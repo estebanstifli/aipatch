@@ -1,0 +1,539 @@
+He revisado lo que llevas y te diría que la base está bastante bien para una v1, pero ahora mismo el plugin está todavía en fase de “security posture / hygiene plugin” más que en fase de “security intelligence potente”.
+
+La arquitectura general me parece correcta:
+
+patchwatch.php arranca limpio
+class-pww-loader.php centraliza bien los módulos
+separación por responsabilidad razonable:
+scanner
+hardening
+vulnerabilities
+dashboard
+rest
+cron
+site_health
+logger
+
+Eso está bien planteado. No veo una base caótica.
+
+Lo que ya tienes bien montado
+
+Hay varias cosas buenas de verdad:
+
+1. Estructura modular
+
+Eso es lo más importante para crecer sin romper todo.
+Tu plugin no está metido en un único archivo monstruo. Para una herramienta de seguridad, eso es clave.
+
+2. Flujo lógico coherente
+
+El producto actual tiene sentido:
+
+escaneo local
+score
+issues priorizadas
+hardening configurable
+logs
+Site Health
+REST interna
+cron
+
+O sea, como producto inicial está bien enfocado.
+
+3. Hardening sin tocar archivos sensibles
+
+Muy bien que no te hayas ido a editar wp-config.php o .htaccess automáticamente.
+Eso lo hace más seguro y más defendible.
+
+4. Provider architecture en vulnerabilidades
+
+Aunque ahora el provider sea mock, la decisión de hacerlo con interfaz y providers es buena.
+Eso sí está pensado para crecer.
+
+Lo que veo flojo o a medio hacer
+1. El módulo de vulnerabilidades aún no es “real”
+
+Ahora mismo PWW_Local_Vulnerability_Provider es básicamente un mock de demo.
+Está bien para UI, flujo y arquitectura, pero no es aún valor real.
+
+Esto es seguramente la mayor diferencia entre lo que parece el plugin y lo que realmente hace hoy.
+
+2. El escáner todavía es de configuración, no de intrusión/malware
+
+class-pww-scanner.php revisa cosas útiles:
+
+updates
+usuarios
+debug
+SSL
+XML-RPC
+permisos
+file editor
+etc.
+
+Pero eso sigue siendo más bien:
+
+higiene
+posture
+hardening hints
+
+No detecta todavía:
+
+malware
+archivos alterados
+inyecciones
+anomalías reales
+persistence
+usuarios/cron/options sospechosos a nivel profundo
+3. Las “settings de módulos” parecen preparadas, pero no están gobernando realmente el sistema
+
+Tienes modules_enabled en settings, pero por lo que he visto no se están usando de verdad para activar o desactivar módulos en el loader.
+O sea, la UI ya existe, pero la lógica todavía no manda.
+
+Eso ahora no es grave, pero conviene arreglarlo pronto para que no se convierta en deuda técnica.
+
+4. Solo guardas el último scan
+
+Ahora mismo guardas:
+
+scan_results
+last_scan
+security_score
+
+Pero no una historia de scans.
+Eso te limita mucho para crecer hacia:
+
+comparativas
+tendencias
+“qué cambió desde ayer”
+alertas
+auditoría
+5. El login protection es útil, pero básico
+
+Sirve como primera capa, pero si el plugin crece, esa parte necesitará:
+
+mejor tracking
+whitelist
+locks por usuario además de IP
+eventos más detallados
+cleanup/control de transients
+quizá compatibilidad con proxies / Cloudflare
+6. Falta una capa de “motor de hallazgos”
+
+Ahora mismo el scanner genera issues directamente.
+Para crecer de verdad, te va a venir mejor separar:
+
+collectors → recogen datos
+rules → evalúan
+findings/issues → resultado normalizado
+score engine → puntúa
+
+Ahora lo tienes más compacto y simple, que está bien para empezar, pero a medio plazo se te quedará corto.
+
+Mi diagnóstico general
+
+Te diría esto:
+
+Está bien para:
+MVP
+v1 pública
+plugin de postura de seguridad
+panel claro y limpio
+Aún no está listo para:
+competir con plugins serios de inteligencia/vulnerabilidades
+llamarse anti-malware real
+detección avanzada
+monitorización diferencial potente
+
+Pero eso no es malo.
+De hecho, el siguiente paso lógico no es meter cien funciones, sino convertir esta base en un motor más serio por capas.
+
+Orden lógico de crecimiento
+Fase 1 — Consolidar la base actual
+
+Antes de añadir cosas grandes, yo haría esta fase de limpieza interna.
+
+1. Hacer que modules_enabled funcione de verdad
+
+En PWW_Loader, decidir realmente si se cargan:
+
+scanner
+hardening
+vulnerabilities
+login protection
+
+Ahora mismo eso debería pasar de “setting decorativa” a “feature flag real”.
+
+2. Separar score de findings
+
+Crear una pequeña capa de modelo interno:
+
+finding id
+categoría
+severidad
+evidencia
+recomendación
+fuente
+dismissible
+fingerprint
+
+Ahora ya lo tienes más o menos así, pero lo formalizaría mejor.
+
+3. Añadir historial de scans
+
+Crear tabla nueva, por ejemplo:
+
+pww_scans
+id
+score
+summary_json
+issues_json
+created_at
+
+Y opcional:
+
+scan_type
+duration_ms
+source (manual, cron)
+
+Esto te desbloquea media hoja de ruta futura.
+
+4. Mejorar logs
+
+Los logs están bien para una v1.
+El siguiente paso sería distinguir mejor:
+
+scan events
+hardening events
+auth events
+detection events
+system events
+
+Y guardar contexto más consistente.
+
+Fase 2 — Vulnerability intelligence real
+
+Esta es la fase más importante para que el plugin dé un salto de valor.
+
+Objetivo
+
+Sustituir el provider mock por un sistema real.
+
+Qué haría
+2.1. Crear un provider local real
+
+No hace falta API remota al principio.
+Puedes empezar con una base local propia tipo JSON:
+
+core
+plugins
+themes
+rangos de versiones vulnerables
+fix version
+cve/cwe/references
+severity
+source
+
+Estructura ejemplo:
+
+data/vulns/core.json
+data/vulns/plugins/contact-form-7.json
+etc.
+2.2. Normalizar slugs/versionado
+
+Aquí hay mucho trabajo importante:
+
+slug correcto de plugin
+plugin file vs dirname
+themes
+premium plugins
+versiones raras
+2.3. Añadir confidence/source metadata
+
+Cada finding debería decir:
+
+source_type: local_db / remote / heuristic
+source_name
+confidence
+2.4. Mantener el provider architecture
+
+Eso lo mantendría tal cual, porque está bien pensado.
+
+Fase 3 — File integrity monitoring
+
+Este sería para mí el siguiente gran salto real.
+
+Objetivo
+
+Detectar:
+
+archivos nuevos sospechosos
+archivos modificados inesperadamente
+cambios entre escaneos
+Cómo lo haría
+3.1. Inventario inicial
+
+Tabla tipo:
+
+pww_file_inventory
+path
+hash
+size
+mtime
+group (core, plugin, theme, uploads, other)
+first_seen
+last_seen
+3.2. Escaneo diferencial
+
+Comparar contra el inventario previo y marcar:
+
+new file
+modified file
+deleted file
+3.3. Enfocar primero en rutas críticas
+
+No escanear todo a lo loco desde el día 1.
+Primero:
+
+wp-content/plugins
+wp-content/themes
+wp-content/uploads
+wp-config.php
+algunos ficheros raíz
+3.4. Exclusions
+
+Necesitas exclusiones desde pronto:
+
+cachés
+backups
+logs
+minificados regenerados
+builders/plugins que crean archivos dinámicos
+Fase 4 — Malware heuristics y firmas
+
+Aquí ya empiezas a entrar en una liga más seria.
+
+Objetivo
+
+Detectar patrones sospechosos en archivos.
+
+Motor inicial
+
+No te iría aún a YARA completa dentro del plugin si te complica demasiado.
+Primero haría un motor simple de reglas:
+
+cadenas sospechosas
+combinaciones sospechosas
+ofuscación
+PHP en uploads
+nombres de archivo anómalos
+webshell patterns
+Ejemplos de reglas iniciales
+eval(base64_decode(...))
+gzinflate(base64_decode(...))
+assert($_POST...)
+preg_replace /e
+str_rot13 + decode
+create_function
+shell_exec, passthru, system, proc_open
+ficheros .php en uploads
+archivos con nombres muy raros tipo wp-vcd.php, class.wp.php, etc.
+Después
+
+Ya metería:
+
+firmas JSON propias
+luego quizá YARA subset
+luego feeds externos opcionales
+Fase 5 — Detección WordPress-specific profunda
+
+Aquí está tu verdadero valor diferencial.
+
+Añadir chequeos de:
+usuarios admin creados recientemente
+cambios sospechosos en roles/capabilities
+cron jobs anómalos
+active_plugins raros
+siteurl / home alterados
+injections en wp_options
+MU plugins inesperados
+plugin/theme editor enabled + risky context
+uploads con ejecutables
+.htaccess alterado de forma rara
+wp-config.php con includes sospechosos
+
+Esto es mucho más útil para WordPress que un simple escaneo genérico.
+
+Fase 6 — Quarantine y remediation segura
+
+No lo metería antes de tiempo.
+
+Primero
+vista del hallazgo
+evidencia
+explicación
+marcar falso positivo
+ignorar
+exportar
+Luego
+mover a cuarentena
+restaurar
+desactivar temporalmente
+excluir de futuros escaneos
+Lo que evitaría al principio
+borrar automáticamente
+“limpieza con IA”
+reescritura automática de archivos
+
+Eso es donde se rompen webs.
+
+Fase 7 — Alertas y monitorización
+
+Cuando ya tengas historial y findings más serios:
+
+email alerts
+alertas solo para critical/high
+digest diario/semanal
+“new since last scan”
+“score dropped from 84 to 61”
+“3 new suspicious files”
+“1 plugin newly vulnerable”
+
+Sin historial, esto no compensa. Con historial, sí.
+
+Fase 8 — API remota opcional
+
+Solo cuando la base local esté bien.
+
+Para qué usarla
+feed de vulnerabilidades actualizado
+ruleset updates
+false positive tuning
+reputación
+explicaciones IA
+Pero:
+
+el plugin debe seguir teniendo valor sin nube.
+Eso ya lo llevas bien planteado y yo lo mantendría.
+
+Qué reestructuraría ya
+Cambio 1: carpetas por dominio
+
+Ahora no está mal, pero yo iría migrando hacia algo así:
+
+includes/core/
+includes/admin/
+includes/scanner/
+includes/vulnerabilities/
+includes/hardening/
+includes/logging/
+includes/site-health/
+includes/rest/
+data/
+data/vulns/
+data/rules/
+
+No es urgente, pero cuando crezca te vendrá mejor.
+
+Cambio 2: scanner por checks separados
+
+class-pww-scanner.php acabará siendo demasiado grande.
+Yo lo partiría en checks:
+
+class-check-wp-version.php
+class-check-plugins.php
+class-check-users.php
+class-check-ssl.php
+etc.
+
+Y luego un scanner runner que los agregue.
+
+Cambio 3: findings model común
+
+Te lo recomiendo bastante.
+Te simplificará:
+
+score
+UI
+REST
+historial
+dismissals
+exportaciones
+Riesgos o detalles a corregir pronto
+1. No vendas demasiado la parte de vulnerabilidades si sigue siendo mock
+
+Ahora mismo en producto parece más avanzado de lo que realmente es.
+Yo sería prudente hasta que haya base real.
+
+2. Los módulos activables deben ser reales
+
+Si el usuario ve toggles de módulos, tienen que mandar de verdad.
+
+3. El score debe poder evolucionar
+
+Ahora el score es simple y válido para empezar, pero luego tendrás que pasar a:
+
+pesos por tipo de finding
+suppressions
+confidence
+recency
+compensating controls
+
+No hace falta cambiarlo ya, pero conviene dejarlo preparado mentalmente.
+
+Mi propuesta de roadmap realista
+Sprint siguiente
+hacer funcionar modules_enabled
+añadir tabla pww_scans
+guardar historial
+mejorar logs
+empezar a separar scanner en checks independientes
+Sprint 2
+provider local real de vulnerabilidades
+base JSON local
+normalización de software instalado
+provider status más serio
+UI mejor de vulnerabilidades
+Sprint 3
+inventario de archivos
+hash baseline
+nuevos/modificados/eliminados
+exclusions
+cron incremental
+Sprint 4
+heurísticas malware
+reglas propias
+score más rico
+findings WordPress-specific
+Sprint 5
+cuarentena
+falsos positivos
+alertas
+export
+explicación más avanzada
+Conclusión clara
+
+Mi veredicto sería:
+
+La estructura actual está bien como base.
+No la veo mal diseñada.
+Pero el siguiente salto no es “más checks sueltos”, sino convertirlo en una plataforma de findings + historial + providers + integridad de archivos.
+
+Ahora mismo el plugin está en este punto:
+
+arquitectura: bien
+producto v1: bien
+motor de inteligencia real: todavía en construcción
+
+El orden lógico para crecer sería:
+
+1. consolidar base y settings reales
+2. historial de escaneos
+3. provider de vulnerabilidades real
+4. integridad de archivos
+5. heurísticas malware y anomalías WordPress
+6. cuarentena y alertas
+
+Ese es el camino bueno.
+
+Si quieres, en el siguiente mensaje te lo convierto en un plan exacto para el agente de programación, con carpetas nuevas, clases a crear y orden de implementación.

@@ -1,5 +1,5 @@
 === AI PatchWatch – Security Intelligence ===
-Contributors: patchwatch
+Contributors: estebandezafra
 Tags: security, vulnerabilities, hardening, scanner, protection
 Requires at least: 6.5
 Tested up to: 6.9
