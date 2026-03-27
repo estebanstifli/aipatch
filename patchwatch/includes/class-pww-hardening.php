@@ -75,7 +75,7 @@ class PWW_Hardening {
                 'hardening_toggle',
                 sprintf(
                     /* translators: 1: Option key, 2: Action. */
-                    __( 'Hardening option "%1$s" %2$s.', 'patchwatch-wp' ),
+                    __( 'Hardening option "%1$s" %2$s.', 'patchwatch' ),
                     $key,
                     $action
                 )
@@ -114,39 +114,39 @@ class PWW_Hardening {
         return array(
             array(
                 'key'           => 'disable_xmlrpc',
-                'title'         => __( 'Disable XML-RPC', 'patchwatch-wp' ),
-                'description'   => __( 'Blocks external XML-RPC requests. Disable if you use the WordPress mobile app, Jetpack, or remote publishing tools.', 'patchwatch-wp' ),
+                'title'         => __( 'Disable XML-RPC', 'patchwatch' ),
+                'description'   => __( 'Blocks external XML-RPC requests. Disable if you use the WordPress mobile app, Jetpack, or remote publishing tools.', 'patchwatch' ),
                 'enabled'       => ! empty( $options['disable_xmlrpc'] ),
-                'warning'       => __( 'May break Jetpack and WordPress mobile app connectivity.', 'patchwatch-wp' ),
+                'warning'       => __( 'May break Jetpack and WordPress mobile app connectivity.', 'patchwatch' ),
                 'severity'      => 'medium',
             ),
             array(
                 'key'           => 'hide_wp_version',
-                'title'         => __( 'Hide WordPress Version', 'patchwatch-wp' ),
-                'description'   => __( 'Removes the WordPress version number from the page source, RSS feeds, and scripts.', 'patchwatch-wp' ),
+                'title'         => __( 'Hide WordPress Version', 'patchwatch' ),
+                'description'   => __( 'Removes the WordPress version number from the page source, RSS feeds, and scripts.', 'patchwatch' ),
                 'enabled'       => ! empty( $options['hide_wp_version'] ),
                 'warning'       => '',
                 'severity'      => 'low',
             ),
             array(
                 'key'           => 'restrict_rest_api',
-                'title'         => __( 'Restrict REST API', 'patchwatch-wp' ),
-                'description'   => __( 'Limits sensitive REST API endpoints (like user enumeration) to authenticated users only. Public endpoints for themes and plugins remain accessible.', 'patchwatch-wp' ),
+                'title'         => __( 'Restrict REST API', 'patchwatch' ),
+                'description'   => __( 'Limits sensitive REST API endpoints (like user enumeration) to authenticated users only. Public endpoints for themes and plugins remain accessible.', 'patchwatch' ),
                 'enabled'       => ! empty( $options['restrict_rest_api'] ),
-                'warning'       => __( 'May affect headless/decoupled setups or plugins that rely on public REST access.', 'patchwatch-wp' ),
+                'warning'       => __( 'May affect headless/decoupled setups or plugins that rely on public REST access.', 'patchwatch' ),
                 'severity'      => 'low',
             ),
             array(
                 'key'           => 'login_protection',
-                'title'         => __( 'Login Brute-Force Protection', 'patchwatch-wp' ),
+                'title'         => __( 'Login Brute-Force Protection', 'patchwatch' ),
                 'description'   => sprintf(
                     /* translators: 1: Max attempts, 2: Lockout duration in minutes. */
-                    __( 'Limits login attempts to %1$d tries per IP, with a %2$d-minute lockout after exceeding the limit.', 'patchwatch-wp' ),
+                    __( 'Limits login attempts to %1$d tries per IP, with a %2$d-minute lockout after exceeding the limit.', 'patchwatch' ),
                     $options['login_max_attempts'],
                     $options['login_lockout_duration']
                 ),
                 'enabled'       => ! empty( $options['login_protection'] ),
-                'warning'       => __( 'Legitimate users may be locked out temporarily if they forget their password.', 'patchwatch-wp' ),
+                'warning'       => __( 'Legitimate users may be locked out temporarily if they forget their password.', 'patchwatch' ),
                 'severity'      => 'high',
                 'settings'      => array(
                     'login_max_attempts'    => $options['login_max_attempts'],
@@ -239,7 +239,7 @@ class PWW_Hardening {
                 if ( strpos( $request_uri, $pattern ) !== false ) {
                     return new WP_Error(
                         'rest_forbidden',
-                        __( 'Authentication is required to access this endpoint.', 'patchwatch-wp' ),
+                        __( 'Authentication is required to access this endpoint.', 'patchwatch' ),
                         array( 'status' => 401 )
                     );
                 }
@@ -274,7 +274,7 @@ class PWW_Hardening {
                     'aipatch_locked_out',
                     sprintf(
                         /* translators: %d: Lockout duration in minutes. */
-                        __( 'Too many failed login attempts. Please try again in %d minutes.', 'patchwatch-wp' ),
+                        __( 'Too many failed login attempts. Please try again in %d minutes.', 'patchwatch' ),
                         $lockout_minutes
                     )
                 );
@@ -302,7 +302,7 @@ class PWW_Hardening {
                     'login_lockout',
                     sprintf(
                         /* translators: %d: Max attempts. */
-                        __( 'IP locked out after %d failed login attempts.', 'patchwatch-wp' ),
+                        __( 'IP locked out after %d failed login attempts.', 'patchwatch' ),
                         $max_attempts
                     ),
                     array( 'ip_hash' => $ip_hash )

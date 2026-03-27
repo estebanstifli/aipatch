@@ -114,19 +114,19 @@ class PWW_Utils {
     public static function severity_info( $severity ) {
         $map = array(
             'critical' => array(
-                'label' => __( 'Critical', 'patchwatch-wp' ),
+                'label' => __( 'Critical', 'patchwatch' ),
                 'class' => 'aipatch-severity-critical',
             ),
             'high' => array(
-                'label' => __( 'High', 'patchwatch-wp' ),
+                'label' => __( 'High', 'patchwatch' ),
                 'class' => 'aipatch-severity-high',
             ),
             'medium' => array(
-                'label' => __( 'Medium', 'patchwatch-wp' ),
+                'label' => __( 'Medium', 'patchwatch' ),
                 'class' => 'aipatch-severity-medium',
             ),
             'low' => array(
-                'label' => __( 'Low', 'patchwatch-wp' ),
+                'label' => __( 'Low', 'patchwatch' ),
                 'class' => 'aipatch-severity-low',
             ),
         );
@@ -190,7 +190,7 @@ class PWW_Utils {
      */
     public static function format_time( $timestamp ) {
         if ( empty( $timestamp ) ) {
-            return __( 'Never', 'patchwatch-wp' );
+            return __( 'Never', 'patchwatch' );
         }
         return wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $timestamp );
     }

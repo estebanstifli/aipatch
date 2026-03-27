@@ -1,20 +1,20 @@
-=== AI PatchWatch – Security Intelligence for WordPress ===
+=== AI PatchWatch – Security Intelligence ===
 Contributors: patchwatch
 Tags: security, vulnerabilities, hardening, scanner, protection
 Requires at least: 6.5
-Tested up to: 6.7
+Tested up to: 6.9
 Stable tag: 1.0.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Lightweight security intelligence for WordPress. Detect vulnerabilities, assess risks, and apply safe hardening — without the bloat.
+Lightweight security intelligence for your site. Detect vulnerabilities, assess risks, and apply safe hardening — without the bloat.
 
 == Description ==
 
-**AI PatchWatch** is a lightweight security intelligence plugin that helps you understand and improve your WordPress site's security posture.
+**AI PatchWatch** is a lightweight security intelligence plugin that helps you understand and improve your site's security posture.
 
-Unlike heavy security suites, PatchWatch focuses on **clarity over complexity**:
+Unlike heavy security suites, AI PatchWatch focuses on **clarity over complexity**:
 
 * **Security Score:** A simple 0–100 score that summarizes your site's security status at a glance.
 * **Smart Scanner:** Detects outdated plugins, themes, core versions, risky configurations, and common vulnerabilities — all locally, with no external dependencies.
@@ -26,9 +26,9 @@ Unlike heavy security suites, PatchWatch focuses on **clarity over complexity**:
 
 = Philosophy =
 
-PatchWatch is designed around the idea of **security intelligence, not security overload**. We believe site owners deserve clear, actionable information without being overwhelmed by technical jargon or upsell pressure.
+AI PatchWatch is designed around the idea of **security intelligence, not security overload**. We believe site owners deserve clear, actionable information without being overwhelmed by technical jargon or upsell pressure.
 
-= What PatchWatch Does NOT Do =
+= What AI PatchWatch Does NOT Do =
 
 * It is NOT a firewall or WAF.
 * It does NOT scan files for malware (planned for future versions).
@@ -46,15 +46,15 @@ PatchWatch is designed around the idea of **security intelligence, not security 
 
 == Installation ==
 
-1. Upload the `patchwatch-wp` folder to `/wp-content/plugins/`.
+1. Upload the `patchwatch` folder to `/wp-content/plugins/`.
 2. Activate the plugin through the 'Plugins' menu in WordPress.
-3. Navigate to **PatchWatch → Dashboard** to run your first scan.
+3. Navigate to **AI PatchWatch → Dashboard** to run your first scan.
 
 == Frequently Asked Questions ==
 
 = Does this plugin slow down my site? =
 
-No. PatchWatch runs scans on demand or via a daily cron job. It does not add anything to your frontend and does not intercept requests on every page load.
+No. AI PatchWatch runs scans on demand or via a daily cron job. It does not add anything to your frontend and does not intercept requests on every page load.
 
 = Does it require an external API or account? =
 
@@ -62,15 +62,15 @@ No. The current version works entirely locally. Future versions will offer optio
 
 = Will it break my site? =
 
-PatchWatch is designed to be safe. Hardening options are toggled individually and include compatibility warnings. No system files are modified automatically.
+AI PatchWatch is designed to be safe. Hardening options are toggled individually and include compatibility warnings. No system files are modified automatically.
 
 = Is it compatible with other security plugins? =
 
-Yes. PatchWatch focuses on intelligence and reporting, not on request filtering. It can coexist with firewall plugins like Wordfence or Sucuri.
+Yes. AI PatchWatch focuses on intelligence and reporting, not on request filtering. It can coexist with firewall plugins like Wordfence or Sucuri.
 
 = What data does it store? =
 
-PatchWatch stores scan results, settings, hardening preferences, and security logs in your WordPress database. No data is sent externally.
+AI PatchWatch stores scan results, settings, hardening preferences, and security logs in your database. No data is sent externally.
 
 == Screenshots ==
 

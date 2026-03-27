@@ -30,9 +30,9 @@ foreach ( $aipatch_options as $option ) {
 
 // Remove the custom log table.
 global $wpdb;
-$table_name = $wpdb->prefix . 'pww_logs';
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$wpdb->query( "DROP TABLE IF EXISTS {$table_name}" );
+$table_name = esc_sql( $wpdb->prefix . 'pww_logs' );
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared
+$wpdb->query( 'DROP TABLE IF EXISTS `' . $table_name . '`' );
 
 // Clear scheduled cron events.
 wp_clear_scheduled_hook( 'aipatch_daily_scan' );
@@ -41,7 +41,8 @@ wp_clear_scheduled_hook( 'aipatch_log_cleanup' );
 // Clean up transients (login protection).
 // Note: We cannot enumerate all transients, but the main ones expire naturally.
 // We clean known patterns if possible.
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+$options_table = esc_sql( $wpdb->options );
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 $wpdb->query(
-    "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_aipatch_%' OR option_name LIKE '_transient_timeout_aipatch_%'"
+    'DELETE FROM `' . $options_table . "` WHERE option_name LIKE '_transient_aipatch_%' OR option_name LIKE '_transient_timeout_aipatch_%'"
 );

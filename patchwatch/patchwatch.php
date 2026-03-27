@@ -1,6 +1,6 @@
 <?php
 /**
- * AI PatchWatch – Security Intelligence for WordPress
+ * AI PatchWatch – Security Intelligence
  *
  * @package     PatchWatch
  * @author      PatchWatch
@@ -8,15 +8,15 @@
  * @license     GPL-2.0-or-later
  *
  * @wordpress-plugin
- * Plugin Name: AI PatchWatch – Security Intelligence for WordPress
- * Plugin URI:  https://example.com/patchwatch-wp
- * Description: Lightweight security intelligence for WordPress. Detect vulnerabilities, assess risks, and apply safe hardening measures.
+ * Plugin Name: AI PatchWatch – Security Intelligence
+ * Plugin URI:  https://github.com/estebanstifli/aipatch
+ * Description: Lightweight security intelligence for your site. Detect vulnerabilities, assess risks, and apply safe hardening measures.
  * Version:     1.0.0
  * Requires at least: 6.5
  * Requires PHP: 7.4
  * Author:      AI PatchWatch
- * Author URI:  https://example.com
- * Text Domain: patchwatch-wp
+ * Author URI:  https://github.com/estebanstifli/aipatch
+ * Text Domain: patchwatch
  * Domain Path: /languages
  * License:     GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -91,7 +91,7 @@ function aipatch_php_notice() {
         esc_html(
             sprintf(
                 /* translators: 1: Required PHP version, 2: Current PHP version. */
-                __( 'AI PatchWatch requires PHP %1$s or higher. You are running PHP %2$s.', 'patchwatch-wp' ),
+                __( 'AI PatchWatch requires PHP %1$s or higher. You are running PHP %2$s.', 'patchwatch' ),
                 AIPATCH_MIN_PHP,
                 PHP_VERSION
             )
@@ -109,7 +109,7 @@ function aipatch_wp_notice() {
         esc_html(
             sprintf(
                 /* translators: 1: Required WP version, 2: Current WP version. */
-                __( 'AI PatchWatch requires WordPress %1$s or higher. You are running %2$s.', 'patchwatch-wp' ),
+                __( 'AI PatchWatch requires WordPress %1$s or higher. You are running %2$s.', 'patchwatch' ),
                 AIPATCH_MIN_WP,
                 $wp_version
             )

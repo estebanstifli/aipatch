@@ -13,17 +13,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div class="wrap aipatch-wrap">
     <h1 class="aipatch-page-title">
         <span class="dashicons dashicons-lock"></span>
-        <?php esc_html_e( 'Security Hardening', 'patchwatch-wp' ); ?>
+        <?php esc_html_e( 'Security Hardening', 'patchwatch' ); ?>
     </h1>
 
-    <?php if ( isset( $_GET['updated'] ) && '1' === $_GET['updated'] ) : ?>
+    <?php if ( isset( $_GET['updated'] ) && '1' === $_GET['updated'] ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display of redirect query param. ?>
         <div class="notice notice-success is-dismissible">
-            <p><?php esc_html_e( 'Hardening setting updated successfully.', 'patchwatch-wp' ); ?></p>
+            <p><?php esc_html_e( 'Hardening setting updated successfully.', 'patchwatch' ); ?></p>
         </div>
     <?php endif; ?>
 
     <p class="aipatch-page-desc">
-        <?php esc_html_e( 'Enable or disable security hardening measures. Each option includes an explanation and a compatibility warning. Changes take effect immediately.', 'patchwatch-wp' ); ?>
+        <?php esc_html_e( 'Enable or disable security hardening measures. Each option includes an explanation and a compatibility warning. Changes take effect immediately.', 'patchwatch' ); ?>
     </p>
 
     <div class="aipatch-hardening-list">
@@ -51,12 +51,12 @@ if ( ! defined( 'ABSPATH' ) ) {
                         <input type="hidden" name="hardening_key" value="<?php echo esc_attr( $rule['key'] ); ?>" />
                         <?php if ( $rule['enabled'] ) : ?>
                             <input type="hidden" name="hardening_value" value="" />
-                            <button type="submit" name="aipatch_toggle_hardening" value="1" class="aipatch-toggle-btn aipatch-toggle-on" title="<?php esc_attr_e( 'Click to disable', 'patchwatch-wp' ); ?>">
+                            <button type="submit" name="aipatch_toggle_hardening" value="1" class="aipatch-toggle-btn aipatch-toggle-on" title="<?php esc_attr_e( 'Click to disable', 'patchwatch' ); ?>">
                                 <span class="aipatch-toggle-slider"></span>
                             </button>
                         <?php else : ?>
                             <input type="hidden" name="hardening_value" value="1" />
-                            <button type="submit" name="aipatch_toggle_hardening" value="1" class="aipatch-toggle-btn aipatch-toggle-off" title="<?php esc_attr_e( 'Click to enable', 'patchwatch-wp' ); ?>">
+                            <button type="submit" name="aipatch_toggle_hardening" value="1" class="aipatch-toggle-btn aipatch-toggle-off" title="<?php esc_attr_e( 'Click to enable', 'patchwatch' ); ?>">
                                 <span class="aipatch-toggle-slider"></span>
                             </button>
                         <?php endif; ?>
@@ -66,14 +66,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
             <?php if ( ! empty( $rule['settings'] ) ) : ?>
             <div class="aipatch-hardening-settings">
-                <p class="aipatch-meta-label"><?php esc_html_e( 'Current settings:', 'patchwatch-wp' ); ?></p>
+                <p class="aipatch-meta-label"><?php esc_html_e( 'Current settings:', 'patchwatch' ); ?></p>
                 <ul>
                     <?php if ( isset( $rule['settings']['login_max_attempts'] ) ) : ?>
                         <li>
                             <?php
                             printf(
                                 /* translators: %d: Max attempts. */
-                                esc_html__( 'Max attempts: %d', 'patchwatch-wp' ),
+                                esc_html__( 'Max attempts: %d', 'patchwatch' ),
                                 (int) $rule['settings']['login_max_attempts']
                             );
                             ?>
@@ -84,7 +84,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                             <?php
                             printf(
                                 /* translators: %d: Minutes. */
-                                esc_html__( 'Lockout duration: %d minutes', 'patchwatch-wp' ),
+                                esc_html__( 'Lockout duration: %d minutes', 'patchwatch' ),
                                 (int) $rule['settings']['login_lockout_duration']
                             );
                             ?>
@@ -98,13 +98,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     </div>
 
     <div class="aipatch-section aipatch-muted-box">
-        <h3><?php esc_html_e( 'About Hardening', 'patchwatch-wp' ); ?></h3>
+        <h3><?php esc_html_e( 'About Hardening', 'patchwatch' ); ?></h3>
         <p>
-            <?php esc_html_e( 'Security hardening applies protective measures to reduce your site\'s attack surface. These measures are safe for most WordPress sites, but review the compatibility warnings before enabling. Some features like XML-RPC or public REST API access may be required by specific plugins or services.', 'patchwatch-wp' ); ?>
+            <?php esc_html_e( 'Security hardening applies protective measures to reduce your site\'s attack surface. These measures are safe for most WordPress sites, but review the compatibility warnings before enabling. Some features like XML-RPC or public REST API access may be required by specific plugins or services.', 'patchwatch' ); ?>
         </p>
         <p>
-            <strong><?php esc_html_e( 'File Editor:', 'patchwatch-wp' ); ?></strong>
-            <?php esc_html_e( 'To disable the WordPress file editor, add this line to your wp-config.php file:', 'patchwatch-wp' ); ?>
+            <strong><?php esc_html_e( 'File Editor:', 'patchwatch' ); ?></strong>
+            <?php esc_html_e( 'To disable the WordPress file editor, add this line to your wp-config.php file:', 'patchwatch' ); ?>
             <code>define( 'DISALLOW_FILE_EDIT', true );</code>
         </p>
     </div>

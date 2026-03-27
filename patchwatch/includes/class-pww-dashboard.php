@@ -98,18 +98,18 @@ class PWW_Dashboard {
      */
     private function get_score_label( $score ) {
         if ( $score >= 90 ) {
-            return __( 'Excellent', 'patchwatch-wp' );
+            return __( 'Excellent', 'patchwatch' );
         }
         if ( $score >= 70 ) {
-            return __( 'Good', 'patchwatch-wp' );
+            return __( 'Good', 'patchwatch' );
         }
         if ( $score >= 50 ) {
-            return __( 'Needs Attention', 'patchwatch-wp' );
+            return __( 'Needs Attention', 'patchwatch' );
         }
         if ( $score >= 30 ) {
-            return __( 'At Risk', 'patchwatch-wp' );
+            return __( 'At Risk', 'patchwatch' );
         }
-        return __( 'Critical', 'patchwatch-wp' );
+        return __( 'Critical', 'patchwatch' );
     }
 
     /**

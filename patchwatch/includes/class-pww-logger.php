@@ -129,7 +129,7 @@ class PWW_Logger {
 
         $where_sql = implode( ' AND ', $where );
 
-        // Sanitize order parameters.
+        // Sanitize order parameters (allowlist only).
         $allowed_orderby = array( 'id', 'event_type', 'severity', 'created_at' );
         $orderby = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : 'created_at';
         $order   = strtoupper( $args['order'] ) === 'ASC' ? 'ASC' : 'DESC';
@@ -137,38 +137,25 @@ class PWW_Logger {
         $per_page = absint( $args['per_page'] );
         $offset   = ( absint( $args['page'] ) - 1 ) * $per_page;
 
+        // Table name is safe: $wpdb->prefix (trusted) + hardcoded suffix.
+        $table = esc_sql( $this->table );
+
         // Count total.
+        $count_sql = 'SELECT COUNT(*) FROM `' . $table . '` WHERE ' . $where_sql;
         if ( ! empty( $values ) ) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$this->table} WHERE {$where_sql}", $values ) );
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+            $total = (int) $wpdb->get_var( $wpdb->prepare( $count_sql, $values ) );
         } else {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$this->table} WHERE {$where_sql}" );
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+            $total = (int) $wpdb->get_var( $count_sql );
         }
 
         // Fetch rows.
-        $query_values   = $values;
-        $query_values[] = $per_page;
-        $query_values[] = $offset;
+        $select_sql   = 'SELECT * FROM `' . $table . '` WHERE ' . $where_sql . ' ORDER BY ' . $orderby . ' ' . $order . ' LIMIT %d OFFSET %d';
+        $query_values = array_merge( $values, array( $per_page, $offset ) );
 
-        if ( ! empty( $values ) ) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $items = $wpdb->get_results(
-                $wpdb->prepare(
-                    "SELECT * FROM {$this->table} WHERE {$where_sql} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d",
-                    $query_values
-                )
-            );
-        } else {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $items = $wpdb->get_results(
-                $wpdb->prepare(
-                    "SELECT * FROM {$this->table} WHERE {$where_sql} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d",
-                    $per_page,
-                    $offset
-                )
-            );
-        }
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+        $items = $wpdb->get_results( $wpdb->prepare( $select_sql, $query_values ) );
 
         return array(
             'items' => $items ? $items : array(),
@@ -190,13 +177,11 @@ class PWW_Logger {
             $days = 30;
         }
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $deleted = $wpdb->query(
-            $wpdb->prepare(
-                "DELETE FROM {$this->table} WHERE created_at < DATE_SUB(NOW(), INTERVAL %d DAY)",
-                $days
-            )
-        );
+        $table       = esc_sql( $this->table );
+        $cleanup_sql = 'DELETE FROM `' . $table . '` WHERE created_at < DATE_SUB(NOW(), INTERVAL %d DAY)';
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+        $deleted = $wpdb->query( $wpdb->prepare( $cleanup_sql, $days ) );
 
         return $deleted ? $deleted : 0;
     }
@@ -208,8 +193,11 @@ class PWW_Logger {
      */
     public function clear_all() {
         global $wpdb;
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        return $wpdb->query( "TRUNCATE TABLE {$this->table}" );
+
+        $table = esc_sql( $this->table );
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+        return $wpdb->query( 'TRUNCATE TABLE `' . $table . '`' );
     }
 
     /**
@@ -219,9 +207,12 @@ class PWW_Logger {
      */
     public function get_counts() {
         global $wpdb;
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+        $table = esc_sql( $this->table );
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
         $results = $wpdb->get_results(
-            "SELECT severity, COUNT(*) as count FROM {$this->table} GROUP BY severity",
+            'SELECT severity, COUNT(*) as count FROM `' . $table . '` GROUP BY severity',
             OBJECT_K
         );
 

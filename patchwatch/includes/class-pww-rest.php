@@ -111,7 +111,7 @@ class PWW_Rest {
         if ( ! current_user_can( 'manage_options' ) ) {
             return new WP_Error(
                 'rest_forbidden',
-                __( 'You do not have permission to access this endpoint.', 'patchwatch-wp' ),
+                __( 'You do not have permission to access this endpoint.', 'patchwatch' ),
                 array( 'status' => 403 )
             );
         }
@@ -128,7 +128,7 @@ class PWW_Rest {
         $results = $this->scanner->run_full_scan();
 
         $logger = new PWW_Logger();
-        $logger->info( 'rest_scan', __( 'Security scan triggered via REST API.', 'patchwatch-wp' ) );
+        $logger->info( 'rest_scan', __( 'Security scan triggered via REST API.', 'patchwatch' ) );
 
         return new WP_REST_Response( array(
             'success' => true,
@@ -183,7 +183,7 @@ class PWW_Rest {
         if ( ! $result ) {
             return new WP_REST_Response( array(
                 'success' => false,
-                'message' => __( 'Invalid hardening option.', 'patchwatch-wp' ),
+                'message' => __( 'Invalid hardening option.', 'patchwatch' ),
             ), 400 );
         }
 

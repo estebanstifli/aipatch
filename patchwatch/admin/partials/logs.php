@@ -21,12 +21,12 @@ $base_url = admin_url( 'admin.php?page=patchwatch-logs' );
 <div class="wrap aipatch-wrap">
     <h1 class="aipatch-page-title">
         <span class="dashicons dashicons-list-view"></span>
-        <?php esc_html_e( 'Security Logs', 'patchwatch-wp' ); ?>
+        <?php esc_html_e( 'Security Logs', 'patchwatch' ); ?>
     </h1>
 
-    <?php if ( isset( $_GET['cleared'] ) && '1' === $_GET['cleared'] ) : ?>
+    <?php if ( isset( $_GET['cleared'] ) && '1' === $_GET['cleared'] ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display of redirect query param. ?>
         <div class="notice notice-success is-dismissible">
-            <p><?php esc_html_e( 'All logs have been cleared.', 'patchwatch-wp' ); ?></p>
+            <p><?php esc_html_e( 'All logs have been cleared.', 'patchwatch' ); ?></p>
         </div>
     <?php endif; ?>
 
@@ -37,8 +37,8 @@ $base_url = admin_url( 'admin.php?page=patchwatch-logs' );
                 <?php
                 printf(
                     /* translators: %d: Count. */
-                    esc_html__( 'All (%d)', 'patchwatch-wp' ),
-                    $counts['total']
+                    esc_html__( 'All (%d)', 'patchwatch' ),
+                    absint( $counts['total'] )
                 );
                 ?>
             </a>
@@ -47,8 +47,8 @@ $base_url = admin_url( 'admin.php?page=patchwatch-logs' );
                 <?php
                 printf(
                     /* translators: %d: Count. */
-                    esc_html__( 'Critical (%d)', 'patchwatch-wp' ),
-                    $counts['critical']
+                    esc_html__( 'Critical (%d)', 'patchwatch' ),
+                    absint( $counts['critical'] )
                 );
                 ?>
             </a>
@@ -57,8 +57,8 @@ $base_url = admin_url( 'admin.php?page=patchwatch-logs' );
                 <?php
                 printf(
                     /* translators: %d: Count. */
-                    esc_html__( 'Error (%d)', 'patchwatch-wp' ),
-                    $counts['error']
+                    esc_html__( 'Error (%d)', 'patchwatch' ),
+                    absint( $counts['error'] )
                 );
                 ?>
             </a>
@@ -67,8 +67,8 @@ $base_url = admin_url( 'admin.php?page=patchwatch-logs' );
                 <?php
                 printf(
                     /* translators: %d: Count. */
-                    esc_html__( 'Warning (%d)', 'patchwatch-wp' ),
-                    $counts['warning']
+                    esc_html__( 'Warning (%d)', 'patchwatch' ),
+                    absint( $counts['warning'] )
                 );
                 ?>
             </a>
@@ -77,8 +77,8 @@ $base_url = admin_url( 'admin.php?page=patchwatch-logs' );
                 <?php
                 printf(
                     /* translators: %d: Count. */
-                    esc_html__( 'Info (%d)', 'patchwatch-wp' ),
-                    $counts['info']
+                    esc_html__( 'Info (%d)', 'patchwatch' ),
+                    absint( $counts['info'] )
                 );
                 ?>
             </a>
@@ -88,7 +88,7 @@ $base_url = admin_url( 'admin.php?page=patchwatch-logs' );
             <?php wp_nonce_field( 'aipatch_clear_logs', 'aipatch_clear_nonce' ); ?>
             <button type="submit" name="aipatch_clear_logs" value="1" class="button" onclick="return confirm(aipatchAdmin.i18n.confirmClear);">
                 <span class="dashicons dashicons-trash"></span>
-                <?php esc_html_e( 'Clear All Logs', 'patchwatch-wp' ); ?>
+                <?php esc_html_e( 'Clear All Logs', 'patchwatch' ); ?>
             </button>
         </form>
     </div>
@@ -98,10 +98,10 @@ $base_url = admin_url( 'admin.php?page=patchwatch-logs' );
     <table class="widefat aipatch-table aipatch-logs-table">
         <thead>
             <tr>
-                <th class="aipatch-col-severity"><?php esc_html_e( 'Severity', 'patchwatch-wp' ); ?></th>
-                <th class="aipatch-col-event"><?php esc_html_e( 'Event', 'patchwatch-wp' ); ?></th>
-                <th><?php esc_html_e( 'Message', 'patchwatch-wp' ); ?></th>
-                <th class="aipatch-col-date"><?php esc_html_e( 'Date', 'patchwatch-wp' ); ?></th>
+                <th class="aipatch-col-severity"><?php esc_html_e( 'Severity', 'patchwatch' ); ?></th>
+                <th class="aipatch-col-event"><?php esc_html_e( 'Event', 'patchwatch' ); ?></th>
+                <th><?php esc_html_e( 'Message', 'patchwatch' ); ?></th>
+                <th class="aipatch-col-date"><?php esc_html_e( 'Date', 'patchwatch' ); ?></th>
             </tr>
         </thead>
         <tbody>
@@ -146,7 +146,7 @@ $base_url = admin_url( 'admin.php?page=patchwatch-logs' );
     <div class="aipatch-section">
         <div class="aipatch-all-clear">
             <span class="dashicons dashicons-yes-alt"></span>
-            <p><?php esc_html_e( 'No log entries found.', 'patchwatch-wp' ); ?></p>
+            <p><?php esc_html_e( 'No log entries found.', 'patchwatch' ); ?></p>
         </div>
     </div>
     <?php endif; ?>

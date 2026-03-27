@@ -53,7 +53,7 @@ class PWW_Cron {
     public function add_custom_schedules( $schedules ) {
         $schedules['weekly'] = array(
             'interval' => WEEK_IN_SECONDS,
-            'display'  => __( 'Once Weekly', 'patchwatch-wp' ),
+            'display'  => __( 'Once Weekly', 'patchwatch' ),
         );
         return $schedules;
     }
@@ -62,13 +62,13 @@ class PWW_Cron {
      * Execute scheduled scan.
      */
     public function run_scheduled_scan() {
-        $this->logger->info( 'cron_scan', __( 'Scheduled security scan started.', 'patchwatch-wp' ) );
+        $this->logger->info( 'cron_scan', __( 'Scheduled security scan started.', 'patchwatch' ) );
 
         $results = $this->scanner->run_full_scan();
 
         $this->logger->info(
             'cron_scan',
-            __( 'Scheduled security scan completed.', 'patchwatch-wp' ),
+            __( 'Scheduled security scan completed.', 'patchwatch' ),
             array( 'score' => $results['score'], 'issues_count' => count( $results['issues'] ) )
         );
     }
@@ -86,7 +86,7 @@ class PWW_Cron {
                 'log_cleanup',
                 sprintf(
                     /* translators: %d: Number of log entries deleted. */
-                    __( 'Cleaned up %d old log entries.', 'patchwatch-wp' ),
+                    __( 'Cleaned up %d old log entries.', 'patchwatch' ),
                     $deleted
                 )
             );

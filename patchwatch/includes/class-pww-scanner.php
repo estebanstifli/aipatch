@@ -132,16 +132,16 @@ class PWW_Scanner {
         if ( $needs_update ) {
             $issues[] = array(
                 'id'              => 'wp_outdated',
-                'title'           => __( 'WordPress core is outdated', 'patchwatch-wp' ),
+                'title'           => __( 'WordPress core is outdated', 'patchwatch' ),
                 'description'     => sprintf(
                     /* translators: %s: Current WP version. */
-                    __( 'You are running WordPress %s. A newer version is available.', 'patchwatch-wp' ),
+                    __( 'You are running WordPress %s. A newer version is available.', 'patchwatch' ),
                     $wp_version
                 ),
                 'severity'        => 'high',
                 'category'        => 'core',
-                'why_it_matters'  => __( 'Outdated WordPress versions may contain known security vulnerabilities that attackers can exploit.', 'patchwatch-wp' ),
-                'recommendation'  => __( 'Update WordPress to the latest version from Dashboard → Updates.', 'patchwatch-wp' ),
+                'why_it_matters'  => __( 'Outdated WordPress versions may contain known security vulnerabilities that attackers can exploit.', 'patchwatch' ),
+                'recommendation'  => __( 'Update WordPress to the latest version from Dashboard → Updates.', 'patchwatch' ),
                 'dismissible'     => false,
             );
         }
@@ -181,18 +181,18 @@ class PWW_Scanner {
                 'id'              => 'plugins_outdated',
                 'title'           => sprintf(
                     /* translators: %d: Number of outdated plugins. */
-                    _n( '%d plugin needs updating', '%d plugins need updating', count( $outdated ), 'patchwatch-wp' ),
+                    _n( '%d plugin needs updating', '%d plugins need updating', count( $outdated ), 'patchwatch' ),
                     count( $outdated )
                 ),
                 'description'     => sprintf(
                     /* translators: %s: Comma-separated plugin names. */
-                    __( 'Outdated plugins: %s', 'patchwatch-wp' ),
+                    __( 'Outdated plugins: %s', 'patchwatch' ),
                     implode( ', ', array_map( 'esc_html', array_slice( $outdated, 0, 10 ) ) )
                 ),
                 'severity'        => count( $outdated ) > 3 ? 'high' : 'medium',
                 'category'        => 'plugins',
-                'why_it_matters'  => __( 'Outdated plugins are one of the most common entry points for attackers. Updates often include security patches.', 'patchwatch-wp' ),
-                'recommendation'  => __( 'Update all plugins from Dashboard → Updates, or enable auto-updates for trusted plugins.', 'patchwatch-wp' ),
+                'why_it_matters'  => __( 'Outdated plugins are one of the most common entry points for attackers. Updates often include security patches.', 'patchwatch' ),
+                'recommendation'  => __( 'Update all plugins from Dashboard → Updates, or enable auto-updates for trusted plugins.', 'patchwatch' ),
                 'dismissible'     => false,
             );
         }
@@ -224,18 +224,18 @@ class PWW_Scanner {
                 'id'              => 'themes_outdated',
                 'title'           => sprintf(
                     /* translators: %d: Number of outdated themes. */
-                    _n( '%d theme needs updating', '%d themes need updating', count( $outdated ), 'patchwatch-wp' ),
+                    _n( '%d theme needs updating', '%d themes need updating', count( $outdated ), 'patchwatch' ),
                     count( $outdated )
                 ),
                 'description'     => sprintf(
                     /* translators: %s: Comma-separated theme names. */
-                    __( 'Outdated themes: %s', 'patchwatch-wp' ),
+                    __( 'Outdated themes: %s', 'patchwatch' ),
                     implode( ', ', array_map( 'esc_html', $outdated ) )
                 ),
                 'severity'        => 'medium',
                 'category'        => 'themes',
-                'why_it_matters'  => __( 'Theme vulnerabilities can be exploited even if the theme is not active. Keep all installed themes updated.', 'patchwatch-wp' ),
-                'recommendation'  => __( 'Update themes from Dashboard → Updates. Remove unused themes.', 'patchwatch-wp' ),
+                'why_it_matters'  => __( 'Theme vulnerabilities can be exploited even if the theme is not active. Keep all installed themes updated.', 'patchwatch' ),
+                'recommendation'  => __( 'Update themes from Dashboard → Updates. Remove unused themes.', 'patchwatch' ),
                 'dismissible'     => true,
             );
         }
@@ -256,12 +256,12 @@ class PWW_Scanner {
         if ( $admin_user ) {
             $issues[] = array(
                 'id'              => 'admin_username',
-                'title'           => __( 'Default "admin" username exists', 'patchwatch-wp' ),
-                'description'     => __( 'A user account with the username "admin" was detected.', 'patchwatch-wp' ),
+                'title'           => __( 'Default "admin" username exists', 'patchwatch' ),
+                'description'     => __( 'A user account with the username "admin" was detected.', 'patchwatch' ),
                 'severity'        => 'medium',
                 'category'        => 'users',
-                'why_it_matters'  => __( 'The "admin" username is the first one attackers try in brute-force attacks. Using a unique username adds a layer of security.', 'patchwatch-wp' ),
-                'recommendation'  => __( 'Create a new administrator account with a unique username, transfer content, and delete the "admin" account.', 'patchwatch-wp' ),
+                'why_it_matters'  => __( 'The "admin" username is the first one attackers try in brute-force attacks. Using a unique username adds a layer of security.', 'patchwatch' ),
+                'recommendation'  => __( 'Create a new administrator account with a unique username, transfer content, and delete the "admin" account.', 'patchwatch' ),
                 'dismissible'     => true,
             );
         }
@@ -273,14 +273,14 @@ class PWW_Scanner {
                 'id'              => 'too_many_admins',
                 'title'           => sprintf(
                     /* translators: %d: Number of admin users. */
-                    __( '%d administrator accounts detected', 'patchwatch-wp' ),
+                    __( '%d administrator accounts detected', 'patchwatch' ),
                     count( $admins )
                 ),
-                'description'     => __( 'Having many administrator accounts increases the attack surface.', 'patchwatch-wp' ),
+                'description'     => __( 'Having many administrator accounts increases the attack surface.', 'patchwatch' ),
                 'severity'        => 'low',
                 'category'        => 'users',
-                'why_it_matters'  => __( 'Each admin account is a potential target. If one is compromised, the attacker gains full control.', 'patchwatch-wp' ),
-                'recommendation'  => __( 'Review administrator accounts and downgrade roles where full admin access is not needed.', 'patchwatch-wp' ),
+                'why_it_matters'  => __( 'Each admin account is a potential target. If one is compromised, the attacker gains full control.', 'patchwatch' ),
+                'recommendation'  => __( 'Review administrator accounts and downgrade roles where full admin access is not needed.', 'patchwatch' ),
                 'dismissible'     => true,
             );
         }
@@ -302,12 +302,12 @@ class PWW_Scanner {
         if ( ! $xmlrpc_disabled ) {
             $issues[] = array(
                 'id'              => 'xmlrpc_enabled',
-                'title'           => __( 'XML-RPC is enabled', 'patchwatch-wp' ),
-                'description'     => __( 'The XML-RPC interface is currently accessible.', 'patchwatch-wp' ),
+                'title'           => __( 'XML-RPC is enabled', 'patchwatch' ),
+                'description'     => __( 'The XML-RPC interface is currently accessible.', 'patchwatch' ),
                 'severity'        => 'medium',
                 'category'        => 'configuration',
-                'why_it_matters'  => __( 'XML-RPC can be exploited for brute-force amplification attacks and DDoS. Most modern sites do not need it.', 'patchwatch-wp' ),
-                'recommendation'  => __( 'Disable XML-RPC from the Hardening page unless you use Jetpack, the WordPress mobile app, or XML-RPC clients.', 'patchwatch-wp' ),
+                'why_it_matters'  => __( 'XML-RPC can be exploited for brute-force amplification attacks and DDoS. Most modern sites do not need it.', 'patchwatch' ),
+                'recommendation'  => __( 'Disable XML-RPC from the Hardening page unless you use Jetpack, the WordPress mobile app, or XML-RPC clients.', 'patchwatch' ),
                 'dismissible'     => true,
             );
         }
@@ -326,12 +326,12 @@ class PWW_Scanner {
         if ( ! defined( 'DISALLOW_FILE_EDIT' ) || ! DISALLOW_FILE_EDIT ) {
             $issues[] = array(
                 'id'              => 'file_editor_enabled',
-                'title'           => __( 'WordPress file editor is enabled', 'patchwatch-wp' ),
-                'description'     => __( 'The built-in plugin and theme editor is accessible from the admin panel.', 'patchwatch-wp' ),
+                'title'           => __( 'WordPress file editor is enabled', 'patchwatch' ),
+                'description'     => __( 'The built-in plugin and theme editor is accessible from the admin panel.', 'patchwatch' ),
                 'severity'        => 'high',
                 'category'        => 'configuration',
-                'why_it_matters'  => __( 'If an attacker gains admin access, they can inject malicious code directly through the file editor.', 'patchwatch-wp' ),
-                'recommendation'  => __( 'Add this line to your wp-config.php: define( \'DISALLOW_FILE_EDIT\', true );', 'patchwatch-wp' ),
+                'why_it_matters'  => __( 'If an attacker gains admin access, they can inject malicious code directly through the file editor.', 'patchwatch' ),
+                'recommendation'  => __( 'Add this line to your wp-config.php: define( \'DISALLOW_FILE_EDIT\', true );', 'patchwatch' ),
                 'dismissible'     => true,
             );
         }
@@ -355,12 +355,12 @@ class PWW_Scanner {
 
             $issues[] = array(
                 'id'              => 'debug_enabled',
-                'title'           => __( 'Debug mode is active', 'patchwatch-wp' ),
-                'description'     => __( 'WP_DEBUG is enabled on this site.', 'patchwatch-wp' ),
+                'title'           => __( 'Debug mode is active', 'patchwatch' ),
+                'description'     => __( 'WP_DEBUG is enabled on this site.', 'patchwatch' ),
                 'severity'        => $severity,
                 'category'        => 'configuration',
-                'why_it_matters'  => __( 'Debug mode can expose sensitive information like file paths, database queries, and PHP errors to visitors.', 'patchwatch-wp' ),
-                'recommendation'  => __( 'Disable WP_DEBUG in wp-config.php for production sites. Use WP_DEBUG_LOG instead of WP_DEBUG_DISPLAY if you need logging.', 'patchwatch-wp' ),
+                'why_it_matters'  => __( 'Debug mode can expose sensitive information like file paths, database queries, and PHP errors to visitors.', 'patchwatch' ),
+                'recommendation'  => __( 'Disable WP_DEBUG in wp-config.php for production sites. Use WP_DEBUG_LOG instead of WP_DEBUG_DISPLAY if you need logging.', 'patchwatch' ),
                 'dismissible'     => true,
             );
         }
@@ -383,14 +383,14 @@ class PWW_Scanner {
                 'id'              => 'php_outdated',
                 'title'           => sprintf(
                     /* translators: %s: PHP version. */
-                    __( 'PHP %s is outdated', 'patchwatch-wp' ),
+                    __( 'PHP %s is outdated', 'patchwatch' ),
                     PHP_VERSION
                 ),
-                'description'     => __( 'Your PHP version is no longer receiving active security updates.', 'patchwatch-wp' ),
+                'description'     => __( 'Your PHP version is no longer receiving active security updates.', 'patchwatch' ),
                 'severity'        => $severity,
                 'category'        => 'server',
-                'why_it_matters'  => __( 'Outdated PHP versions may have unpatched security vulnerabilities and degrade performance.', 'patchwatch-wp' ),
-                'recommendation'  => __( 'Contact your hosting provider to upgrade PHP to version 8.1 or higher.', 'patchwatch-wp' ),
+                'why_it_matters'  => __( 'Outdated PHP versions may have unpatched security vulnerabilities and degrade performance.', 'patchwatch' ),
+                'recommendation'  => __( 'Contact your hosting provider to upgrade PHP to version 8.1 or higher.', 'patchwatch' ),
                 'dismissible'     => true,
             );
         }
@@ -410,12 +410,12 @@ class PWW_Scanner {
         if ( empty( $hardening['restrict_rest_api'] ) ) {
             $issues[] = array(
                 'id'              => 'rest_api_exposed',
-                'title'           => __( 'REST API is publicly accessible', 'patchwatch-wp' ),
-                'description'     => __( 'The WordPress REST API exposes user enumeration and other data to unauthenticated requests.', 'patchwatch-wp' ),
+                'title'           => __( 'REST API is publicly accessible', 'patchwatch' ),
+                'description'     => __( 'The WordPress REST API exposes user enumeration and other data to unauthenticated requests.', 'patchwatch' ),
                 'severity'        => 'low',
                 'category'        => 'configuration',
-                'why_it_matters'  => __( 'Attackers can enumerate usernames via /wp-json/wp/v2/users and gather information about your site structure.', 'patchwatch-wp' ),
-                'recommendation'  => __( 'Enable REST API restrictions from the Hardening page. Compatible mode keeps public endpoints working.', 'patchwatch-wp' ),
+                'why_it_matters'  => __( 'Attackers can enumerate usernames via /wp-json/wp/v2/users and gather information about your site structure.', 'patchwatch' ),
+                'recommendation'  => __( 'Enable REST API restrictions from the Hardening page. Compatible mode keeps public endpoints working.', 'patchwatch' ),
                 'dismissible'     => true,
             );
         }
@@ -451,12 +451,12 @@ class PWW_Scanner {
             if ( ! $protected ) {
                 $issues[] = array(
                     'id'              => 'directory_listing',
-                    'title'           => __( 'Directory listing may be enabled', 'patchwatch-wp' ),
-                    'description'     => __( 'The uploads directory does not have an index file and no .htaccess protection was detected.', 'patchwatch-wp' ),
+                    'title'           => __( 'Directory listing may be enabled', 'patchwatch' ),
+                    'description'     => __( 'The uploads directory does not have an index file and no .htaccess protection was detected.', 'patchwatch' ),
                     'severity'        => 'low',
                     'category'        => 'server',
-                    'why_it_matters'  => __( 'Directory listing allows anyone to browse your files, which can expose sensitive information.', 'patchwatch-wp' ),
-                    'recommendation'  => __( 'Add an empty index.php file to your uploads directory or add "Options -Indexes" to your .htaccess file.', 'patchwatch-wp' ),
+                    'why_it_matters'  => __( 'Directory listing allows anyone to browse your files, which can expose sensitive information.', 'patchwatch' ),
+                    'recommendation'  => __( 'Add an empty index.php file to your uploads directory or add "Options -Indexes" to your .htaccess file.', 'patchwatch' ),
                     'dismissible'     => true,
                 );
             }
@@ -488,16 +488,16 @@ class PWW_Scanner {
             if ( $perms > 0644 ) {
                 $issues[] = array(
                     'id'              => 'wpconfig_permissions',
-                    'title'           => __( 'wp-config.php has loose permissions', 'patchwatch-wp' ),
+                    'title'           => __( 'wp-config.php has loose permissions', 'patchwatch' ),
                     'description'     => sprintf(
                         /* translators: %s: File permissions in octal. */
-                        __( 'Current permissions: %s. Recommended: 0644 or more restrictive.', 'patchwatch-wp' ),
+                        __( 'Current permissions: %s. Recommended: 0644 or more restrictive.', 'patchwatch' ),
                         decoct( $perms )
                     ),
                     'severity'        => 'high',
                     'category'        => 'server',
-                    'why_it_matters'  => __( 'wp-config.php contains database credentials and secret keys. Loose permissions may allow other users on the server to read it.', 'patchwatch-wp' ),
-                    'recommendation'  => __( 'Set wp-config.php permissions to 0644 or 0640 via your hosting file manager or SSH.', 'patchwatch-wp' ),
+                    'why_it_matters'  => __( 'wp-config.php contains database credentials and secret keys. Loose permissions may allow other users on the server to read it.', 'patchwatch' ),
+                    'recommendation'  => __( 'Set wp-config.php permissions to 0644 or 0640 via your hosting file manager or SSH.', 'patchwatch' ),
                     'dismissible'     => false,
                 );
             }
@@ -517,12 +517,12 @@ class PWW_Scanner {
         if ( ! is_ssl() ) {
             $issues[] = array(
                 'id'              => 'no_ssl',
-                'title'           => __( 'Site is not using HTTPS', 'patchwatch-wp' ),
-                'description'     => __( 'This site is accessible over an unencrypted HTTP connection.', 'patchwatch-wp' ),
+                'title'           => __( 'Site is not using HTTPS', 'patchwatch' ),
+                'description'     => __( 'This site is accessible over an unencrypted HTTP connection.', 'patchwatch' ),
                 'severity'        => 'high',
                 'category'        => 'server',
-                'why_it_matters'  => __( 'Without HTTPS, data between your visitors and the server (including passwords) is sent in plain text and can be intercepted.', 'patchwatch-wp' ),
-                'recommendation'  => __( 'Install an SSL certificate (many hosts offer free Let\'s Encrypt certificates) and force HTTPS.', 'patchwatch-wp' ),
+                'why_it_matters'  => __( 'Without HTTPS, data between your visitors and the server (including passwords) is sent in plain text and can be intercepted.', 'patchwatch' ),
+                'recommendation'  => __( 'Install an SSL certificate (many hosts offer free Let\'s Encrypt certificates) and force HTTPS.', 'patchwatch' ),
                 'dismissible'     => false,
             );
         }

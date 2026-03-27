@@ -15,21 +15,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div class="wrap aipatch-wrap">
     <h1 class="aipatch-page-title">
         <span class="dashicons dashicons-warning"></span>
-        <?php esc_html_e( 'Vulnerability Intelligence', 'patchwatch-wp' ); ?>
+        <?php esc_html_e( 'Vulnerability Intelligence', 'patchwatch' ); ?>
     </h1>
 
     <?php if ( ! $has_external ) : ?>
         <div class="notice notice-info">
             <p>
-                <strong><?php esc_html_e( 'No external vulnerability feed connected.', 'patchwatch-wp' ); ?></strong>
-                <?php esc_html_e( 'Displaying local mock data for demonstration. Connect an external provider for real-time vulnerability intelligence.', 'patchwatch-wp' ); ?>
+                <strong><?php esc_html_e( 'No external vulnerability feed connected.', 'patchwatch' ); ?></strong>
+                <?php esc_html_e( 'Displaying local mock data for demonstration. Connect an external provider for real-time vulnerability intelligence.', 'patchwatch' ); ?>
             </p>
         </div>
     <?php endif; ?>
 
     <!-- Provider Status -->
     <div class="aipatch-provider-status">
-        <h3><?php esc_html_e( 'Data Sources', 'patchwatch-wp' ); ?></h3>
+        <h3><?php esc_html_e( 'Data Sources', 'patchwatch' ); ?></h3>
         <ul>
             <?php foreach ( $providers as $provider ) : ?>
                 <li>
@@ -37,8 +37,8 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <?php echo esc_html( $provider['name'] ); ?>
                     –
                     <?php echo $provider['available']
-                        ? esc_html__( 'Active', 'patchwatch-wp' )
-                        : esc_html__( 'Not configured', 'patchwatch-wp' ); ?>
+                        ? esc_html__( 'Active', 'patchwatch' )
+                        : esc_html__( 'Not configured', 'patchwatch' ); ?>
                 </li>
             <?php endforeach; ?>
         </ul>
@@ -50,13 +50,13 @@ if ( ! defined( 'ABSPATH' ) ) {
         <table class="widefat aipatch-table" id="aipatch-vuln-table">
             <thead>
                 <tr>
-                    <th><?php esc_html_e( 'Severity', 'patchwatch-wp' ); ?></th>
-                    <th><?php esc_html_e( 'Software', 'patchwatch-wp' ); ?></th>
-                    <th><?php esc_html_e( 'Type', 'patchwatch-wp' ); ?></th>
-                    <th><?php esc_html_e( 'Vulnerability', 'patchwatch-wp' ); ?></th>
-                    <th><?php esc_html_e( 'Installed', 'patchwatch-wp' ); ?></th>
-                    <th><?php esc_html_e( 'Fix Version', 'patchwatch-wp' ); ?></th>
-                    <th><?php esc_html_e( 'Source', 'patchwatch-wp' ); ?></th>
+                    <th><?php esc_html_e( 'Severity', 'patchwatch' ); ?></th>
+                    <th><?php esc_html_e( 'Software', 'patchwatch' ); ?></th>
+                    <th><?php esc_html_e( 'Type', 'patchwatch' ); ?></th>
+                    <th><?php esc_html_e( 'Vulnerability', 'patchwatch' ); ?></th>
+                    <th><?php esc_html_e( 'Installed', 'patchwatch' ); ?></th>
+                    <th><?php esc_html_e( 'Fix Version', 'patchwatch' ); ?></th>
+                    <th><?php esc_html_e( 'Source', 'patchwatch' ); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -83,7 +83,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                                     <?php echo esc_html( $vuln['fix_version'] ); ?>
                                 </span>
                             <?php else : ?>
-                                <span class="aipatch-text-muted"><?php esc_html_e( 'Unknown', 'patchwatch-wp' ); ?></span>
+                                <span class="aipatch-text-muted"><?php esc_html_e( 'Unknown', 'patchwatch' ); ?></span>
                             <?php endif; ?>
                         </td>
                         <td><span class="aipatch-source-badge"><?php echo esc_html( $vuln['source'] ); ?></span></td>
@@ -96,15 +96,15 @@ if ( ! defined( 'ABSPATH' ) ) {
     <div class="aipatch-section">
         <div class="aipatch-all-clear">
             <span class="dashicons dashicons-yes-alt"></span>
-            <p><?php esc_html_e( 'No known vulnerabilities detected for your installed software.', 'patchwatch-wp' ); ?></p>
+            <p><?php esc_html_e( 'No known vulnerabilities detected for your installed software.', 'patchwatch' ); ?></p>
         </div>
     </div>
     <?php endif; ?>
 
     <div class="aipatch-section aipatch-muted-box">
-        <h3><?php esc_html_e( 'About Vulnerability Data', 'patchwatch-wp' ); ?></h3>
+        <h3><?php esc_html_e( 'About Vulnerability Data', 'patchwatch' ); ?></h3>
         <p>
-            <?php esc_html_e( 'Vulnerability data is compared against your installed plugins, themes, and WordPress core version. In the current MVP, data is sourced from a local demonstration database. Future versions will support external vulnerability feeds for real-time intelligence.', 'patchwatch-wp' ); ?>
+            <?php esc_html_e( 'Vulnerability data is compared against your installed plugins, themes, and WordPress core version. In the current MVP, data is sourced from a local demonstration database. Future versions will support external vulnerability feeds for real-time intelligence.', 'patchwatch' ); ?>
         </p>
     </div>
 </div>

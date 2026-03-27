@@ -67,8 +67,8 @@ class PWW_Admin {
     public function register_menus() {
         // Main menu.
         add_menu_page(
-            __( 'AI PatchWatch', 'patchwatch-wp' ),
-            __( 'AI PatchWatch', 'patchwatch-wp' ),
+            __( 'AI PatchWatch', 'patchwatch' ),
+            __( 'AI PatchWatch', 'patchwatch' ),
             'manage_options',
             'patchwatch-dashboard',
             array( $this, 'render_dashboard' ),
@@ -79,8 +79,8 @@ class PWW_Admin {
         // Submenu: Dashboard.
         add_submenu_page(
             'patchwatch-dashboard',
-            __( 'Security Dashboard', 'patchwatch-wp' ),
-            __( 'Dashboard', 'patchwatch-wp' ),
+            __( 'Security Dashboard', 'patchwatch' ),
+            __( 'Dashboard', 'patchwatch' ),
             'manage_options',
             'patchwatch-dashboard',
             array( $this, 'render_dashboard' )
@@ -89,8 +89,8 @@ class PWW_Admin {
         // Submenu: Vulnerabilities.
         add_submenu_page(
             'patchwatch-dashboard',
-            __( 'Vulnerabilities', 'patchwatch-wp' ),
-            __( 'Vulnerabilities', 'patchwatch-wp' ),
+            __( 'Vulnerabilities', 'patchwatch' ),
+            __( 'Vulnerabilities', 'patchwatch' ),
             'manage_options',
             'patchwatch-vulnerabilities',
             array( $this, 'render_vulnerabilities' )
@@ -99,8 +99,8 @@ class PWW_Admin {
         // Submenu: Hardening.
         add_submenu_page(
             'patchwatch-dashboard',
-            __( 'Hardening', 'patchwatch-wp' ),
-            __( 'Hardening', 'patchwatch-wp' ),
+            __( 'Hardening', 'patchwatch' ),
+            __( 'Hardening', 'patchwatch' ),
             'manage_options',
             'patchwatch-hardening',
             array( $this, 'render_hardening' )
@@ -109,8 +109,8 @@ class PWW_Admin {
         // Submenu: Logs.
         add_submenu_page(
             'patchwatch-dashboard',
-            __( 'Security Logs', 'patchwatch-wp' ),
-            __( 'Logs', 'patchwatch-wp' ),
+            __( 'Security Logs', 'patchwatch' ),
+            __( 'Logs', 'patchwatch' ),
             'manage_options',
             'patchwatch-logs',
             array( $this, 'render_logs' )
@@ -119,8 +119,8 @@ class PWW_Admin {
         // Submenu: Settings.
         add_submenu_page(
             'patchwatch-dashboard',
-            __( 'Settings', 'patchwatch-wp' ),
-            __( 'Settings', 'patchwatch-wp' ),
+            __( 'Settings', 'patchwatch' ),
+            __( 'Settings', 'patchwatch' ),
             'manage_options',
             'patchwatch-settings',
             array( $this, 'render_settings' )
@@ -165,12 +165,12 @@ class PWW_Admin {
             'nonce'     => wp_create_nonce( 'wp_rest' ),
             'adminUrl'  => admin_url(),
             'i18n'      => array(
-                'scanning'        => __( 'Scanning...', 'patchwatch-wp' ),
-                'scanComplete'    => __( 'Scan complete. Reloading...', 'patchwatch-wp' ),
-                'error'           => __( 'An error occurred. Please try again.', 'patchwatch-wp' ),
-                'confirmClear'    => __( 'Are you sure you want to clear all logs?', 'patchwatch-wp' ),
-                'saving'          => __( 'Saving...', 'patchwatch-wp' ),
-                'saved'           => __( 'Saved!', 'patchwatch-wp' ),
+                'scanning'        => __( 'Scanning...', 'patchwatch' ),
+                'scanComplete'    => __( 'Scan complete. Reloading...', 'patchwatch' ),
+                'error'           => __( 'An error occurred. Please try again.', 'patchwatch' ),
+                'confirmClear'    => __( 'Are you sure you want to clear all logs?', 'patchwatch' ),
+                'saving'          => __( 'Saving...', 'patchwatch' ),
+                'saved'           => __( 'Saved!', 'patchwatch' ),
             ),
         ) );
     }
@@ -194,7 +194,7 @@ class PWW_Admin {
         if ( isset( $_POST['aipatch_run_scan'] ) ) {
             check_admin_referer( 'aipatch_run_scan', 'aipatch_scan_nonce' );
             $this->scanner->run_full_scan();
-            $this->logger->info( 'manual_scan', __( 'Manual security scan executed.', 'patchwatch-wp' ) );
+            $this->logger->info( 'manual_scan', __( 'Manual security scan executed.', 'patchwatch' ) );
             wp_safe_redirect( admin_url( 'admin.php?page=patchwatch-dashboard&scan=complete' ) );
             exit;
         }
@@ -231,7 +231,7 @@ class PWW_Admin {
         if ( isset( $_POST['aipatch_clear_logs'] ) ) {
             check_admin_referer( 'aipatch_clear_logs', 'aipatch_clear_nonce' );
             $this->logger->clear_all();
-            $this->logger->info( 'logs_cleared', __( 'All logs were cleared manually.', 'patchwatch-wp' ) );
+            $this->logger->info( 'logs_cleared', __( 'All logs were cleared manually.', 'patchwatch' ) );
             wp_safe_redirect( admin_url( 'admin.php?page=patchwatch-logs&cleared=1' ) );
             exit;
         }
@@ -285,8 +285,8 @@ class PWW_Admin {
         }
 
         $per_page = 20;
-        $page     = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1;
-        $severity = isset( $_GET['severity'] ) ? sanitize_key( $_GET['severity'] ) : '';
+        $page     = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $severity = isset( $_GET['severity'] ) ? sanitize_key( $_GET['severity'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
         $log_data = $this->logger->get_logs( array(
             'per_page' => $per_page,

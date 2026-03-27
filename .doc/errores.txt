@@ -1,0 +1,17 @@
+FILE: includes/class-pww-logger.php
+Line	Column	Type	Code	Message	Edit Link
+157	17	WARNING	WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber	Incorrect number of replacements passed to $wpdb->prepare(). Found 1 replacement parameters, expected 2.	View in code editor (opens in a new tab)
+158	21	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$this->table} at "SELECT * FROM {$this->table} WHERE {$where_sql} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d"	View in code editor (opens in a new tab)
+158	21	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$where_sql} at "SELECT * FROM {$this->table} WHERE {$where_sql} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d"	View in code editor (opens in a new tab)
+158	21	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$orderby} at "SELECT * FROM {$this->table} WHERE {$where_sql} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d"	View in code editor (opens in a new tab)
+158	21	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$order} at "SELECT * FROM {$this->table} WHERE {$where_sql} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d"	View in code editor (opens in a new tab)
+166	21	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$this->table} at "SELECT * FROM {$this->table} WHERE {$where_sql} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d"	View in code editor (opens in a new tab)
+166	21	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$where_sql} at "SELECT * FROM {$this->table} WHERE {$where_sql} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d"	View in code editor (opens in a new tab)
+166	21	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$orderby} at "SELECT * FROM {$this->table} WHERE {$where_sql} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d"	View in code editor (opens in a new tab)
+166	21	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$order} at "SELECT * FROM {$this->table} WHERE {$where_sql} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d"	View in code editor (opens in a new tab)
+196	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$this->table} at "DELETE FROM {$this->table} WHERE created_at < DATE_SUB(NOW(), INTERVAL %d DAY)"	View in code editor (opens in a new tab)
+224	13	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$this->table} at "SELECT severity, COUNT(*) as count FROM {$this->table} GROUP BY severity"	View in code editor (opens in a new tab)
+
+FILE: patchwatch-wp.php
+Line	Column	Type	Code	Message	Edit Link
+0	0	WARNING	trademarked_term	The plugin slug includes a restricted term. Your plugin slug - "patchwatch-wp" - contains the restricted term "wp" which can be used within the plugin slug, as long as you don't use the full name in the plugin name. For example: You can use WP but not WordPress.
