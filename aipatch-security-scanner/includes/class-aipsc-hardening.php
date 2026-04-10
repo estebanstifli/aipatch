@@ -10,21 +10,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class PWW_Hardening
+ * Class AIPSC_Hardening
  */
-class PWW_Hardening {
+class AIPSC_Hardening {
 
     /**
-     * @var PWW_Logger
+     * @var AIPSC_Logger
      */
     private $logger;
 
     /**
      * Constructor.
      *
-     * @param PWW_Logger $logger Logger instance.
+     * @param AIPSC_Logger $logger Logger instance.
      */
-    public function __construct( PWW_Logger $logger ) {
+    public function __construct( AIPSC_Logger $logger ) {
         $this->logger = $logger;
     }
 
@@ -33,7 +33,7 @@ class PWW_Hardening {
      * Called early during plugin bootstrap.
      */
     public function apply_active_rules() {
-        $options = PWW_Utils::get_hardening();
+        $options = AIPSC_Utils::get_hardening();
 
         if ( ! empty( $options['disable_xmlrpc'] ) ) {
             $this->apply_disable_xmlrpc();
@@ -47,7 +47,7 @@ class PWW_Hardening {
             $this->apply_restrict_rest_api();
         }
 
-        if ( ! empty( $options['login_protection'] ) && PWW_Settings::is_module_enabled( 'login_protection' ) ) {
+        if ( ! empty( $options['login_protection'] ) && AIPSC_Settings::is_module_enabled( 'login_protection' ) ) {
             $this->apply_login_protection( $options );
         }
     }
@@ -60,14 +60,14 @@ class PWW_Hardening {
      * @return bool
      */
     public function toggle( $key, $value ) {
-        $defaults = PWW_Utils::get_default_hardening();
+        $defaults = AIPSC_Utils::get_default_hardening();
         if ( ! array_key_exists( $key, $defaults ) ) {
             return false;
         }
 
-        $options = PWW_Utils::get_hardening();
+        $options = AIPSC_Utils::get_hardening();
         $options[ $key ] = (bool) $value;
-        $result = PWW_Utils::update_option( 'hardening', $options );
+        $result = AIPSC_Utils::update_option( 'hardening', $options );
 
         if ( $result ) {
             $action = $value ? 'enabled' : 'disabled';
@@ -98,9 +98,9 @@ class PWW_Hardening {
             return false;
         }
 
-        $options = PWW_Utils::get_hardening();
+        $options = AIPSC_Utils::get_hardening();
         $options[ $key ] = absint( $value );
-        return PWW_Utils::update_option( 'hardening', $options );
+        return AIPSC_Utils::update_option( 'hardening', $options );
     }
 
     /**
@@ -109,7 +109,7 @@ class PWW_Hardening {
      * @return array
      */
     public function get_status() {
-        $options = PWW_Utils::get_hardening();
+        $options = AIPSC_Utils::get_hardening();
 
         return array(
             array(
@@ -221,7 +221,7 @@ class PWW_Hardening {
             }
 
             // Check compat mode.
-            $settings = PWW_Utils::get_settings();
+            $settings = AIPSC_Utils::get_settings();
             if ( ! empty( $settings['rest_compat_mode'] ) ) {
                 return $result;
             }
@@ -264,8 +264,8 @@ class PWW_Hardening {
                 return $user;
             }
 
-            $ip      = PWW_Utils::get_client_ip();
-            $ip_hash = PWW_Utils::hash_ip( $ip );
+            $ip      = AIPSC_Utils::get_client_ip();
+            $ip_hash = AIPSC_Utils::hash_ip( $ip );
 
             // Check if currently locked out.
             $lockout = get_transient( 'aipatch_lockout_' . $ip_hash );
@@ -285,8 +285,8 @@ class PWW_Hardening {
 
         // Record failed login.
         add_action( 'wp_login_failed', function ( $username ) use ( $max_attempts, $lockout_minutes ) {
-            $ip      = PWW_Utils::get_client_ip();
-            $ip_hash = PWW_Utils::hash_ip( $ip );
+            $ip      = AIPSC_Utils::get_client_ip();
+            $ip_hash = AIPSC_Utils::hash_ip( $ip );
             $key     = 'aipatch_fails_' . $ip_hash;
 
             $attempts = (int) get_transient( $key );
@@ -313,8 +313,8 @@ class PWW_Hardening {
 
         // Clear failed attempts on successful login.
         add_action( 'wp_login', function () {
-            $ip      = PWW_Utils::get_client_ip();
-            $ip_hash = PWW_Utils::hash_ip( $ip );
+            $ip      = AIPSC_Utils::get_client_ip();
+            $ip_hash = AIPSC_Utils::hash_ip( $ip );
             delete_transient( 'aipatch_fails_' . $ip_hash );
             delete_transient( 'aipatch_lockout_' . $ip_hash );
         } );

@@ -10,27 +10,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class PWW_Cron
+ * Class AIPSC_Cron
  */
-class PWW_Cron {
+class AIPSC_Cron {
 
     /**
-     * @var PWW_Scanner
+     * @var AIPSC_Scanner
      */
     private $scanner;
 
     /**
-     * @var PWW_Logger
+     * @var AIPSC_Logger
      */
     private $logger;
 
     /**
      * Constructor.
      *
-     * @param PWW_Scanner $scanner Scanner instance.
-     * @param PWW_Logger  $logger  Logger instance.
+     * @param AIPSC_Scanner $scanner Scanner instance.
+     * @param AIPSC_Logger  $logger  Logger instance.
      */
-    public function __construct( PWW_Scanner $scanner, PWW_Logger $logger ) {
+    public function __construct( AIPSC_Scanner $scanner, AIPSC_Logger $logger ) {
         $this->scanner = $scanner;
         $this->logger  = $logger;
     }
@@ -77,7 +77,7 @@ class PWW_Cron {
      * Execute log cleanup.
      */
     public function run_log_cleanup() {
-        $settings = PWW_Utils::get_settings();
+        $settings = AIPSC_Utils::get_settings();
         $days     = isset( $settings['log_retention_days'] ) ? (int) $settings['log_retention_days'] : 30;
         $deleted  = $this->logger->cleanup( $days );
 
@@ -123,6 +123,6 @@ class PWW_Cron {
      * @return int
      */
     public static function get_last_scan() {
-        return (int) PWW_Utils::get_option( 'last_scan', 0 );
+        return (int) AIPSC_Utils::get_option( 'last_scan', 0 );
     }
 }

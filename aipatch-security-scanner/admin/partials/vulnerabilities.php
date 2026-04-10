@@ -61,7 +61,7 @@ if ( ! defined( 'ABSPATH' ) ) {
             </thead>
             <tbody>
                 <?php foreach ( $vulns as $vuln ) :
-                    $sev = PWW_Utils::severity_info( $vuln['severity'] );
+                    $sev = AIPSC_Utils::severity_info( $vuln['severity'] );
                 ?>
                     <tr>
                         <td>

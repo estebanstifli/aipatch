@@ -3,7 +3,7 @@
  * Admin partial: Hardening page.
  *
  * @package AipatchSecurityScanner
- * @var array $rules Hardening rules from PWW_Hardening::get_status().
+ * @var array $rules Hardening rules from AIPSC_Hardening::get_status().
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -28,7 +28,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
     <div class="aipatch-hardening-list">
         <?php foreach ( $rules as $rule ) :
-            $sev = PWW_Utils::severity_info( $rule['severity'] );
+            $sev = AIPSC_Utils::severity_info( $rule['severity'] );
         ?>
         <div class="aipatch-hardening-item <?php echo $rule['enabled'] ? 'aipatch-hardening-active' : ''; ?>">
             <div class="aipatch-hardening-header">

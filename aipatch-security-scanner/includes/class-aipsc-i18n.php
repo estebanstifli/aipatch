@@ -10,9 +10,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class PWW_I18n
+ * Class AIPSC_I18n
  */
-class PWW_I18n {
+class AIPSC_I18n {
 
     /**
      * Load the plugin text domain.

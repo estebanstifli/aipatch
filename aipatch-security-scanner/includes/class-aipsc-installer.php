@@ -10,9 +10,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class PWW_Installer
+ * Class AIPSC_Installer
  */
-class PWW_Installer {
+class AIPSC_Installer {
 
     /**
      * Run on plugin activation.
@@ -46,7 +46,7 @@ class PWW_Installer {
         $charset_collate = $wpdb->get_charset_collate();
 
         // Logs table.
-        $logs_table = $wpdb->prefix . 'pww_logs';
+        $logs_table = $wpdb->prefix . 'aipsc_logs';
         $sql_logs = "CREATE TABLE {$logs_table} (
             id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             event_type VARCHAR(50) NOT NULL DEFAULT '',
@@ -61,7 +61,7 @@ class PWW_Installer {
         ) {$charset_collate};";
 
         // Scan history table.
-        $scans_table = $wpdb->prefix . 'pww_scan_history';
+        $scans_table = $wpdb->prefix . 'aipsc_scan_history';
         $sql_scans = "CREATE TABLE {$scans_table} (
             id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             scan_type VARCHAR(20) NOT NULL DEFAULT 'manual',
@@ -85,11 +85,11 @@ class PWW_Installer {
      */
     private static function set_default_options() {
         if ( false === get_option( 'aipatch_settings' ) ) {
-            update_option( 'aipatch_settings', PWW_Utils::get_default_settings(), false );
+            update_option( 'aipatch_settings', AIPSC_Utils::get_default_settings(), false );
         }
 
         if ( false === get_option( 'aipatch_hardening' ) ) {
-            update_option( 'aipatch_hardening', PWW_Utils::get_default_hardening(), false );
+            update_option( 'aipatch_hardening', AIPSC_Utils::get_default_hardening(), false );
         }
 
         if ( false === get_option( 'aipatch_dismissed' ) ) {

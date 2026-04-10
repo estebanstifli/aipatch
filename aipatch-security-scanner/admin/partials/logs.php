@@ -114,7 +114,7 @@ $base_url = admin_url( 'admin.php?page=aipatch-security-scanner-logs' );
                     </td>
                     <td><code><?php echo esc_html( $log->event_type ); ?></code></td>
                     <td><?php echo esc_html( $log->message ); ?></td>
-                    <td><?php echo esc_html( PWW_Utils::format_time( strtotime( $log->created_at ) ) ); ?></td>
+                    <td><?php echo esc_html( AIPSC_Utils::format_time( strtotime( $log->created_at ) ) ); ?></td>
                 </tr>
             <?php endforeach; ?>
         </tbody>

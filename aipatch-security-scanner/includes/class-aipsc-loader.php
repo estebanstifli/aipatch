@@ -10,11 +10,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class PWW_Loader
+ * Class AIPSC_Loader
  *
  * Loads all plugin components and wires hooks.
  */
-class PWW_Loader {
+class AIPSC_Loader {
 
     /**
      * Registered actions.
@@ -50,19 +50,19 @@ class PWW_Loader {
     private function load_dependencies() {
         $includes = AIPATCH_PLUGIN_DIR . 'includes/';
 
-        require_once $includes . 'class-pww-utils.php';
-        require_once $includes . 'class-pww-i18n.php';
-        require_once $includes . 'class-pww-installer.php';
-        require_once $includes . 'class-pww-logger.php';
-        require_once $includes . 'class-pww-settings.php';
-        require_once $includes . 'class-pww-scanner.php';
-        require_once $includes . 'class-pww-hardening.php';
-        require_once $includes . 'class-pww-vulnerabilities.php';
-        require_once $includes . 'class-pww-dashboard.php';
-        require_once $includes . 'class-pww-admin.php';
-        require_once $includes . 'class-pww-rest.php';
-        require_once $includes . 'class-pww-cron.php';
-        require_once $includes . 'class-pww-site-health.php';
+        require_once $includes . 'class-aipsc-utils.php';
+        require_once $includes . 'class-aipsc-i18n.php';
+        require_once $includes . 'class-aipsc-installer.php';
+        require_once $includes . 'class-aipsc-logger.php';
+        require_once $includes . 'class-aipsc-settings.php';
+        require_once $includes . 'class-aipsc-scanner.php';
+        require_once $includes . 'class-aipsc-hardening.php';
+        require_once $includes . 'class-aipsc-vulnerabilities.php';
+        require_once $includes . 'class-aipsc-dashboard.php';
+        require_once $includes . 'class-aipsc-admin.php';
+        require_once $includes . 'class-aipsc-rest.php';
+        require_once $includes . 'class-aipsc-cron.php';
+        require_once $includes . 'class-aipsc-site-health.php';
     }
 
     /**
@@ -96,43 +96,43 @@ class PWW_Loader {
      */
     public function run() {
         // i18n.
-        $i18n = new PWW_I18n();
+        $i18n = new AIPSC_I18n();
         $this->add_action( 'init', $i18n, 'load_textdomain' );
 
         // Run any pending DB upgrades.
-        PWW_Installer::maybe_upgrade();
+        AIPSC_Installer::maybe_upgrade();
 
         // Logger (must be early, other modules may log).
-        $this->modules['logger'] = new PWW_Logger();
+        $this->modules['logger'] = new AIPSC_Logger();
 
         // Settings (always loaded — needed for module checks and admin).
-        $this->modules['settings'] = new PWW_Settings();
+        $this->modules['settings'] = new AIPSC_Settings();
 
         // Scanner (respects module toggle).
-        if ( PWW_Settings::is_module_enabled( 'scanner' ) ) {
-            $this->modules['scanner'] = new PWW_Scanner( $this->modules['logger'] );
+        if ( AIPSC_Settings::is_module_enabled( 'scanner' ) ) {
+            $this->modules['scanner'] = new AIPSC_Scanner( $this->modules['logger'] );
         }
 
         // Hardening (respects module toggle).
-        if ( PWW_Settings::is_module_enabled( 'hardening' ) ) {
-            $this->modules['hardening'] = new PWW_Hardening( $this->modules['logger'] );
+        if ( AIPSC_Settings::is_module_enabled( 'hardening' ) ) {
+            $this->modules['hardening'] = new AIPSC_Hardening( $this->modules['logger'] );
             $this->modules['hardening']->apply_active_rules();
         }
 
         // Vulnerabilities (respects module toggle).
-        if ( PWW_Settings::is_module_enabled( 'vulnerabilities' ) ) {
-            $this->modules['vulnerabilities'] = new PWW_Vulnerabilities();
+        if ( AIPSC_Settings::is_module_enabled( 'vulnerabilities' ) ) {
+            $this->modules['vulnerabilities'] = new AIPSC_Vulnerabilities();
         }
 
         // Dashboard (uses scanner + vulnerabilities if available).
-        $this->modules['dashboard'] = new PWW_Dashboard(
+        $this->modules['dashboard'] = new AIPSC_Dashboard(
             isset( $this->modules['scanner'] ) ? $this->modules['scanner'] : null,
             isset( $this->modules['vulnerabilities'] ) ? $this->modules['vulnerabilities'] : null
         );
 
         // Admin (only in admin context).
         if ( is_admin() ) {
-            $this->modules['admin'] = new PWW_Admin(
+            $this->modules['admin'] = new AIPSC_Admin(
                 $this->modules['dashboard'],
                 isset( $this->modules['scanner'] ) ? $this->modules['scanner'] : null,
                 isset( $this->modules['hardening'] ) ? $this->modules['hardening'] : null,
@@ -144,7 +144,7 @@ class PWW_Loader {
         }
 
         // REST API (uses available modules).
-        $this->modules['rest'] = new PWW_Rest(
+        $this->modules['rest'] = new AIPSC_Rest(
             isset( $this->modules['scanner'] ) ? $this->modules['scanner'] : null,
             $this->modules['dashboard'],
             isset( $this->modules['vulnerabilities'] ) ? $this->modules['vulnerabilities'] : null,
@@ -155,13 +155,13 @@ class PWW_Loader {
 
         // Cron (only if scanner is enabled).
         if ( isset( $this->modules['scanner'] ) ) {
-            $this->modules['cron'] = new PWW_Cron( $this->modules['scanner'], $this->modules['logger'] );
+            $this->modules['cron'] = new AIPSC_Cron( $this->modules['scanner'], $this->modules['logger'] );
             $this->modules['cron']->init();
         }
 
         // Site Health (only if scanner is enabled).
         if ( isset( $this->modules['scanner'] ) ) {
-            $this->modules['site_health'] = new PWW_Site_Health( $this->modules['scanner'] );
+            $this->modules['site_health'] = new AIPSC_Site_Health( $this->modules['scanner'] );
             $this->modules['site_health']->init();
         }
 
@@ -171,7 +171,7 @@ class PWW_Loader {
         /**
          * Fires after Aipatch Security Scanner is fully loaded.
          *
-         * @param PWW_Loader $loader The loader instance.
+         * @param AIPSC_Loader $loader The loader instance.
          */
         do_action( 'aipatch_loaded', $this );
     }

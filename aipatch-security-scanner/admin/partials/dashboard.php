@@ -3,7 +3,7 @@
  * Admin partial: Dashboard page.
  *
  * @package AipatchSecurityScanner
- * @var array $data Dashboard data from PWW_Dashboard::get_dashboard_data().
+ * @var array $data Dashboard data from AIPSC_Dashboard::get_dashboard_data().
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -37,7 +37,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                         printf(
                             /* translators: %s: Last scan time. */
                             esc_html__( 'Last scan: %s', 'aipatch-security-scanner' ),
-                            esc_html( PWW_Utils::format_time( $data['last_scan'] ) )
+                            esc_html( AIPSC_Utils::format_time( $data['last_scan'] ) )
                         );
                         ?>
                     </span>
@@ -61,7 +61,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                     printf(
                         /* translators: %s: Next scan time. */
                         esc_html__( 'Next automatic scan: %s', 'aipatch-security-scanner' ),
-                        esc_html( PWW_Utils::format_time( $data['next_scan'] ) )
+                        esc_html( AIPSC_Utils::format_time( $data['next_scan'] ) )
                     );
                     ?>
                 </p>
@@ -158,7 +158,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         <h2><?php esc_html_e( 'Recommended Actions', 'aipatch-security-scanner' ); ?></h2>
         <div class="aipatch-recommendations">
             <?php foreach ( $data['recommendations'] as $rec ) :
-                $severity_info = PWW_Utils::severity_info( $rec['severity'] );
+                $severity_info = AIPSC_Utils::severity_info( $rec['severity'] );
             ?>
                 <div class="aipatch-recommendation">
                     <div class="aipatch-rec-header">

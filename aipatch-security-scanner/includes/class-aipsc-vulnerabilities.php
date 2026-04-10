@@ -10,12 +10,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Interface PWW_Vulnerability_Provider
+ * Interface AIPSC_Vulnerability_Provider
  *
  * Contract for vulnerability data sources.
  * Future providers (remote API, WPScan, etc.) implement this interface.
  */
-interface PWW_Vulnerability_Provider {
+interface AIPSC_Vulnerability_Provider {
 
     /**
      * Get vulnerabilities for installed software.
@@ -41,12 +41,12 @@ interface PWW_Vulnerability_Provider {
 }
 
 /**
- * Class PWW_Local_Vulnerability_Provider
+ * Class AIPSC_Local_Vulnerability_Provider
  *
  * Built-in provider with a curated local knowledge base of known vulnerabilities.
  * Checks installed software against known vulnerability records.
  */
-class PWW_Local_Vulnerability_Provider implements PWW_Vulnerability_Provider {
+class AIPSC_Local_Vulnerability_Provider implements AIPSC_Vulnerability_Provider {
 
     /**
      * @inheritDoc
@@ -143,16 +143,16 @@ class PWW_Local_Vulnerability_Provider implements PWW_Vulnerability_Provider {
 }
 
 /**
- * Class PWW_Vulnerabilities
+ * Class AIPSC_Vulnerabilities
  *
  * Orchestrates vulnerability providers and formats results.
  */
-class PWW_Vulnerabilities {
+class AIPSC_Vulnerabilities {
 
     /**
      * Registered providers.
      *
-     * @var PWW_Vulnerability_Provider[]
+     * @var AIPSC_Vulnerability_Provider[]
      */
     private $providers = array();
 
@@ -161,12 +161,12 @@ class PWW_Vulnerabilities {
      */
     public function __construct() {
         // Register the built-in local provider.
-        $this->register_provider( new PWW_Local_Vulnerability_Provider() );
+        $this->register_provider( new AIPSC_Local_Vulnerability_Provider() );
 
         /**
          * Allow external code to register additional providers.
          *
-         * @param PWW_Vulnerabilities $instance The vulnerabilities module.
+         * @param AIPSC_Vulnerabilities $instance The vulnerabilities module.
          */
         do_action( 'aipatch_register_vulnerability_providers', $this );
     }
@@ -174,9 +174,9 @@ class PWW_Vulnerabilities {
     /**
      * Register a vulnerability provider.
      *
-     * @param PWW_Vulnerability_Provider $provider Provider instance.
+     * @param AIPSC_Vulnerability_Provider $provider Provider instance.
      */
-    public function register_provider( PWW_Vulnerability_Provider $provider ) {
+    public function register_provider( AIPSC_Vulnerability_Provider $provider ) {
         $this->providers[ $provider->get_source_name() ] = $provider;
     }
 

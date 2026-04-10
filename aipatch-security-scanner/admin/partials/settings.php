@@ -3,7 +3,7 @@
  * Admin partial: Settings page.
  *
  * @package AipatchSecurityScanner
- * @var array $settings Current settings from PWW_Utils::get_settings().
+ * @var array $settings Current settings from AIPSC_Utils::get_settings().
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

@@ -10,19 +10,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class PWW_Site_Health
+ * Class AIPSC_Site_Health
  */
-class PWW_Site_Health {
+class AIPSC_Site_Health {
 
-    /** @var PWW_Scanner */
+    /** @var AIPSC_Scanner */
     private $scanner;
 
     /**
      * Constructor.
      *
-     * @param PWW_Scanner $scanner Scanner instance.
+     * @param AIPSC_Scanner $scanner Scanner instance.
      */
-    public function __construct( PWW_Scanner $scanner ) {
+    public function __construct( AIPSC_Scanner $scanner ) {
         $this->scanner = $scanner;
     }
 
@@ -156,7 +156,7 @@ class PWW_Site_Health {
      * @return array
      */
     public function test_xmlrpc() {
-        $hardening = PWW_Utils::get_hardening();
+        $hardening = AIPSC_Utils::get_hardening();
 
         $result = array(
             'label'       => __( 'XML-RPC is disabled', 'aipatch-security-scanner' ),
@@ -259,8 +259,8 @@ class PWW_Site_Health {
      * @return array
      */
     public function test_security_score() {
-        $score = (int) PWW_Utils::get_option( 'security_score', 0 );
-        $last_scan = PWW_Utils::get_option( 'last_scan', 0 );
+        $score = (int) AIPSC_Utils::get_option( 'security_score', 0 );
+        $last_scan = AIPSC_Utils::get_option( 'last_scan', 0 );
 
         if ( empty( $last_scan ) ) {
             return array(
@@ -308,7 +308,7 @@ class PWW_Site_Health {
                         /* translators: 1: Score, 2: Last scan date. */
                         __( 'Your site scored %1$d out of 100 on the last security scan (%2$s). Visit the Aipatch Security Scanner dashboard for details and recommendations.', 'aipatch-security-scanner' ),
                         $score,
-                        PWW_Utils::format_time( $last_scan )
+                        AIPSC_Utils::format_time( $last_scan )
                     )
                 )
             ),

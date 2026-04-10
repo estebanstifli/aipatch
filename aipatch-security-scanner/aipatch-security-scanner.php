@@ -44,9 +44,9 @@ define( 'AIPATCH_REST_NAMESPACE', 'aipatch-security-scanner/v1' );
  * Plugin activation.
  */
 function aipatch_activate() {
-    require_once AIPATCH_PLUGIN_DIR . 'includes/class-pww-utils.php';
-    require_once AIPATCH_PLUGIN_DIR . 'includes/class-pww-installer.php';
-    PWW_Installer::activate();
+    require_once AIPATCH_PLUGIN_DIR . 'includes/class-aipsc-utils.php';
+    require_once AIPATCH_PLUGIN_DIR . 'includes/class-aipsc-installer.php';
+    AIPSC_Installer::activate();
 }
 register_activation_hook( __FILE__, 'aipatch_activate' );
 
@@ -54,8 +54,8 @@ register_activation_hook( __FILE__, 'aipatch_activate' );
  * Plugin deactivation.
  */
 function aipatch_deactivate() {
-    require_once AIPATCH_PLUGIN_DIR . 'includes/class-pww-installer.php';
-    PWW_Installer::deactivate();
+    require_once AIPATCH_PLUGIN_DIR . 'includes/class-aipsc-installer.php';
+    AIPSC_Installer::deactivate();
 }
 register_deactivation_hook( __FILE__, 'aipatch_deactivate' );
 
@@ -76,8 +76,8 @@ function aipatch_init() {
         return;
     }
 
-    require_once AIPATCH_PLUGIN_DIR . 'includes/class-pww-loader.php';
-    $plugin = new PWW_Loader();
+    require_once AIPATCH_PLUGIN_DIR . 'includes/class-aipsc-loader.php';
+    $plugin = new AIPSC_Loader();
     $plugin->run();
 }
 add_action( 'plugins_loaded', 'aipatch_init' );

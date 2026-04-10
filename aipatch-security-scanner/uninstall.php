@@ -30,8 +30,8 @@ foreach ( $aipatch_options as $option ) {
 
 // Remove the custom tables.
 global $wpdb;
-$logs_table = esc_sql( $wpdb->prefix . 'pww_logs' );
-$scans_table = esc_sql( $wpdb->prefix . 'pww_scan_history' );
+$logs_table = esc_sql( $wpdb->prefix . 'aipsc_logs' );
+$scans_table = esc_sql( $wpdb->prefix . 'aipsc_scan_history' );
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared
 $wpdb->query( 'DROP TABLE IF EXISTS `' . $logs_table . '`' );
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared

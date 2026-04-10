@@ -10,25 +10,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class PWW_Dashboard
+ * Class AIPSC_Dashboard
  */
-class PWW_Dashboard {
+class AIPSC_Dashboard {
 
     /**
-     * @var PWW_Scanner|null
+     * @var AIPSC_Scanner|null
      */
     private $scanner;
 
     /**
-     * @var PWW_Vulnerabilities|null
+     * @var AIPSC_Vulnerabilities|null
      */
     private $vulnerabilities;
 
     /**
      * Constructor.
      *
-     * @param PWW_Scanner|null         $scanner         Scanner module.
-     * @param PWW_Vulnerabilities|null $vulnerabilities Vulnerabilities module.
+     * @param AIPSC_Scanner|null         $scanner         Scanner module.
+     * @param AIPSC_Vulnerabilities|null $vulnerabilities Vulnerabilities module.
      */
     public function __construct( $scanner, $vulnerabilities ) {
         $this->scanner         = $scanner;
@@ -43,7 +43,7 @@ class PWW_Dashboard {
     public function get_dashboard_data() {
         $scan_results = $this->scanner ? $this->scanner->get_last_results() : false;
         $summary      = $this->scanner ? $this->scanner->get_summary() : array();
-        $dismissed    = PWW_Utils::get_option( 'dismissed', array() );
+        $dismissed    = AIPSC_Utils::get_option( 'dismissed', array() );
 
         $score  = $scan_results ? $scan_results['score'] : 0;
         $issues = $scan_results ? $scan_results['issues'] : array();
@@ -62,7 +62,7 @@ class PWW_Dashboard {
 
         // Sort by severity weight (critical first).
         usort( $active_issues, function ( $a, $b ) {
-            return PWW_Utils::severity_weight( $b['severity'] ) - PWW_Utils::severity_weight( $a['severity'] );
+            return AIPSC_Utils::severity_weight( $b['severity'] ) - AIPSC_Utils::severity_weight( $a['severity'] );
         } );
 
         // Prioritized recommendations from active issues.
@@ -84,8 +84,8 @@ class PWW_Dashboard {
             'issues'           => $active_issues,
             'dismissed_issues' => $dismissed_issues,
             'recommendations'  => $recommendations,
-            'last_scan'        => PWW_Utils::get_option( 'last_scan', 0 ),
-            'next_scan'        => PWW_Cron::get_next_scan(),
+            'last_scan'        => AIPSC_Utils::get_option( 'last_scan', 0 ),
+            'next_scan'        => AIPSC_Cron::get_next_scan(),
             'has_scan'         => ! empty( $scan_results ),
         );
     }
@@ -138,12 +138,12 @@ class PWW_Dashboard {
      * @return bool
      */
     public function dismiss_issue( $issue_id ) {
-        $dismissed = PWW_Utils::get_option( 'dismissed', array() );
+        $dismissed = AIPSC_Utils::get_option( 'dismissed', array() );
         $dismissed[ sanitize_key( $issue_id ) ] = array(
             'dismissed_at' => time(),
             'dismissed_by' => get_current_user_id(),
         );
-        return PWW_Utils::update_option( 'dismissed', $dismissed );
+        return AIPSC_Utils::update_option( 'dismissed', $dismissed );
     }
 
     /**
@@ -153,8 +153,8 @@ class PWW_Dashboard {
      * @return bool
      */
     public function restore_issue( $issue_id ) {
-        $dismissed = PWW_Utils::get_option( 'dismissed', array() );
+        $dismissed = AIPSC_Utils::get_option( 'dismissed', array() );
         unset( $dismissed[ sanitize_key( $issue_id ) ] );
-        return PWW_Utils::update_option( 'dismissed', $dismissed );
+        return AIPSC_Utils::update_option( 'dismissed', $dismissed );
     }
 }

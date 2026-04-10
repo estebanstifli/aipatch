@@ -10,9 +10,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class PWW_Logger
+ * Class AIPSC_Logger
  */
-class PWW_Logger {
+class AIPSC_Logger {
 
     /**
      * Log table name (cached).
@@ -26,7 +26,7 @@ class PWW_Logger {
      */
     public function __construct() {
         global $wpdb;
-        $this->table = $wpdb->prefix . 'pww_logs';
+        $this->table = $wpdb->prefix . 'aipsc_logs';
     }
 
     /**

@@ -10,23 +10,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class PWW_Rest
+ * Class AIPSC_Rest
  */
-class PWW_Rest {
+class AIPSC_Rest {
 
-    /** @var PWW_Scanner|null */
+    /** @var AIPSC_Scanner|null */
     private $scanner;
 
-    /** @var PWW_Dashboard */
+    /** @var AIPSC_Dashboard */
     private $dashboard;
 
-    /** @var PWW_Vulnerabilities|null */
+    /** @var AIPSC_Vulnerabilities|null */
     private $vulnerabilities;
 
-    /** @var PWW_Hardening|null */
+    /** @var AIPSC_Hardening|null */
     private $hardening;
 
-    /** @var PWW_Logger */
+    /** @var AIPSC_Logger */
     private $logger;
 
     /**
@@ -34,10 +34,10 @@ class PWW_Rest {
      */
     public function __construct(
         $scanner,
-        PWW_Dashboard $dashboard,
+        AIPSC_Dashboard $dashboard,
         $vulnerabilities,
         $hardening,
-        PWW_Logger $logger
+        AIPSC_Logger $logger
     ) {
         $this->scanner         = $scanner;
         $this->dashboard       = $dashboard;

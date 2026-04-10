@@ -10,9 +10,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class PWW_Settings
+ * Class AIPSC_Settings
  */
-class PWW_Settings {
+class AIPSC_Settings {
 
     /**
      * Register settings with WordPress Settings API.
@@ -24,7 +24,7 @@ class PWW_Settings {
             array(
                 'type'              => 'array',
                 'sanitize_callback' => array( $this, 'sanitize_settings' ),
-                'default'           => PWW_Utils::get_default_settings(),
+                'default'           => AIPSC_Utils::get_default_settings(),
             )
         );
     }
@@ -37,7 +37,7 @@ class PWW_Settings {
      */
     public function sanitize_settings( $input ) {
         $clean    = array();
-        $defaults = PWW_Utils::get_default_settings();
+        $defaults = AIPSC_Utils::get_default_settings();
 
         // Scan frequency.
         $valid_frequencies = array( 'daily', 'twicedaily', 'weekly' );
@@ -62,9 +62,9 @@ class PWW_Settings {
         }
 
         // Reschedule cron if frequency changed.
-        $current = PWW_Utils::get_settings();
+        $current = AIPSC_Utils::get_settings();
         if ( $clean['scan_frequency'] !== $current['scan_frequency'] ) {
-            PWW_Cron::reschedule_scan( $clean['scan_frequency'] );
+            AIPSC_Cron::reschedule_scan( $clean['scan_frequency'] );
         }
 
         return $clean;
@@ -77,7 +77,7 @@ class PWW_Settings {
      * @return bool
      */
     public static function is_module_enabled( $module ) {
-        $settings = PWW_Utils::get_settings();
+        $settings = AIPSC_Utils::get_settings();
         return ! empty( $settings['modules_enabled'][ $module ] );
     }
 }

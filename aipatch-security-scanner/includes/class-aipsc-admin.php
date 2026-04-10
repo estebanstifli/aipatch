@@ -10,38 +10,38 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class PWW_Admin
+ * Class AIPSC_Admin
  */
-class PWW_Admin {
+class AIPSC_Admin {
 
-    /** @var PWW_Dashboard */
+    /** @var AIPSC_Dashboard */
     private $dashboard;
 
-    /** @var PWW_Scanner|null */
+    /** @var AIPSC_Scanner|null */
     private $scanner;
 
-    /** @var PWW_Hardening|null */
+    /** @var AIPSC_Hardening|null */
     private $hardening;
 
-    /** @var PWW_Vulnerabilities|null */
+    /** @var AIPSC_Vulnerabilities|null */
     private $vulnerabilities;
 
-    /** @var PWW_Settings */
+    /** @var AIPSC_Settings */
     private $settings;
 
-    /** @var PWW_Logger */
+    /** @var AIPSC_Logger */
     private $logger;
 
     /**
      * Constructor.
      */
     public function __construct(
-        PWW_Dashboard $dashboard,
+        AIPSC_Dashboard $dashboard,
         $scanner,
         $hardening,
         $vulnerabilities,
-        PWW_Settings $settings,
-        PWW_Logger $logger
+        AIPSC_Settings $settings,
+        AIPSC_Logger $logger
     ) {
         $this->dashboard       = $dashboard;
         $this->scanner         = $scanner;
@@ -186,7 +186,7 @@ class PWW_Admin {
      * Handle admin form actions (nonce-protected).
      */
     public function handle_admin_actions() {
-        if ( ! PWW_Utils::current_user_can_manage() ) {
+        if ( ! AIPSC_Utils::current_user_can_manage() ) {
             return;
         }
 
@@ -245,7 +245,7 @@ class PWW_Admin {
      * Render the dashboard page.
      */
     public function render_dashboard() {
-        if ( ! PWW_Utils::current_user_can_manage() ) {
+        if ( ! AIPSC_Utils::current_user_can_manage() ) {
             return;
         }
         $data = $this->dashboard->get_dashboard_data();
@@ -256,7 +256,7 @@ class PWW_Admin {
      * Render the vulnerabilities page.
      */
     public function render_vulnerabilities() {
-        if ( ! PWW_Utils::current_user_can_manage() ) {
+        if ( ! AIPSC_Utils::current_user_can_manage() ) {
             return;
         }
         $vulns         = $this->vulnerabilities ? $this->vulnerabilities->get_all_vulnerabilities() : array();
@@ -269,7 +269,7 @@ class PWW_Admin {
      * Render the hardening page.
      */
     public function render_hardening() {
-        if ( ! PWW_Utils::current_user_can_manage() ) {
+        if ( ! AIPSC_Utils::current_user_can_manage() ) {
             return;
         }
         $rules = $this->hardening ? $this->hardening->get_status() : array();
@@ -280,7 +280,7 @@ class PWW_Admin {
      * Render the logs page.
      */
     public function render_logs() {
-        if ( ! PWW_Utils::current_user_can_manage() ) {
+        if ( ! AIPSC_Utils::current_user_can_manage() ) {
             return;
         }
 
@@ -306,10 +306,10 @@ class PWW_Admin {
      * Render the settings page.
      */
     public function render_settings() {
-        if ( ! PWW_Utils::current_user_can_manage() ) {
+        if ( ! AIPSC_Utils::current_user_can_manage() ) {
             return;
         }
-        $settings = PWW_Utils::get_settings();
+        $settings = AIPSC_Utils::get_settings();
         include AIPATCH_PLUGIN_DIR . 'admin/partials/settings.php';
     }
 }

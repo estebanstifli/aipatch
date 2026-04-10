@@ -10,23 +10,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class PWW_Scanner
+ * Class AIPSC_Scanner
  *
  * Performs local security checks and generates a risk score.
  */
-class PWW_Scanner {
+class AIPSC_Scanner {
 
     /**
-     * @var PWW_Logger
+     * @var AIPSC_Logger
      */
     private $logger;
 
     /**
      * Constructor.
      *
-     * @param PWW_Logger $logger Logger instance.
+     * @param AIPSC_Logger $logger Logger instance.
      */
-    public function __construct( PWW_Logger $logger ) {
+    public function __construct( AIPSC_Logger $logger ) {
         $this->logger = $logger;
     }
 
@@ -66,9 +66,9 @@ class PWW_Scanner {
         );
 
         // Store results.
-        PWW_Utils::update_option( 'scan_results', $results );
-        PWW_Utils::update_option( 'last_scan', time() );
-        PWW_Utils::update_option( 'security_score', $score );
+        AIPSC_Utils::update_option( 'scan_results', $results );
+        AIPSC_Utils::update_option( 'last_scan', time() );
+        AIPSC_Utils::update_option( 'security_score', $score );
 
         // Save to scan history table.
         $this->save_scan_history( $scan_type, $score, $issues, $duration_ms );
@@ -94,7 +94,7 @@ class PWW_Scanner {
     private function save_scan_history( $scan_type, $score, $issues, $duration_ms ) {
         global $wpdb;
 
-        $table = $wpdb->prefix . 'pww_scan_history';
+        $table = $wpdb->prefix . 'aipsc_scan_history';
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
         $wpdb->insert(
@@ -117,7 +117,7 @@ class PWW_Scanner {
      * @return array|false
      */
     public function get_last_results() {
-        return PWW_Utils::get_option( 'scan_results', false );
+        return AIPSC_Utils::get_option( 'scan_results', false );
     }
 
     /**
@@ -130,13 +130,13 @@ class PWW_Scanner {
         $score = 100;
 
         // Filter out dismissed issues.
-        $dismissed = PWW_Utils::get_option( 'dismissed', array() );
+        $dismissed = AIPSC_Utils::get_option( 'dismissed', array() );
 
         foreach ( $issues as $issue ) {
             if ( isset( $dismissed[ $issue['id'] ] ) ) {
                 continue;
             }
-            $score -= PWW_Utils::severity_weight( $issue['severity'] );
+            $score -= AIPSC_Utils::severity_weight( $issue['severity'] );
         }
 
         return max( 0, min( 100, $score ) );
@@ -345,7 +345,7 @@ class PWW_Scanner {
     private function check_xmlrpc() {
         $issues = array();
 
-        $hardening = PWW_Utils::get_hardening();
+        $hardening = AIPSC_Utils::get_hardening();
         $xmlrpc_disabled = ! empty( $hardening['disable_xmlrpc'] );
 
         if ( ! $xmlrpc_disabled ) {
@@ -374,8 +374,9 @@ class PWW_Scanner {
      */
     private function check_file_editor() {
         $issues = array();
+        $file_editor_disabled = defined( 'DISALLOW_FILE_EDIT' ) ? (bool) constant( 'DISALLOW_FILE_EDIT' ) : false;
 
-        if ( ! defined( 'DISALLOW_FILE_EDIT' ) || ! DISALLOW_FILE_EDIT ) {
+        if ( ! $file_editor_disabled ) {
             $issues[] = array(
                 'id'              => 'file_editor_enabled',
                 'title'           => __( 'WordPress file editor is enabled', 'aipatch-security-scanner' ),
@@ -467,7 +468,7 @@ class PWW_Scanner {
     private function check_rest_api_exposure() {
         $issues = array();
 
-        $hardening = PWW_Utils::get_hardening();
+        $hardening = AIPSC_Utils::get_hardening();
         if ( empty( $hardening['restrict_rest_api'] ) ) {
             $issues[] = array(
                 'id'              => 'rest_api_exposed',
@@ -620,7 +621,8 @@ class PWW_Scanner {
         $update_plugins = get_site_transient( 'update_plugins' );
         $update_themes  = get_site_transient( 'update_themes' );
         $admins         = get_users( array( 'role' => 'administrator', 'fields' => 'ID' ) );
-        $hardening      = PWW_Utils::get_hardening();
+        $hardening      = AIPSC_Utils::get_hardening();
+        $file_editor_off = defined( 'DISALLOW_FILE_EDIT' ) ? (bool) constant( 'DISALLOW_FILE_EDIT' ) : false;
 
         $outdated_plugins = 0;
         if ( isset( $update_plugins->response ) ) {
@@ -647,7 +649,7 @@ class PWW_Scanner {
             'admin_user_exists'  => (bool) get_user_by( 'login', 'admin' ),
             'xmlrpc_disabled'    => ! empty( $hardening['disable_xmlrpc'] ),
             'rest_restricted'    => ! empty( $hardening['restrict_rest_api'] ),
-            'file_editor_off'    => defined( 'DISALLOW_FILE_EDIT' ) && DISALLOW_FILE_EDIT,
+            'file_editor_off'    => $file_editor_off,
             'debug_active'       => defined( 'WP_DEBUG' ) && WP_DEBUG,
             'ssl_active'         => is_ssl(),
             'login_protected'    => ! empty( $hardening['login_protection'] ),

@@ -10,11 +10,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Class PWW_Utils
+ * Class AIPSC_Utils
  *
  * Static utility helpers used across the plugin.
  */
-class PWW_Utils {
+class AIPSC_Utils {
 
     /**
      * Get a plugin option with default fallback.
