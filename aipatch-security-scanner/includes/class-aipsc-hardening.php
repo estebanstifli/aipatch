@@ -47,6 +47,10 @@ class AIPSC_Hardening {
             $this->apply_restrict_rest_api();
         }
 
+        if ( ! empty( $options['block_author_scanning'] ) ) {
+            $this->apply_block_author_scanning();
+        }
+
         if ( ! empty( $options['login_protection'] ) && AIPSC_Settings::is_module_enabled( 'login_protection' ) ) {
             $this->apply_login_protection( $options );
         }
@@ -135,6 +139,14 @@ class AIPSC_Hardening {
                 'enabled'       => ! empty( $options['restrict_rest_api'] ),
                 'warning'       => __( 'May affect headless/decoupled setups or plugins that rely on public REST access.', 'aipatch-security-scanner' ),
                 'severity'      => 'low',
+            ),
+            array(
+                'key'           => 'block_author_scanning',
+                'title'         => __( 'Block Author Scanning', 'aipatch-security-scanner' ),
+                'description'   => __( 'Prevents user enumeration via ?author=N queries and author archive URLs. Redirects these requests to the homepage.', 'aipatch-security-scanner' ),
+                'enabled'       => ! empty( $options['block_author_scanning'] ),
+                'warning'       => __( 'Author archive pages will no longer be accessible. May affect themes that rely on author pages.', 'aipatch-security-scanner' ),
+                'severity'      => 'medium',
             ),
             array(
                 'key'           => 'login_protection',
@@ -246,6 +258,24 @@ class AIPSC_Hardening {
             }
 
             return $result;
+        } );
+    }
+
+    /**
+     * Block author scanning / user enumeration via ?author= parameter.
+     */
+    private function apply_block_author_scanning() {
+        add_action( 'template_redirect', function () {
+            if ( is_author() ) {
+                wp_safe_redirect( home_url( '/' ), 301 );
+                exit;
+            }
+
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            if ( isset( $_GET['author'] ) ) {
+                wp_safe_redirect( home_url( '/' ), 301 );
+                exit;
+            }
         } );
     }
 

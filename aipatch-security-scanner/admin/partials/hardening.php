@@ -51,12 +51,12 @@ if ( ! defined( 'ABSPATH' ) ) {
                         <input type="hidden" name="hardening_key" value="<?php echo esc_attr( $aipsc_rule['key'] ); ?>" />
                         <?php if ( $aipsc_rule['enabled'] ) : ?>
                             <input type="hidden" name="hardening_value" value="" />
-                            <button type="submit" name="aipatch_toggle_hardening" value="1" class="aipatch-toggle-btn aipatch-toggle-on" title="<?php esc_attr_e( 'Click to disable', 'aipatch-security-scanner' ); ?>">
+                            <button type="submit" name="aipatch_toggle_hardening" value="1" class="aipatch-toggle-btn aipatch-toggle-on" data-rest data-key="<?php echo esc_attr( $aipsc_rule['key'] ); ?>" title="<?php esc_attr_e( 'Click to disable', 'aipatch-security-scanner' ); ?>">
                                 <span class="aipatch-toggle-slider"></span>
                             </button>
                         <?php else : ?>
                             <input type="hidden" name="hardening_value" value="1" />
-                            <button type="submit" name="aipatch_toggle_hardening" value="1" class="aipatch-toggle-btn aipatch-toggle-off" title="<?php esc_attr_e( 'Click to enable', 'aipatch-security-scanner' ); ?>">
+                            <button type="submit" name="aipatch_toggle_hardening" value="1" class="aipatch-toggle-btn aipatch-toggle-off" data-rest data-key="<?php echo esc_attr( $aipsc_rule['key'] ); ?>" title="<?php esc_attr_e( 'Click to enable', 'aipatch-security-scanner' ); ?>">
                                 <span class="aipatch-toggle-slider"></span>
                             </button>
                         <?php endif; ?>

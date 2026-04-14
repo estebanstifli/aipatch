@@ -127,7 +127,8 @@ class AIPSC_Loader {
         // Dashboard (uses scanner + vulnerabilities if available).
         $this->modules['dashboard'] = new AIPSC_Dashboard(
             isset( $this->modules['scanner'] ) ? $this->modules['scanner'] : null,
-            isset( $this->modules['vulnerabilities'] ) ? $this->modules['vulnerabilities'] : null
+            isset( $this->modules['vulnerabilities'] ) ? $this->modules['vulnerabilities'] : null,
+            $this->modules['logger']
         );
 
         // Admin (only in admin context).

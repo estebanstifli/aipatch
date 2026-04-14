@@ -99,6 +99,32 @@ class AIPSC_Rest {
             ),
         ) );
 
+        register_rest_route( AIPATCH_REST_NAMESPACE, '/scan-history', array(
+            'methods'             => 'GET',
+            'callback'            => array( $this, 'handle_get_scan_history' ),
+            'permission_callback' => array( $this, 'check_admin_permission' ),
+            'args'                => array(
+                'limit' => array(
+                    'required'          => false,
+                    'type'              => 'integer',
+                    'default'           => 30,
+                    'sanitize_callback' => 'absint',
+                ),
+            ),
+        ) );
+
+        register_rest_route( AIPATCH_REST_NAMESPACE, '/export-logs', array(
+            'methods'             => 'GET',
+            'callback'            => array( $this, 'handle_export_logs' ),
+            'permission_callback' => array( $this, 'check_admin_permission' ),
+        ) );
+
+        register_rest_route( AIPATCH_REST_NAMESPACE, '/export-scans', array(
+            'methods'             => 'GET',
+            'callback'            => array( $this, 'handle_export_scans' ),
+            'permission_callback' => array( $this, 'check_admin_permission' ),
+        ) );
+
         /**
          * Fires after Aipatch Security Scanner REST routes are registered.
          * Allows adding custom endpoints.
@@ -232,6 +258,112 @@ class AIPSC_Rest {
 
         return new WP_REST_Response( array(
             'success' => true,
+        ), 200 );
+    }
+
+    /**
+     * Handle: scan-history.
+     *
+     * @param WP_REST_Request $request Request.
+     * @return WP_REST_Response
+     */
+    public function handle_get_scan_history( $request ) {
+        global $wpdb;
+
+        $limit = min( absint( $request->get_param( 'limit' ) ), 90 );
+        if ( $limit < 1 ) {
+            $limit = 30;
+        }
+
+        $table = $wpdb->prefix . 'aipsc_scan_history';
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT score, issues_count, scan_type, duration_ms, created_at FROM %i ORDER BY created_at DESC LIMIT %d",
+                $table,
+                $limit
+            ),
+            ARRAY_A
+        );
+
+        // Reverse so chart goes oldest → newest.
+        $rows = array_reverse( $rows ?: array() );
+
+        return new WP_REST_Response( array(
+            'success' => true,
+            'data'    => $rows,
+        ), 200 );
+    }
+
+    /**
+     * Handle: export-logs (CSV).
+     *
+     * @param WP_REST_Request $request Request.
+     * @return WP_REST_Response
+     */
+    public function handle_export_logs( $request ) {
+        $log_data = $this->logger->get_logs( array(
+            'per_page' => 5000,
+            'page'     => 1,
+        ) );
+
+        $csv_rows = array();
+        $csv_rows[] = array( 'Date', 'Severity', 'Event', 'Message' );
+
+        foreach ( $log_data['items'] as $log ) {
+            $csv_rows[] = array(
+                $log->created_at,
+                $log->severity,
+                $log->event_type,
+                $log->message,
+            );
+        }
+
+        return new WP_REST_Response( array(
+            'success'  => true,
+            'filename' => 'aipatch-logs-' . gmdate( 'Y-m-d' ) . '.csv',
+            'data'     => $csv_rows,
+        ), 200 );
+    }
+
+    /**
+     * Handle: export-scans (CSV).
+     *
+     * @param WP_REST_Request $request Request.
+     * @return WP_REST_Response
+     */
+    public function handle_export_scans( $request ) {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'aipsc_scan_history';
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT scan_type, score, issues_count, duration_ms, created_at FROM %i ORDER BY created_at DESC LIMIT 500",
+                $table
+            ),
+            ARRAY_A
+        );
+
+        $csv_rows = array();
+        $csv_rows[] = array( 'Date', 'Type', 'Score', 'Issues', 'Duration (ms)' );
+
+        foreach ( $rows ?: array() as $row ) {
+            $csv_rows[] = array(
+                $row['created_at'],
+                $row['scan_type'],
+                $row['score'],
+                $row['issues_count'],
+                $row['duration_ms'],
+            );
+        }
+
+        return new WP_REST_Response( array(
+            'success'  => true,
+            'filename' => 'aipatch-scans-' . gmdate( 'Y-m-d' ) . '.csv',
+            'data'     => $csv_rows,
         ), 200 );
     }
 }

@@ -96,6 +96,17 @@ class AIPSC_Logger {
     }
 
     /**
+     * Log a critical event.
+     *
+     * @param string $event_type Event type.
+     * @param string $message    Message.
+     * @param array  $context    Context.
+     */
+    public function critical( $event_type, $message, $context = array() ) {
+        $this->log( $event_type, $message, 'critical', $context );
+    }
+
+    /**
      * Retrieve log entries with pagination.
      *
      * @param array $args Query arguments.

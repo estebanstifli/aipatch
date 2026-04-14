@@ -69,6 +69,25 @@ if ( ! defined( 'ABSPATH' ) ) {
         </div>
     </div>
 
+    <!-- Scan History Chart -->
+    <?php if ( $data['has_scan'] ) : ?>
+    <div class="aipatch-section">
+        <div class="aipatch-section-header">
+            <h2><?php esc_html_e( 'Score Trend', 'aipatch-security-scanner' ); ?></h2>
+            <div class="aipatch-export-buttons">
+                <button type="button" class="button button-small" id="aipatch-export-scans">
+                    <span class="dashicons dashicons-download"></span>
+                    <?php esc_html_e( 'Export CSV', 'aipatch-security-scanner' ); ?>
+                </button>
+            </div>
+        </div>
+        <div class="aipatch-chart-container">
+            <canvas id="aipatch-score-chart" height="200"></canvas>
+            <p class="aipatch-chart-empty" style="display:none;"><?php esc_html_e( 'Run at least 2 scans to see the trend.', 'aipatch-security-scanner' ); ?></p>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <!-- Summary Cards -->
     <div class="aipatch-cards-grid">
         <div class="aipatch-card">
@@ -84,6 +103,14 @@ if ( ! defined( 'ABSPATH' ) ) {
             <div class="aipatch-card-content">
                 <span class="aipatch-card-value"><?php echo esc_html( $data['summary']['outdated_plugins'] ); ?></span>
                 <span class="aipatch-card-label"><?php esc_html_e( 'Plugins Outdated', 'aipatch-security-scanner' ); ?></span>
+            </div>
+        </div>
+
+        <div class="aipatch-card <?php echo ( isset( $data['summary']['inactive_plugins'] ) && $data['summary']['inactive_plugins'] > 3 ) ? 'aipatch-card-warning' : ''; ?>">
+            <div class="aipatch-card-icon dashicons dashicons-plugins-checked"></div>
+            <div class="aipatch-card-content">
+                <span class="aipatch-card-value"><?php echo esc_html( isset( $data['summary']['inactive_plugins'] ) ? $data['summary']['inactive_plugins'] : 0 ); ?></span>
+                <span class="aipatch-card-label"><?php esc_html_e( 'Inactive Plugins', 'aipatch-security-scanner' ); ?></span>
             </div>
         </div>
 
@@ -108,6 +135,14 @@ if ( ! defined( 'ABSPATH' ) ) {
             <div class="aipatch-card-content">
                 <span class="aipatch-card-value"><?php echo esc_html( $data['summary']['admin_count'] ); ?></span>
                 <span class="aipatch-card-label"><?php esc_html_e( 'Admin Users', 'aipatch-security-scanner' ); ?></span>
+            </div>
+        </div>
+
+        <div class="aipatch-card <?php echo ! empty( $data['summary']['db_prefix_default'] ) ? 'aipatch-card-warning' : ''; ?>">
+            <div class="aipatch-card-icon dashicons dashicons-database"></div>
+            <div class="aipatch-card-content">
+                <span class="aipatch-card-value"><?php echo ! empty( $data['summary']['db_prefix_default'] ) ? esc_html__( 'Default', 'aipatch-security-scanner' ) : esc_html__( 'Custom', 'aipatch-security-scanner' ); ?></span>
+                <span class="aipatch-card-label"><?php esc_html_e( 'DB Prefix', 'aipatch-security-scanner' ); ?></span>
             </div>
         </div>
 
@@ -150,6 +185,24 @@ if ( ! defined( 'ABSPATH' ) ) {
                 <span class="aipatch-card-label"><?php esc_html_e( 'Login Protection', 'aipatch-security-scanner' ); ?></span>
             </div>
         </div>
+
+        <div class="aipatch-card <?php echo ! empty( $data['summary']['auto_updates_core'] ) ? '' : 'aipatch-card-warning'; ?>">
+            <div class="aipatch-card-icon dashicons dashicons-update"></div>
+            <div class="aipatch-card-content">
+                <span class="aipatch-card-value"><?php echo ! empty( $data['summary']['auto_updates_core'] ) ? esc_html__( 'On', 'aipatch-security-scanner' ) : esc_html__( 'Off', 'aipatch-security-scanner' ); ?></span>
+                <span class="aipatch-card-label"><?php esc_html_e( 'Core Auto-Updates', 'aipatch-security-scanner' ); ?></span>
+            </div>
+        </div>
+
+        <?php if ( ! empty( $data['summary']['total_checks'] ) ) : ?>
+        <div class="aipatch-card">
+            <div class="aipatch-card-icon dashicons dashicons-search"></div>
+            <div class="aipatch-card-content">
+                <span class="aipatch-card-value"><?php echo esc_html( $data['summary']['total_checks'] ); ?></span>
+                <span class="aipatch-card-label"><?php esc_html_e( 'Security Checks', 'aipatch-security-scanner' ); ?></span>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 
     <!-- Recommendations -->
@@ -159,6 +212,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         <div class="aipatch-recommendations">
             <?php foreach ( $data['recommendations'] as $aipsc_rec ) :
                 $aipsc_severity_info = AIPSC_Utils::severity_info( $aipsc_rec['severity'] );
+                $aipsc_quick_fix = AIPSC_Utils::get_quick_fix( $aipsc_rec['id'] );
             ?>
                 <div class="aipatch-recommendation">
                     <div class="aipatch-rec-header">
@@ -168,15 +222,28 @@ if ( ! defined( 'ABSPATH' ) ) {
                         <strong><?php echo esc_html( $aipsc_rec['title'] ); ?></strong>
                     </div>
                     <p><?php echo esc_html( $aipsc_rec['recommendation'] ); ?></p>
-                    <?php if ( $aipsc_rec['dismissible'] ) : ?>
-                        <form method="post" class="aipatch-inline-form">
-                            <?php wp_nonce_field( 'aipatch_dismiss_issue', 'aipatch_dismiss_nonce' ); ?>
-                            <input type="hidden" name="issue_id" value="<?php echo esc_attr( $aipsc_rec['id'] ); ?>" />
-                            <button type="submit" name="aipatch_dismiss_issue" value="1" class="button button-small">
-                                <?php esc_html_e( 'Dismiss', 'aipatch-security-scanner' ); ?>
-                            </button>
-                        </form>
-                    <?php endif; ?>
+                    <div class="aipatch-rec-actions">
+                        <?php if ( $aipsc_quick_fix ) : ?>
+                            <form method="post" class="aipatch-inline-form">
+                                <?php wp_nonce_field( 'aipatch_toggle_hardening', 'aipatch_hardening_nonce' ); ?>
+                                <input type="hidden" name="hardening_key" value="<?php echo esc_attr( $aipsc_quick_fix['key'] ); ?>" />
+                                <input type="hidden" name="hardening_value" value="1" />
+                                <button type="submit" name="aipatch_toggle_hardening" value="1" class="button button-small button-primary">
+                                    <span class="dashicons dashicons-yes"></span>
+                                    <?php echo esc_html( $aipsc_quick_fix['label'] ); ?>
+                                </button>
+                            </form>
+                        <?php endif; ?>
+                        <?php if ( $aipsc_rec['dismissible'] ) : ?>
+                            <form method="post" class="aipatch-inline-form">
+                                <?php wp_nonce_field( 'aipatch_dismiss_issue', 'aipatch_dismiss_nonce' ); ?>
+                                <input type="hidden" name="issue_id" value="<?php echo esc_attr( $aipsc_rec['id'] ); ?>" />
+                                <button type="submit" name="aipatch_dismiss_issue" value="1" class="button button-small" data-dismiss-rest data-issue-id="<?php echo esc_attr( $aipsc_rec['id'] ); ?>">
+                                    <?php esc_html_e( 'Dismiss', 'aipatch-security-scanner' ); ?>
+                                </button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
                 </div>
             <?php endforeach; ?>
         </div>

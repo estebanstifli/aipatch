@@ -74,11 +74,12 @@ class AIPSC_Utils {
      */
     public static function get_default_hardening() {
         return array(
-            'disable_xmlrpc'       => false,
-            'hide_wp_version'      => false,
-            'restrict_rest_api'    => false,
-            'login_protection'     => false,
-            'login_max_attempts'   => 5,
+            'disable_xmlrpc'         => false,
+            'hide_wp_version'        => false,
+            'restrict_rest_api'      => false,
+            'block_author_scanning'  => false,
+            'login_protection'       => false,
+            'login_max_attempts'     => 5,
             'login_lockout_duration' => 15,
         );
     }
@@ -106,6 +107,31 @@ class AIPSC_Utils {
     }
 
     /**
+     * Map scanner issue IDs to one-click hardening fixes.
+     *
+     * @param string $issue_id Scanner issue ID.
+     * @return array|false Array with 'key' and 'label', or false if no quick fix.
+     */
+    public static function get_quick_fix( $issue_id ) {
+        $map = array(
+            'xmlrpc_enabled'    => array(
+                'key'   => 'disable_xmlrpc',
+                'label' => __( 'Disable XML-RPC', 'aipatch-security-scanner' ),
+            ),
+            'rest_api_exposed'  => array(
+                'key'   => 'restrict_rest_api',
+                'label' => __( 'Restrict REST API', 'aipatch-security-scanner' ),
+            ),
+            'user_enumeration'  => array(
+                'key'   => 'block_author_scanning',
+                'label' => __( 'Block Author Scanning', 'aipatch-security-scanner' ),
+            ),
+        );
+
+        return isset( $map[ $issue_id ] ) ? $map[ $issue_id ] : false;
+    }
+
+    /**
      * Severity label with color class.
      *
      * @param string $severity Severity level.
@@ -129,6 +155,10 @@ class AIPSC_Utils {
                 'label' => __( 'Low', 'aipatch-security-scanner' ),
                 'class' => 'aipatch-severity-low',
             ),
+            'info' => array(
+                'label' => __( 'Info', 'aipatch-security-scanner' ),
+                'class' => 'aipatch-severity-info',
+            ),
         );
 
         return isset( $map[ $severity ] ) ? $map[ $severity ] : $map['low'];
@@ -146,6 +176,7 @@ class AIPSC_Utils {
             'high'     => 15,
             'medium'   => 10,
             'low'      => 5,
+            'info'     => 0,
         );
         return isset( $weights[ $severity ] ) ? $weights[ $severity ] : 5;
     }

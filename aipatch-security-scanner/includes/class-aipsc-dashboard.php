@@ -25,14 +25,21 @@ class AIPSC_Dashboard {
     private $vulnerabilities;
 
     /**
+     * @var AIPSC_Logger|null
+     */
+    private $logger;
+
+    /**
      * Constructor.
      *
      * @param AIPSC_Scanner|null         $scanner         Scanner module.
      * @param AIPSC_Vulnerabilities|null $vulnerabilities Vulnerabilities module.
+     * @param AIPSC_Logger|null          $logger          Logger instance.
      */
-    public function __construct( $scanner, $vulnerabilities ) {
+    public function __construct( $scanner, $vulnerabilities, $logger = null ) {
         $this->scanner         = $scanner;
         $this->vulnerabilities = $vulnerabilities;
+        $this->logger          = $logger;
     }
 
     /**
@@ -143,7 +150,20 @@ class AIPSC_Dashboard {
             'dismissed_at' => time(),
             'dismissed_by' => get_current_user_id(),
         );
-        return AIPSC_Utils::update_option( 'dismissed', $dismissed );
+        $result = AIPSC_Utils::update_option( 'dismissed', $dismissed );
+
+        if ( $result && $this->logger ) {
+            $this->logger->info(
+                'issue_dismissed',
+                sprintf(
+                    /* translators: %s: Issue ID. */
+                    __( 'Issue "%s" dismissed.', 'aipatch-security-scanner' ),
+                    sanitize_key( $issue_id )
+                )
+            );
+        }
+
+        return $result;
     }
 
     /**
@@ -155,6 +175,19 @@ class AIPSC_Dashboard {
     public function restore_issue( $issue_id ) {
         $dismissed = AIPSC_Utils::get_option( 'dismissed', array() );
         unset( $dismissed[ sanitize_key( $issue_id ) ] );
-        return AIPSC_Utils::update_option( 'dismissed', $dismissed );
+        $result = AIPSC_Utils::update_option( 'dismissed', $dismissed );
+
+        if ( $result && $this->logger ) {
+            $this->logger->info(
+                'issue_restored',
+                sprintf(
+                    /* translators: %s: Issue ID. */
+                    __( 'Issue "%s" restored.', 'aipatch-security-scanner' ),
+                    sanitize_key( $issue_id )
+                )
+            );
+        }
+
+        return $result;
     }
 }

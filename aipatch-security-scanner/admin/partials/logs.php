@@ -91,6 +91,10 @@ $aipsc_base_url = admin_url( 'admin.php?page=aipatch-security-scanner-logs' );
                 <?php esc_html_e( 'Clear All Logs', 'aipatch-security-scanner' ); ?>
             </button>
         </form>
+        <button type="button" class="button button-small" id="aipatch-export-logs">
+            <span class="dashicons dashicons-download"></span>
+            <?php esc_html_e( 'Export CSV', 'aipatch-security-scanner' ); ?>
+        </button>
     </div>
 
     <!-- Logs Table -->
