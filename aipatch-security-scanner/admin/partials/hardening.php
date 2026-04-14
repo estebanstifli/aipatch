@@ -27,29 +27,29 @@ if ( ! defined( 'ABSPATH' ) ) {
     </p>
 
     <div class="aipatch-hardening-list">
-        <?php foreach ( $rules as $rule ) :
-            $sev = AIPSC_Utils::severity_info( $rule['severity'] );
+        <?php foreach ( $rules as $aipsc_rule ) :
+            $aipsc_sev = AIPSC_Utils::severity_info( $aipsc_rule['severity'] );
         ?>
-        <div class="aipatch-hardening-item <?php echo $rule['enabled'] ? 'aipatch-hardening-active' : ''; ?>">
+        <div class="aipatch-hardening-item <?php echo $aipsc_rule['enabled'] ? 'aipatch-hardening-active' : ''; ?>">
             <div class="aipatch-hardening-header">
                 <div class="aipatch-hardening-info">
                     <h3>
-                        <?php echo esc_html( $rule['title'] ); ?>
-                        <span class="aipatch-badge <?php echo esc_attr( $sev['class'] ); ?>"><?php echo esc_html( $sev['label'] ); ?></span>
+                        <?php echo esc_html( $aipsc_rule['title'] ); ?>
+                        <span class="aipatch-badge <?php echo esc_attr( $aipsc_sev['class'] ); ?>"><?php echo esc_html( $aipsc_sev['label'] ); ?></span>
                     </h3>
-                    <p><?php echo esc_html( $rule['description'] ); ?></p>
-                    <?php if ( ! empty( $rule['warning'] ) ) : ?>
+                    <p><?php echo esc_html( $aipsc_rule['description'] ); ?></p>
+                    <?php if ( ! empty( $aipsc_rule['warning'] ) ) : ?>
                         <p class="aipatch-hardening-warning">
                             <span class="dashicons dashicons-info"></span>
-                            <?php echo esc_html( $rule['warning'] ); ?>
+                            <?php echo esc_html( $aipsc_rule['warning'] ); ?>
                         </p>
                     <?php endif; ?>
                 </div>
                 <div class="aipatch-hardening-toggle">
                     <form method="post">
                         <?php wp_nonce_field( 'aipatch_toggle_hardening', 'aipatch_hardening_nonce' ); ?>
-                        <input type="hidden" name="hardening_key" value="<?php echo esc_attr( $rule['key'] ); ?>" />
-                        <?php if ( $rule['enabled'] ) : ?>
+                        <input type="hidden" name="hardening_key" value="<?php echo esc_attr( $aipsc_rule['key'] ); ?>" />
+                        <?php if ( $aipsc_rule['enabled'] ) : ?>
                             <input type="hidden" name="hardening_value" value="" />
                             <button type="submit" name="aipatch_toggle_hardening" value="1" class="aipatch-toggle-btn aipatch-toggle-on" title="<?php esc_attr_e( 'Click to disable', 'aipatch-security-scanner' ); ?>">
                                 <span class="aipatch-toggle-slider"></span>
@@ -64,28 +64,28 @@ if ( ! defined( 'ABSPATH' ) ) {
                 </div>
             </div>
 
-            <?php if ( ! empty( $rule['settings'] ) ) : ?>
+            <?php if ( ! empty( $aipsc_rule['settings'] ) ) : ?>
             <div class="aipatch-hardening-settings">
                 <p class="aipatch-meta-label"><?php esc_html_e( 'Current settings:', 'aipatch-security-scanner' ); ?></p>
                 <ul>
-                    <?php if ( isset( $rule['settings']['login_max_attempts'] ) ) : ?>
+                    <?php if ( isset( $aipsc_rule['settings']['login_max_attempts'] ) ) : ?>
                         <li>
                             <?php
                             printf(
                                 /* translators: %d: Max attempts. */
                                 esc_html__( 'Max attempts: %d', 'aipatch-security-scanner' ),
-                                (int) $rule['settings']['login_max_attempts']
+                                (int) $aipsc_rule['settings']['login_max_attempts']
                             );
                             ?>
                         </li>
                     <?php endif; ?>
-                    <?php if ( isset( $rule['settings']['login_lockout_duration'] ) ) : ?>
+                    <?php if ( isset( $aipsc_rule['settings']['login_lockout_duration'] ) ) : ?>
                         <li>
                             <?php
                             printf(
                                 /* translators: %d: Minutes. */
                                 esc_html__( 'Lockout duration: %d minutes', 'aipatch-security-scanner' ),
-                                (int) $rule['settings']['login_lockout_duration']
+                                (int) $aipsc_rule['settings']['login_lockout_duration']
                             );
                             ?>
                         </li>

@@ -113,49 +113,91 @@ class AIPSC_Logger {
             'order'      => 'DESC',
         );
 
-        $args   = wp_parse_args( $args, $defaults );
-        $where  = array( '1=1' );
-        $values = array();
-
-        if ( ! empty( $args['event_type'] ) ) {
-            $where[]  = 'event_type = %s';
-            $values[] = sanitize_key( $args['event_type'] );
-        }
-
-        if ( ! empty( $args['severity'] ) ) {
-            $where[]  = 'severity = %s';
-            $values[] = sanitize_key( $args['severity'] );
-        }
-
-        $where_sql = implode( ' AND ', $where );
-
-        // Sanitize order parameters (allowlist only).
-        $allowed_orderby = array( 'id', 'event_type', 'severity', 'created_at' );
-        $orderby = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : 'created_at';
-        $order   = strtoupper( $args['order'] ) === 'ASC' ? 'ASC' : 'DESC';
+        $args = wp_parse_args( $args, $defaults );
 
         $per_page = absint( $args['per_page'] );
         $offset   = ( absint( $args['page'] ) - 1 ) * $per_page;
-
-        // Table name is safe: $wpdb->prefix (trusted) + hardcoded suffix.
-        $table = esc_sql( $this->table );
+        $event_type = sanitize_key( $args['event_type'] );
+        $severity   = sanitize_key( $args['severity'] );
 
         // Count total.
-        $count_sql = 'SELECT COUNT(*) FROM `' . $table . '` WHERE ' . $where_sql;
-        if ( ! empty( $values ) ) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
-            $total = (int) $wpdb->get_var( $wpdb->prepare( $count_sql, $values ) );
+        if ( '' !== $event_type && '' !== $severity ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $total = (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    'SELECT COUNT(*) FROM %i WHERE event_type = %s AND severity = %s',
+                    $this->table,
+                    $event_type,
+                    $severity
+                )
+            );
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $items = $wpdb->get_results(
+                $wpdb->prepare(
+                    'SELECT * FROM %i WHERE event_type = %s AND severity = %s ORDER BY created_at DESC LIMIT %d OFFSET %d',
+                    $this->table,
+                    $event_type,
+                    $severity,
+                    $per_page,
+                    $offset
+                )
+            );
+        } elseif ( '' !== $event_type ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $total = (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    'SELECT COUNT(*) FROM %i WHERE event_type = %s',
+                    $this->table,
+                    $event_type
+                )
+            );
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $items = $wpdb->get_results(
+                $wpdb->prepare(
+                    'SELECT * FROM %i WHERE event_type = %s ORDER BY created_at DESC LIMIT %d OFFSET %d',
+                    $this->table,
+                    $event_type,
+                    $per_page,
+                    $offset
+                )
+            );
+        } elseif ( '' !== $severity ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $total = (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    'SELECT COUNT(*) FROM %i WHERE severity = %s',
+                    $this->table,
+                    $severity
+                )
+            );
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $items = $wpdb->get_results(
+                $wpdb->prepare(
+                    'SELECT * FROM %i WHERE severity = %s ORDER BY created_at DESC LIMIT %d OFFSET %d',
+                    $this->table,
+                    $severity,
+                    $per_page,
+                    $offset
+                )
+            );
         } else {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
-            $total = (int) $wpdb->get_var( $count_sql );
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $total = (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    'SELECT COUNT(*) FROM %i',
+                    $this->table
+                )
+            );
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $items = $wpdb->get_results(
+                $wpdb->prepare(
+                    'SELECT * FROM %i ORDER BY created_at DESC LIMIT %d OFFSET %d',
+                    $this->table,
+                    $per_page,
+                    $offset
+                )
+            );
         }
-
-        // Fetch rows.
-        $select_sql   = 'SELECT * FROM `' . $table . '` WHERE ' . $where_sql . ' ORDER BY ' . $orderby . ' ' . $order . ' LIMIT %d OFFSET %d';
-        $query_values = array_merge( $values, array( $per_page, $offset ) );
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
-        $items = $wpdb->get_results( $wpdb->prepare( $select_sql, $query_values ) );
 
         return array(
             'items' => $items ? $items : array(),
@@ -177,11 +219,14 @@ class AIPSC_Logger {
             $days = 30;
         }
 
-        $table       = esc_sql( $this->table );
-        $cleanup_sql = 'DELETE FROM `' . $table . '` WHERE created_at < DATE_SUB(NOW(), INTERVAL %d DAY)';
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
-        $deleted = $wpdb->query( $wpdb->prepare( $cleanup_sql, $days ) );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $deleted = $wpdb->query(
+            $wpdb->prepare(
+                'DELETE FROM %i WHERE created_at < DATE_SUB(NOW(), INTERVAL %d DAY)',
+                $this->table,
+                $days
+            )
+        );
 
         return $deleted ? $deleted : 0;
     }
@@ -194,10 +239,8 @@ class AIPSC_Logger {
     public function clear_all() {
         global $wpdb;
 
-        $table = esc_sql( $this->table );
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
-        return $wpdb->query( 'TRUNCATE TABLE `' . $table . '`' );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        return $wpdb->query( $wpdb->prepare( 'TRUNCATE TABLE %i', $this->table ) );
     }
 
     /**
@@ -208,11 +251,9 @@ class AIPSC_Logger {
     public function get_counts() {
         global $wpdb;
 
-        $table = esc_sql( $this->table );
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $results = $wpdb->get_results(
-            'SELECT severity, COUNT(*) as count FROM `' . $table . '` GROUP BY severity',
+            $wpdb->prepare( 'SELECT severity, COUNT(*) as count FROM %i GROUP BY severity', $this->table ),
             OBJECT_K
         );
 

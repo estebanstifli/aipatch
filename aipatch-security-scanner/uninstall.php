@@ -24,18 +24,18 @@ $aipatch_options = array(
     'aipatch_db_version',
 );
 
-foreach ( $aipatch_options as $option ) {
-    delete_option( $option );
+foreach ( $aipatch_options as $aipsc_option ) {
+    delete_option( $aipsc_option );
 }
 
 // Remove the custom tables.
 global $wpdb;
-$logs_table = esc_sql( $wpdb->prefix . 'aipsc_logs' );
-$scans_table = esc_sql( $wpdb->prefix . 'aipsc_scan_history' );
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared
-$wpdb->query( 'DROP TABLE IF EXISTS `' . $logs_table . '`' );
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared
-$wpdb->query( 'DROP TABLE IF EXISTS `' . $scans_table . '`' );
+$aipsc_logs_table = $wpdb->prefix . 'aipsc_logs';
+$aipsc_scans_table = $wpdb->prefix . 'aipsc_scan_history';
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $aipsc_logs_table ) );
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $aipsc_scans_table ) );
 
 // Clear scheduled cron events.
 wp_clear_scheduled_hook( 'aipatch_daily_scan' );
@@ -44,8 +44,13 @@ wp_clear_scheduled_hook( 'aipatch_log_cleanup' );
 // Clean up transients (login protection).
 // Note: We cannot enumerate all transients, but the main ones expire naturally.
 // We clean known patterns if possible.
-$options_table = esc_sql( $wpdb->options );
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+$aipsc_options_table = $wpdb->options;
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 $wpdb->query(
-    'DELETE FROM `' . $options_table . "` WHERE option_name LIKE '_transient_aipatch_%' OR option_name LIKE '_transient_timeout_aipatch_%'"
+    $wpdb->prepare(
+        'DELETE FROM %i WHERE option_name LIKE %s OR option_name LIKE %s',
+        $aipsc_options_table,
+        '_transient_aipatch_%',
+        '_transient_timeout_aipatch_%'
+    )
 );

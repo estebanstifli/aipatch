@@ -157,21 +157,21 @@ if ( ! defined( 'ABSPATH' ) ) {
     <div class="aipatch-section">
         <h2><?php esc_html_e( 'Recommended Actions', 'aipatch-security-scanner' ); ?></h2>
         <div class="aipatch-recommendations">
-            <?php foreach ( $data['recommendations'] as $rec ) :
-                $severity_info = AIPSC_Utils::severity_info( $rec['severity'] );
+            <?php foreach ( $data['recommendations'] as $aipsc_rec ) :
+                $aipsc_severity_info = AIPSC_Utils::severity_info( $aipsc_rec['severity'] );
             ?>
                 <div class="aipatch-recommendation">
                     <div class="aipatch-rec-header">
-                        <span class="aipatch-badge <?php echo esc_attr( $severity_info['class'] ); ?>">
-                            <?php echo esc_html( $severity_info['label'] ); ?>
+                        <span class="aipatch-badge <?php echo esc_attr( $aipsc_severity_info['class'] ); ?>">
+                            <?php echo esc_html( $aipsc_severity_info['label'] ); ?>
                         </span>
-                        <strong><?php echo esc_html( $rec['title'] ); ?></strong>
+                        <strong><?php echo esc_html( $aipsc_rec['title'] ); ?></strong>
                     </div>
-                    <p><?php echo esc_html( $rec['recommendation'] ); ?></p>
-                    <?php if ( $rec['dismissible'] ) : ?>
+                    <p><?php echo esc_html( $aipsc_rec['recommendation'] ); ?></p>
+                    <?php if ( $aipsc_rec['dismissible'] ) : ?>
                         <form method="post" class="aipatch-inline-form">
                             <?php wp_nonce_field( 'aipatch_dismiss_issue', 'aipatch_dismiss_nonce' ); ?>
-                            <input type="hidden" name="issue_id" value="<?php echo esc_attr( $rec['id'] ); ?>" />
+                            <input type="hidden" name="issue_id" value="<?php echo esc_attr( $aipsc_rec['id'] ); ?>" />
                             <button type="submit" name="aipatch_dismiss_issue" value="1" class="button button-small">
                                 <?php esc_html_e( 'Dismiss', 'aipatch-security-scanner' ); ?>
                             </button>
@@ -203,12 +203,12 @@ if ( ! defined( 'ABSPATH' ) ) {
             ?>
         </h2>
         <div class="aipatch-dismissed-list">
-            <?php foreach ( $data['dismissed_issues'] as $issue ) : ?>
+            <?php foreach ( $data['dismissed_issues'] as $aipsc_issue ) : ?>
                 <div class="aipatch-dismissed-item">
-                    <span><?php echo esc_html( $issue['title'] ); ?></span>
+                    <span><?php echo esc_html( $aipsc_issue['title'] ); ?></span>
                     <form method="post" class="aipatch-inline-form">
                         <?php wp_nonce_field( 'aipatch_restore_issue', 'aipatch_restore_nonce' ); ?>
-                        <input type="hidden" name="issue_id" value="<?php echo esc_attr( $issue['id'] ); ?>" />
+                        <input type="hidden" name="issue_id" value="<?php echo esc_attr( $aipsc_issue['id'] ); ?>" />
                         <button type="submit" name="aipatch_restore_issue" value="1" class="button button-small button-link">
                             <?php esc_html_e( 'Restore', 'aipatch-security-scanner' ); ?>
                         </button>

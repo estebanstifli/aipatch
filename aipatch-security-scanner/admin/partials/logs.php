@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-$base_url = admin_url( 'admin.php?page=aipatch-security-scanner-logs' );
+$aipsc_base_url = admin_url( 'admin.php?page=aipatch-security-scanner-logs' );
 ?>
 <div class="wrap aipatch-wrap">
     <h1 class="aipatch-page-title">
@@ -33,7 +33,7 @@ $base_url = admin_url( 'admin.php?page=aipatch-security-scanner-logs' );
     <!-- Filter + Actions Bar -->
     <div class="aipatch-logs-toolbar">
         <div class="aipatch-severity-filters">
-            <a href="<?php echo esc_url( $base_url ); ?>" class="<?php echo empty( $severity ) ? 'current' : ''; ?>">
+            <a href="<?php echo esc_url( $aipsc_base_url ); ?>" class="<?php echo empty( $severity ) ? 'current' : ''; ?>">
                 <?php
                 printf(
                     /* translators: %d: Count. */
@@ -43,7 +43,7 @@ $base_url = admin_url( 'admin.php?page=aipatch-security-scanner-logs' );
                 ?>
             </a>
             |
-            <a href="<?php echo esc_url( add_query_arg( 'severity', 'critical', $base_url ) ); ?>" class="<?php echo 'critical' === $severity ? 'current' : ''; ?>">
+            <a href="<?php echo esc_url( add_query_arg( 'severity', 'critical', $aipsc_base_url ) ); ?>" class="<?php echo 'critical' === $severity ? 'current' : ''; ?>">
                 <?php
                 printf(
                     /* translators: %d: Count. */
@@ -53,7 +53,7 @@ $base_url = admin_url( 'admin.php?page=aipatch-security-scanner-logs' );
                 ?>
             </a>
             |
-            <a href="<?php echo esc_url( add_query_arg( 'severity', 'error', $base_url ) ); ?>" class="<?php echo 'error' === $severity ? 'current' : ''; ?>">
+            <a href="<?php echo esc_url( add_query_arg( 'severity', 'error', $aipsc_base_url ) ); ?>" class="<?php echo 'error' === $severity ? 'current' : ''; ?>">
                 <?php
                 printf(
                     /* translators: %d: Count. */
@@ -63,7 +63,7 @@ $base_url = admin_url( 'admin.php?page=aipatch-security-scanner-logs' );
                 ?>
             </a>
             |
-            <a href="<?php echo esc_url( add_query_arg( 'severity', 'warning', $base_url ) ); ?>" class="<?php echo 'warning' === $severity ? 'current' : ''; ?>">
+            <a href="<?php echo esc_url( add_query_arg( 'severity', 'warning', $aipsc_base_url ) ); ?>" class="<?php echo 'warning' === $severity ? 'current' : ''; ?>">
                 <?php
                 printf(
                     /* translators: %d: Count. */
@@ -73,7 +73,7 @@ $base_url = admin_url( 'admin.php?page=aipatch-security-scanner-logs' );
                 ?>
             </a>
             |
-            <a href="<?php echo esc_url( add_query_arg( 'severity', 'info', $base_url ) ); ?>" class="<?php echo 'info' === $severity ? 'current' : ''; ?>">
+            <a href="<?php echo esc_url( add_query_arg( 'severity', 'info', $aipsc_base_url ) ); ?>" class="<?php echo 'info' === $severity ? 'current' : ''; ?>">
                 <?php
                 printf(
                     /* translators: %d: Count. */
@@ -105,16 +105,16 @@ $base_url = admin_url( 'admin.php?page=aipatch-security-scanner-logs' );
             </tr>
         </thead>
         <tbody>
-            <?php foreach ( $logs as $log ) : ?>
-                <tr class="aipatch-log-<?php echo esc_attr( $log->severity ); ?>">
+            <?php foreach ( $logs as $aipsc_log ) : ?>
+                <tr class="aipatch-log-<?php echo esc_attr( $aipsc_log->severity ); ?>">
                     <td>
-                        <span class="aipatch-log-severity aipatch-log-severity-<?php echo esc_attr( $log->severity ); ?>">
-                            <?php echo esc_html( ucfirst( $log->severity ) ); ?>
+                        <span class="aipatch-log-severity aipatch-log-severity-<?php echo esc_attr( $aipsc_log->severity ); ?>">
+                            <?php echo esc_html( ucfirst( $aipsc_log->severity ) ); ?>
                         </span>
                     </td>
-                    <td><code><?php echo esc_html( $log->event_type ); ?></code></td>
-                    <td><?php echo esc_html( $log->message ); ?></td>
-                    <td><?php echo esc_html( AIPSC_Utils::format_time( strtotime( $log->created_at ) ) ); ?></td>
+                    <td><code><?php echo esc_html( $aipsc_log->event_type ); ?></code></td>
+                    <td><?php echo esc_html( $aipsc_log->message ); ?></td>
+                    <td><?php echo esc_html( AIPSC_Utils::format_time( strtotime( $aipsc_log->created_at ) ) ); ?></td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
@@ -124,20 +124,20 @@ $base_url = admin_url( 'admin.php?page=aipatch-security-scanner-logs' );
     <?php if ( $total_pages > 1 ) : ?>
     <div class="aipatch-pagination">
         <?php
-        $pagination_args = array(
-            'base'    => add_query_arg( 'paged', '%#%', $base_url ),
+        $aipsc_pagination_args = array(
+            'base'    => add_query_arg( 'paged', '%#%', $aipsc_base_url ),
             'format'  => '',
             'current' => $page,
             'total'   => $total_pages,
             'type'    => 'plain',
         );
         if ( ! empty( $severity ) ) {
-            $pagination_args['base'] = add_query_arg(
+            $aipsc_pagination_args['base'] = add_query_arg(
                 array( 'severity' => $severity, 'paged' => '%#%' ),
-                $base_url
+                $aipsc_base_url
             );
         }
-        echo wp_kses_post( paginate_links( $pagination_args ) );
+        echo wp_kses_post( paginate_links( $aipsc_pagination_args ) );
         ?>
     </div>
     <?php endif; ?>

@@ -31,12 +31,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     <div class="aipatch-provider-status">
         <h3><?php esc_html_e( 'Data Sources', 'aipatch-security-scanner' ); ?></h3>
         <ul>
-            <?php foreach ( $providers as $provider ) : ?>
+            <?php foreach ( $providers as $aipsc_provider ) : ?>
                 <li>
-                    <span class="dashicons dashicons-<?php echo $provider['available'] ? 'yes-alt aipatch-text-success' : 'marker aipatch-text-muted'; ?>"></span>
-                    <?php echo esc_html( $provider['name'] ); ?>
+                    <span class="dashicons dashicons-<?php echo $aipsc_provider['available'] ? 'yes-alt aipatch-text-success' : 'marker aipatch-text-muted'; ?>"></span>
+                    <?php echo esc_html( $aipsc_provider['name'] ); ?>
                     –
-                    <?php echo $provider['available']
+                    <?php echo $aipsc_provider['available']
                         ? esc_html__( 'Active', 'aipatch-security-scanner' )
                         : esc_html__( 'Not configured', 'aipatch-security-scanner' ); ?>
                 </li>
@@ -60,33 +60,33 @@ if ( ! defined( 'ABSPATH' ) ) {
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ( $vulns as $vuln ) :
-                    $sev = AIPSC_Utils::severity_info( $vuln['severity'] );
+                <?php foreach ( $vulns as $aipsc_vuln ) :
+                    $aipsc_sev = AIPSC_Utils::severity_info( $aipsc_vuln['severity'] );
                 ?>
                     <tr>
                         <td>
-                            <span class="aipatch-badge <?php echo esc_attr( $sev['class'] ); ?>">
-                                <?php echo esc_html( $sev['label'] ); ?>
+                            <span class="aipatch-badge <?php echo esc_attr( $aipsc_sev['class'] ); ?>">
+                                <?php echo esc_html( $aipsc_sev['label'] ); ?>
                             </span>
                         </td>
-                        <td><strong><?php echo esc_html( $vuln['slug'] ); ?></strong></td>
-                        <td><?php echo esc_html( $vuln['software_type'] ); ?></td>
+                        <td><strong><?php echo esc_html( $aipsc_vuln['slug'] ); ?></strong></td>
+                        <td><?php echo esc_html( $aipsc_vuln['software_type'] ); ?></td>
                         <td>
-                            <strong><?php echo esc_html( $vuln['title'] ); ?></strong>
-                            <p class="description"><?php echo esc_html( $vuln['description'] ); ?></p>
+                            <strong><?php echo esc_html( $aipsc_vuln['title'] ); ?></strong>
+                            <p class="description"><?php echo esc_html( $aipsc_vuln['description'] ); ?></p>
                         </td>
-                        <td><code><?php echo esc_html( $vuln['installed_version'] ); ?></code></td>
+                        <td><code><?php echo esc_html( $aipsc_vuln['installed_version'] ); ?></code></td>
                         <td>
-                            <?php if ( ! empty( $vuln['fix_version'] ) ) : ?>
+                            <?php if ( ! empty( $aipsc_vuln['fix_version'] ) ) : ?>
                                 <span class="aipatch-fix-available">
                                     <span class="dashicons dashicons-yes"></span>
-                                    <?php echo esc_html( $vuln['fix_version'] ); ?>
+                                    <?php echo esc_html( $aipsc_vuln['fix_version'] ); ?>
                                 </span>
                             <?php else : ?>
                                 <span class="aipatch-text-muted"><?php esc_html_e( 'Unknown', 'aipatch-security-scanner' ); ?></span>
                             <?php endif; ?>
                         </td>
-                        <td><span class="aipatch-source-badge"><?php echo esc_html( $vuln['source'] ); ?></span></td>
+                        <td><span class="aipatch-source-badge"><?php echo esc_html( $aipsc_vuln['source'] ); ?></span></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
