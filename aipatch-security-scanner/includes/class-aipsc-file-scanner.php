@@ -43,14 +43,28 @@ class AIPSC_File_Scanner {
     private $logger;
 
     /**
+     * @var AIPSC_File_Baseline|null
+     */
+    private $baseline;
+
+    /**
+     * Baseline index cache (loaded once per batch).
+     *
+     * @var array<string, array>|null
+     */
+    private $baseline_index;
+
+    /**
      * Constructor.
      *
-     * @param AIPSC_Job_Manager $job_manager Job manager instance.
-     * @param AIPSC_Logger      $logger      Logger instance.
+     * @param AIPSC_Job_Manager        $job_manager Job manager instance.
+     * @param AIPSC_Logger             $logger      Logger instance.
+     * @param AIPSC_File_Baseline|null $baseline    Optional baseline for integrity checks.
      */
-    public function __construct( AIPSC_Job_Manager $job_manager, AIPSC_Logger $logger ) {
+    public function __construct( AIPSC_Job_Manager $job_manager, AIPSC_Logger $logger, $baseline = null ) {
         $this->job_manager = $job_manager;
         $this->logger      = $logger;
+        $this->baseline    = $baseline;
     }
 
     /**
@@ -139,6 +153,18 @@ class AIPSC_File_Scanner {
             try {
                 $scan_result = $this->scan_file( $file_path );
 
+                // Build enriched JSON payload for storage.
+                $enriched_json = wp_json_encode( array(
+                    'signals'         => $scan_result['signals'],
+                    'reasons'         => $scan_result['reasons'],
+                    'matched_rules'   => $scan_result['matched_rules'],
+                    'context_flags'   => $scan_result['context_flags'],
+                    'integrity_flags' => $scan_result['integrity_flags'],
+                    'layer_scores'    => isset( $scan_result['layer_scores'] ) ? $scan_result['layer_scores'] : array(),
+                    'family_guess'    => $scan_result['family_guess'],
+                    'risk_level'      => $scan_result['risk_level'],
+                ) );
+
                 // Store in file_scan_results table.
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
                 $wpdb->insert(
@@ -148,7 +174,7 @@ class AIPSC_File_Scanner {
                         'file_path'      => $file_path,
                         'risk_score'     => $scan_result['risk_score'],
                         'classification' => $scan_result['classification'],
-                        'signals_json'   => wp_json_encode( $scan_result['signals'] ),
+                        'signals_json'   => $enriched_json,
                         'sha256'         => $scan_result['sha256'],
                         'file_size'      => $scan_result['file_size'],
                         'scanned_at'     => current_time( 'mysql', true ),
@@ -159,6 +185,8 @@ class AIPSC_File_Scanner {
                 $this->job_manager->complete_item( $item->id, array(
                     'risk_score'     => $scan_result['risk_score'],
                     'classification' => $scan_result['classification'],
+                    'family_guess'   => $scan_result['family_guess'],
+                    'risk_level'     => $scan_result['risk_level'],
                 ) );
             } catch ( \Exception $e ) {
                 $this->job_manager->fail_item( $item->id, $e->getMessage() );
@@ -259,7 +287,7 @@ class AIPSC_File_Scanner {
      * Scan a single file.
      *
      * @param string $file_path Absolute path to file.
-     * @return array
+     * @return array Enriched result with layered scoring.
      */
     public function scan_file( $file_path ) {
         if ( ! is_readable( $file_path ) ) {
@@ -271,28 +299,106 @@ class AIPSC_File_Scanner {
         // Skip files that are too large.
         if ( $file_size > self::MAX_FILE_SIZE ) {
             return array(
-                'risk_score'     => 0,
-                'classification' => 'skipped',
-                'signals'        => array(),
-                'sha256'         => '',
-                'file_size'      => $file_size,
+                'risk_score'      => 0,
+                'risk_level'      => 'clean',
+                'classification'  => 'skipped',
+                'family_guess'    => '',
+                'signals'         => array(),
+                'reasons'         => array(),
+                'matched_rules'   => array(),
+                'context_flags'   => array(),
+                'integrity_flags' => array(),
+                'sha256'          => '',
+                'file_size'       => $file_size,
             );
         }
 
-        $content = file_get_contents( $file_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-        $sha256  = hash( 'sha256', $content );
-
+        $content  = file_get_contents( $file_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+        $sha256   = hash( 'sha256', $content );
         $relative = $this->relative_path( $file_path );
-        $signals  = AIPSC_File_Heuristics::analyse( $content, $relative );
-        $result   = AIPSC_File_Classifier::classify( $signals, $relative );
+
+        // Heuristic signals.
+        $signals = AIPSC_File_Heuristics::analyse( $content, $relative );
+
+        // Integrity info from baseline.
+        $integrity_info = $this->get_integrity_info( $relative, $sha256 );
+
+        // Layered classification.
+        $result = AIPSC_File_Classifier::classify( $signals, $relative, $integrity_info, $sha256 );
 
         return array(
-            'risk_score'     => $result['risk_score'],
-            'classification' => $result['classification'],
-            'signals'        => $signals,
-            'sha256'         => $sha256,
-            'file_size'      => $file_size,
+            'risk_score'      => $result['risk_score'],
+            'risk_level'      => $result['risk_level'],
+            'classification'  => $result['classification'],
+            'family_guess'    => $result['family_guess'],
+            'signals'         => $signals,
+            'reasons'         => $result['reasons'],
+            'matched_rules'   => $result['matched_rules'],
+            'context_flags'   => $result['context_flags'],
+            'integrity_flags' => $result['integrity_flags'],
+            'layer_scores'    => $result['layer_scores'],
+            'sha256'          => $sha256,
+            'file_size'       => $file_size,
         );
+    }
+
+    /**
+     * Get integrity info for a file from the baseline index.
+     *
+     * @param string $relative Relative file path.
+     * @param string $sha256   Current file SHA-256.
+     * @return array Integrity status array.
+     */
+    private function get_integrity_info( $relative, $sha256 ) {
+        if ( null === $this->baseline ) {
+            return array( 'status' => 'unknown' );
+        }
+
+        // Lazy-load baseline index once per scanner lifetime.
+        if ( null === $this->baseline_index ) {
+            $this->baseline_index = $this->load_baseline_index();
+        }
+
+        if ( ! isset( $this->baseline_index[ $relative ] ) ) {
+            return array( 'status' => 'new' );
+        }
+
+        $entry = $this->baseline_index[ $relative ];
+
+        if ( $entry['sha256'] === $sha256 ) {
+            return array( 'status' => 'unchanged' );
+        }
+
+        return array(
+            'status'     => 'modified',
+            'sha256_was' => $entry['sha256'],
+        );
+    }
+
+    /**
+     * Load baseline entries into a path-keyed index.
+     *
+     * @return array<string, array{sha256: string, origin_type: string}>
+     */
+    private function load_baseline_index() {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'aipsc_file_baseline';
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $rows = $wpdb->get_results( "SELECT file_path, sha256, origin_type FROM {$table}" );
+
+        $index = array();
+        if ( $rows ) {
+            foreach ( $rows as $row ) {
+                $index[ $row->file_path ] = array(
+                    'sha256'      => $row->sha256,
+                    'origin_type' => $row->origin_type,
+                );
+            }
+        }
+
+        return $index;
     }
 
     /* ---------------------------------------------------------------

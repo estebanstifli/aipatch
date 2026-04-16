@@ -181,16 +181,17 @@ class AIPSC_Loader {
         // Findings persistence store.
         $this->modules['findings_store'] = new AIPSC_Findings_Store();
 
-        // File scanner (uses job manager for batch processing).
-        $this->modules['file_scanner'] = new AIPSC_File_Scanner(
+        // File baseline (integrity monitoring) — created before file scanner.
+        $this->modules['file_baseline'] = new AIPSC_File_Baseline(
             $this->modules['job_manager'],
             $this->modules['logger']
         );
 
-        // File baseline (integrity monitoring).
-        $this->modules['file_baseline'] = new AIPSC_File_Baseline(
+        // File scanner (uses job manager for batch processing + baseline for integrity).
+        $this->modules['file_scanner'] = new AIPSC_File_Scanner(
             $this->modules['job_manager'],
-            $this->modules['logger']
+            $this->modules['logger'],
+            $this->modules['file_baseline']
         );
 
         // Scanner (bridges the audit engine for backward compatibility).
