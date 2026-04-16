@@ -32,6 +32,9 @@ class AIPSC_Admin {
     /** @var AIPSC_Logger */
     private $logger;
 
+    /** @var AIPSC_Performance|null */
+    private $performance;
+
     /**
      * Constructor.
      */
@@ -41,7 +44,8 @@ class AIPSC_Admin {
         $hardening,
         $vulnerabilities,
         AIPSC_Settings $settings,
-        AIPSC_Logger $logger
+        AIPSC_Logger $logger,
+        $performance = null
     ) {
         $this->dashboard       = $dashboard;
         $this->scanner         = $scanner;
@@ -49,6 +53,7 @@ class AIPSC_Admin {
         $this->vulnerabilities = $vulnerabilities;
         $this->settings        = $settings;
         $this->logger          = $logger;
+        $this->performance     = $performance;
     }
 
     /**
@@ -106,6 +111,16 @@ class AIPSC_Admin {
             array( $this, 'render_hardening' )
         );
 
+        // Submenu: Performance.
+        add_submenu_page(
+            'aipatch-security-scanner-dashboard',
+            __( 'Performance Diagnostics', 'aipatch-security-scanner' ),
+            __( 'Performance', 'aipatch-security-scanner' ),
+            'manage_options',
+            'aipatch-security-scanner-performance',
+            array( $this, 'render_performance' )
+        );
+
         // Submenu: Logs.
         add_submenu_page(
             'aipatch-security-scanner-dashboard',
@@ -137,6 +152,7 @@ class AIPSC_Admin {
             'toplevel_page_aipatch-security-scanner-dashboard',
             'aipatch-security-scanner_page_aipatch-security-scanner-vulnerabilities',
             'aipatch-security-scanner_page_aipatch-security-scanner-hardening',
+            'aipatch-security-scanner_page_aipatch-security-scanner-performance',
             'aipatch-security-scanner_page_aipatch-security-scanner-logs',
             'aipatch-security-scanner_page_aipatch-security-scanner-settings',
         );
@@ -227,6 +243,15 @@ class AIPSC_Admin {
             exit;
         }
 
+        // Run performance diagnostics.
+        if ( isset( $_POST['aipatch_run_performance'] ) && $this->performance ) {
+            check_admin_referer( 'aipatch_run_performance', 'aipatch_perf_nonce' );
+            $this->performance->run_diagnostics();
+            $this->logger->info( 'performance_scan', __( 'Performance diagnostics executed.', 'aipatch-security-scanner' ) );
+            wp_safe_redirect( admin_url( 'admin.php?page=aipatch-security-scanner-performance&scan=complete' ) );
+            exit;
+        }
+
         // Clear logs.
         if ( isset( $_POST['aipatch_clear_logs'] ) ) {
             check_admin_referer( 'aipatch_clear_logs', 'aipatch_clear_nonce' );
@@ -300,6 +325,17 @@ class AIPSC_Admin {
         $counts     = $this->logger->get_counts();
 
         include AIPATCH_PLUGIN_DIR . 'admin/partials/logs.php';
+    }
+
+    /**
+     * Render the performance page.
+     */
+    public function render_performance() {
+        if ( ! AIPSC_Utils::current_user_can_manage() ) {
+            return;
+        }
+        $perf_data = $this->performance ? $this->performance->get_last_results() : false;
+        include AIPATCH_PLUGIN_DIR . 'admin/partials/performance.php';
     }
 
     /**

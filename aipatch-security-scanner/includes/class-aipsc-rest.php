@@ -29,6 +29,9 @@ class AIPSC_Rest {
     /** @var AIPSC_Logger */
     private $logger;
 
+    /** @var AIPSC_Performance|null */
+    private $performance;
+
     /**
      * Constructor.
      */
@@ -37,13 +40,15 @@ class AIPSC_Rest {
         AIPSC_Dashboard $dashboard,
         $vulnerabilities,
         $hardening,
-        AIPSC_Logger $logger
+        AIPSC_Logger $logger,
+        $performance = null
     ) {
         $this->scanner         = $scanner;
         $this->dashboard       = $dashboard;
         $this->vulnerabilities = $vulnerabilities;
         $this->hardening       = $hardening;
         $this->logger          = $logger;
+        $this->performance     = $performance;
     }
 
     /**
@@ -122,6 +127,18 @@ class AIPSC_Rest {
         register_rest_route( AIPATCH_REST_NAMESPACE, '/export-scans', array(
             'methods'             => 'GET',
             'callback'            => array( $this, 'handle_export_scans' ),
+            'permission_callback' => array( $this, 'check_admin_permission' ),
+        ) );
+
+        register_rest_route( AIPATCH_REST_NAMESPACE, '/run-performance', array(
+            'methods'             => 'POST',
+            'callback'            => array( $this, 'handle_run_performance' ),
+            'permission_callback' => array( $this, 'check_admin_permission' ),
+        ) );
+
+        register_rest_route( AIPATCH_REST_NAMESPACE, '/get-performance', array(
+            'methods'             => 'GET',
+            'callback'            => array( $this, 'handle_get_performance' ),
             'permission_callback' => array( $this, 'check_admin_permission' ),
         ) );
 
@@ -364,6 +381,52 @@ class AIPSC_Rest {
             'success'  => true,
             'filename' => 'aipatch-scans-' . gmdate( 'Y-m-d' ) . '.csv',
             'data'     => $csv_rows,
+        ), 200 );
+    }
+
+    /**
+     * Handle: run-performance.
+     *
+     * @param WP_REST_Request $request Request.
+     * @return WP_REST_Response
+     */
+    public function handle_run_performance( $request ) {
+        if ( ! $this->performance ) {
+            return new WP_REST_Response( array(
+                'success' => false,
+                'message' => __( 'Performance module is not available.', 'aipatch-security-scanner' ),
+            ), 400 );
+        }
+
+        $results = $this->performance->run_diagnostics();
+
+        $this->logger->info( 'rest_performance', __( 'Performance diagnostics triggered via REST API.', 'aipatch-security-scanner' ) );
+
+        return new WP_REST_Response( array(
+            'success' => true,
+            'data'    => $results,
+        ), 200 );
+    }
+
+    /**
+     * Handle: get-performance.
+     *
+     * @param WP_REST_Request $request Request.
+     * @return WP_REST_Response
+     */
+    public function handle_get_performance( $request ) {
+        if ( ! $this->performance ) {
+            return new WP_REST_Response( array(
+                'success' => true,
+                'data'    => null,
+            ), 200 );
+        }
+
+        $results = $this->performance->get_last_results();
+
+        return new WP_REST_Response( array(
+            'success' => true,
+            'data'    => $results ? $results : null,
         ), 200 );
     }
 }

@@ -50,7 +50,8 @@ if ( ! defined( 'ABSPATH' ) ) {
         <div class="aipatch-top-actions">
             <form method="post" class="aipatch-inline-form">
                 <?php wp_nonce_field( 'aipatch_run_scan', 'aipatch_scan_nonce' ); ?>
-                <button type="submit" name="aipatch_run_scan" value="1" class="button button-primary button-hero" id="aipatch-run-scan">
+                <input type="hidden" name="aipatch_run_scan" value="1" />
+                <button type="submit" class="button button-primary button-hero" id="aipatch-run-scan">
                     <span class="dashicons dashicons-search"></span>
                     <?php esc_html_e( 'Run Scan Now', 'aipatch-security-scanner' ); ?>
                 </button>

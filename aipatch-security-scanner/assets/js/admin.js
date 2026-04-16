@@ -54,6 +54,19 @@
     }
 
     /**
+     * Initialize run performance diagnostics button behavior.
+     */
+    function initRunPerformance() {
+        var btn = document.getElementById('aipatch-run-perf');
+        if (!btn) return;
+
+        btn.closest('form').addEventListener('submit', function () {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="dashicons dashicons-update aipatch-spin"></span> ' + config.i18n.scanning;
+        });
+    }
+
+    /**
      * Initialize REST-based hardening toggles (progressive enhancement).
      * Falls back to form POST if JS fails.
      */
@@ -329,6 +342,7 @@
     function init() {
         addSpinnerStyle();
         initRunScan();
+        initRunPerformance();
         initHardeningToggles();
         initDismissButtons();
         initScoreChart();

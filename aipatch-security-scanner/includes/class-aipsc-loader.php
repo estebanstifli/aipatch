@@ -59,6 +59,8 @@ class AIPSC_Loader {
         require_once $includes . 'class-aipsc-hardening.php';
         require_once $includes . 'class-aipsc-vulnerabilities.php';
         require_once $includes . 'class-aipsc-dashboard.php';
+        require_once $includes . 'class-aipsc-performance.php';
+        require_once $includes . 'class-aipsc-abilities.php';
         require_once $includes . 'class-aipsc-admin.php';
         require_once $includes . 'class-aipsc-rest.php';
         require_once $includes . 'class-aipsc-cron.php';
@@ -131,6 +133,17 @@ class AIPSC_Loader {
             $this->modules['logger']
         );
 
+        // Performance diagnostics.
+        $this->modules['performance'] = new AIPSC_Performance();
+
+        // Abilities API integration (read-only MCP/AI tooling).
+        $this->modules['abilities'] = new AIPSC_Abilities(
+            isset( $this->modules['scanner'] ) ? $this->modules['scanner'] : null,
+            isset( $this->modules['vulnerabilities'] ) ? $this->modules['vulnerabilities'] : null,
+            $this->modules['logger']
+        );
+        $this->modules['abilities']->init();
+
         // Admin (only in admin context).
         if ( is_admin() ) {
             $this->modules['admin'] = new AIPSC_Admin(
@@ -139,7 +152,8 @@ class AIPSC_Loader {
                 isset( $this->modules['hardening'] ) ? $this->modules['hardening'] : null,
                 isset( $this->modules['vulnerabilities'] ) ? $this->modules['vulnerabilities'] : null,
                 $this->modules['settings'],
-                $this->modules['logger']
+                $this->modules['logger'],
+                $this->modules['performance']
             );
             $this->modules['admin']->init();
         }
@@ -150,7 +164,8 @@ class AIPSC_Loader {
             $this->modules['dashboard'],
             isset( $this->modules['vulnerabilities'] ) ? $this->modules['vulnerabilities'] : null,
             isset( $this->modules['hardening'] ) ? $this->modules['hardening'] : null,
-            $this->modules['logger']
+            $this->modules['logger'],
+            $this->modules['performance']
         );
         $this->add_action( 'rest_api_init', $this->modules['rest'], 'register_routes' );
 

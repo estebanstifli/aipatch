@@ -740,3 +740,199 @@
         gap: 8px;
     }
 }
+
+/* ---------------------------------------------------------------
+   Performance Diagnostics
+   --------------------------------------------------------------- */
+
+.aipatch-health-badge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.aipatch-health-badge > .dashicons {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+}
+
+.aipatch-health-good > .dashicons { color: #00a32a; }
+.aipatch-health-warning > .dashicons { color: #dba617; }
+.aipatch-health-poor > .dashicons { color: #d63638; }
+.aipatch-health-none > .dashicons { color: #8c8f94; }
+
+.aipatch-health-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.aipatch-health-label {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.aipatch-health-date {
+    font-size: 12px;
+    color: #8c8f94;
+}
+
+/* Performance Findings Grid */
+.aipatch-perf-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 12px;
+}
+
+.aipatch-perf-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 16px 18px;
+    transition: border-color 0.2s;
+}
+
+.aipatch-perf-card:hover {
+    border-color: #2271b1;
+}
+
+.aipatch-perf-status-good {
+    border-left: 4px solid #00a32a;
+}
+
+.aipatch-perf-status-warning {
+    border-left: 4px solid #dba617;
+}
+
+.aipatch-perf-status-poor {
+    border-left: 4px solid #d63638;
+}
+
+.aipatch-perf-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.aipatch-perf-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    margin-top: 1px;
+    flex-shrink: 0;
+}
+
+.aipatch-perf-status-good .aipatch-perf-icon { color: #00a32a; }
+.aipatch-perf-status-warning .aipatch-perf-icon { color: #996800; }
+.aipatch-perf-status-poor .aipatch-perf-icon { color: #d63638; }
+
+.aipatch-perf-card-title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.aipatch-perf-card-title strong {
+    font-size: 14px;
+    color: #1d2327;
+}
+
+.aipatch-perf-value {
+    font-size: 12px;
+    color: #50575e;
+    font-weight: 600;
+}
+
+.aipatch-perf-desc {
+    margin: 0 0 6px;
+    color: #50575e;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.aipatch-perf-rec {
+    margin: 0;
+    padding: 8px 10px;
+    background: #fcf4e6;
+    border-radius: 3px;
+    font-size: 12px;
+    color: #996800;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    line-height: 1.5;
+}
+
+.aipatch-perf-rec .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+/* Performance Detail Tables */
+.aipatch-perf-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 12px;
+}
+
+.aipatch-perf-detail-table th {
+    text-align: left;
+    font-weight: 600;
+    padding: 4px 8px;
+    background: #f6f7f7;
+    border-bottom: 1px solid #dcdcde;
+}
+
+.aipatch-perf-detail-table td {
+    padding: 4px 8px;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.aipatch-perf-detail-table code {
+    background: #f0f0f1;
+    padding: 1px 5px;
+    font-size: 11px;
+}
+
+/* Recommendation value in header */
+.aipatch-rec-value {
+    margin-left: auto;
+    font-size: 12px;
+    color: #50575e;
+    font-weight: 600;
+}
+
+/* Tools List */
+.aipatch-tools-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.aipatch-tool-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.aipatch-tool-item p {
+    flex: 1 1 100%;
+    margin: 2px 0 0;
+    color: #50575e;
+    font-size: 13px;
+}
+
+@media screen and (max-width: 782px) {
+    .aipatch-perf-grid {
+        grid-template-columns: 1fr;
+    }
+}

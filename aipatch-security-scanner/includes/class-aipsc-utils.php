@@ -239,6 +239,7 @@ class AIPSC_Utils {
             'aipatch_last_scan',
             'aipatch_security_score',
             'aipatch_dismissed',
+            'aipatch_performance_results',
             'aipatch_db_version',
         );
     }
