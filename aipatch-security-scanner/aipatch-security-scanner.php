@@ -11,7 +11,7 @@
  * Plugin Name: Aipatch Security Scanner
  * Plugin URI:  https://github.com/estebanstifli/aipatch
  * Description: Lightweight security scanner for WordPress. Checks for outdated software, risky configurations, and applies safe hardening measures.
- * Version:     1.0.2
+ * Version:     2.0.1
  * Requires at least: 6.5
  * Requires PHP: 7.4
  * Author:      Aipatch Security Scanner
@@ -30,12 +30,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Plugin constants.
  */
-define( 'AIPATCH_VERSION', '1.0.2' );
+define( 'AIPATCH_VERSION', '2.0.1' );
 define( 'AIPATCH_PLUGIN_FILE', __FILE__ );
 define( 'AIPATCH_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AIPATCH_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'AIPATCH_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
-define( 'AIPATCH_DB_VERSION', '1.1' );
+define( 'AIPATCH_DB_VERSION', '2.0' );
 define( 'AIPATCH_MIN_PHP', '7.4' );
 define( 'AIPATCH_MIN_WP', '6.5' );
 define( 'AIPATCH_REST_NAMESPACE', 'aipatch-security-scanner/v1' );

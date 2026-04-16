@@ -157,11 +157,27 @@ class AIPSC_Vulnerabilities {
     private $providers = array();
 
     /**
-     * Constructor.
+     * Vulnerability cache instance.
+     *
+     * @var AIPSC_Vulnerability_Cache|null
      */
-    public function __construct() {
-        // Register the built-in local provider.
-        $this->register_provider( new AIPSC_Local_Vulnerability_Provider() );
+    private $cache;
+
+    /**
+     * Constructor.
+     *
+     * @param AIPSC_Vulnerability_Cache|null $cache Optional cache instance.
+     */
+    public function __construct( AIPSC_Vulnerability_Cache $cache = null ) {
+        $this->cache = $cache;
+
+        // Register the built-in local provider (wrap with cache if available).
+        $local = new AIPSC_Local_Vulnerability_Provider();
+        if ( $this->cache ) {
+            $this->register_provider( new AIPSC_Cached_Vulnerability_Provider( $local, $this->cache ) );
+        } else {
+            $this->register_provider( $local );
+        }
 
         /**
          * Allow external code to register additional providers.

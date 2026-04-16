@@ -25,17 +25,38 @@ class AIPSC_Abilities {
     /** @var AIPSC_Logger */
     private $logger;
 
+    /** @var AIPSC_File_Scanner|null */
+    private $file_scanner;
+
+    /** @var AIPSC_Findings_Store|null */
+    private $findings_store;
+
+    /** @var AIPSC_File_Baseline|null */
+    private $file_baseline;
+
+    /** @var AIPSC_Job_Manager|null */
+    private $job_manager;
+
+    /** @var AIPSC_Remediation_Engine|null */
+    private $remediation_engine;
+
     /**
      * Constructor.
      *
      * @param AIPSC_Scanner|null         $scanner         Scanner module.
      * @param AIPSC_Vulnerabilities|null $vulnerabilities Vulnerabilities module.
      * @param AIPSC_Logger               $logger          Logger instance.
+     * @param array                      $extra_modules   Extra modules keyed by name.
      */
-    public function __construct( $scanner, $vulnerabilities, AIPSC_Logger $logger ) {
-        $this->scanner         = $scanner;
-        $this->vulnerabilities = $vulnerabilities;
-        $this->logger          = $logger;
+    public function __construct( $scanner, $vulnerabilities, AIPSC_Logger $logger, array $extra_modules = array() ) {
+        $this->scanner            = $scanner;
+        $this->vulnerabilities    = $vulnerabilities;
+        $this->logger             = $logger;
+        $this->file_scanner       = isset( $extra_modules['file_scanner'] ) ? $extra_modules['file_scanner'] : null;
+        $this->findings_store     = isset( $extra_modules['findings_store'] ) ? $extra_modules['findings_store'] : null;
+        $this->file_baseline      = isset( $extra_modules['file_baseline'] ) ? $extra_modules['file_baseline'] : null;
+        $this->job_manager        = isset( $extra_modules['job_manager'] ) ? $extra_modules['job_manager'] : null;
+        $this->remediation_engine = isset( $extra_modules['remediation_engine'] ) ? $extra_modules['remediation_engine'] : null;
     }
 
     /**
@@ -80,6 +101,7 @@ class AIPSC_Abilities {
         $this->register_site_audit_ability( 'aipatch/audit-site', __( 'Audit Site', 'aipatch-security-scanner' ), __( 'Runs a full site security audit and returns a structured report for external AI agents.', 'aipatch-security-scanner' ) );
         $this->register_suspicious_audit_ability( 'aipatch/audit-suspicious', __( 'Audit Suspicious Files', 'aipatch-security-scanner' ), __( 'Scans for suspicious files and returns indicators for deep analysis by an external AI agent.', 'aipatch-security-scanner' ) );
         $this->register_async_status_ability();
+        $this->register_new_abilities();
     }
 
     /**
@@ -934,5 +956,503 @@ class AIPSC_Abilities {
     private function is_abilities_api_available() {
         return function_exists( 'wp_register_ability' )
             && function_exists( 'wp_register_ability_category' );
+    }
+
+    /* ---------------------------------------------------------------
+     * New MCP Abilities (Block 8)
+     * ------------------------------------------------------------- */
+
+    /**
+     * Register abilities for new modules (findings, file scanner, baseline, jobs).
+     */
+    private function register_new_abilities() {
+        if ( ! function_exists( 'wp_register_ability' ) ) {
+            return;
+        }
+
+        $abilities = array(
+            array(
+                'name'        => 'aipatch/list-findings',
+                'label'       => __( 'List Findings', 'aipatch-security-scanner' ),
+                'description' => __( 'Query persistent security findings with filters.', 'aipatch-security-scanner' ),
+                'input'       => array(
+                    'status'   => array( 'type' => 'string', 'enum' => array( 'open', 'dismissed', 'resolved' ), 'default' => 'open' ),
+                    'severity' => array( 'type' => 'string', 'enum' => array( 'critical', 'high', 'medium', 'low', 'info' ) ),
+                    'category' => array( 'type' => 'string' ),
+                    'limit'    => array( 'type' => 'integer', 'default' => 50, 'minimum' => 1, 'maximum' => 200 ),
+                ),
+                'callback'    => 'execute_list_findings',
+            ),
+            array(
+                'name'        => 'aipatch/findings-stats',
+                'label'       => __( 'Findings Statistics', 'aipatch-security-scanner' ),
+                'description' => __( 'Returns aggregate statistics for all persistent findings.', 'aipatch-security-scanner' ),
+                'input'       => array(),
+                'callback'    => 'execute_findings_stats',
+            ),
+            array(
+                'name'        => 'aipatch/dismiss-finding',
+                'label'       => __( 'Dismiss Finding', 'aipatch-security-scanner' ),
+                'description' => __( 'Dismiss a specific finding by fingerprint (accepted risk).', 'aipatch-security-scanner' ),
+                'input'       => array(
+                    'fingerprint' => array( 'type' => 'string', 'description' => 'SHA-256 fingerprint of the finding.' ),
+                ),
+                'callback'    => 'execute_dismiss_finding',
+                'readonly'    => false,
+            ),
+            array(
+                'name'        => 'aipatch/start-file-scan',
+                'label'       => __( 'Start File Scan', 'aipatch-security-scanner' ),
+                'description' => __( 'Start an asynchronous malware/heuristic file scan job.', 'aipatch-security-scanner' ),
+                'input'       => array(
+                    'root'       => array( 'type' => 'string', 'description' => 'Scan root directory. Default: ABSPATH.' ),
+                    'max_files'  => array( 'type' => 'integer', 'default' => 10000 ),
+                ),
+                'callback'    => 'execute_start_file_scan',
+                'readonly'    => false,
+            ),
+            array(
+                'name'        => 'aipatch/file-scan-progress',
+                'label'       => __( 'File Scan Progress', 'aipatch-security-scanner' ),
+                'description' => __( 'Get progress and status of a file scan job.', 'aipatch-security-scanner' ),
+                'input'       => array(
+                    'job_id' => array( 'type' => 'string', 'description' => 'Job UUID.' ),
+                ),
+                'callback'    => 'execute_file_scan_progress',
+            ),
+            array(
+                'name'        => 'aipatch/file-scan-results',
+                'label'       => __( 'File Scan Results', 'aipatch-security-scanner' ),
+                'description' => __( 'Get results from a completed file scan job.', 'aipatch-security-scanner' ),
+                'input'       => array(
+                    'job_id'    => array( 'type' => 'string', 'description' => 'Job UUID.' ),
+                    'min_risk'  => array( 'type' => 'integer', 'default' => 15, 'description' => 'Minimum risk score to include.' ),
+                    'limit'     => array( 'type' => 'integer', 'default' => 100, 'minimum' => 1, 'maximum' => 500 ),
+                ),
+                'callback'    => 'execute_file_scan_results',
+            ),
+            array(
+                'name'        => 'aipatch/process-file-scan-batch',
+                'label'       => __( 'Process File Scan Batch', 'aipatch-security-scanner' ),
+                'description' => __( 'Process the next batch of files for a running scan job. Call repeatedly until progress reaches 100.', 'aipatch-security-scanner' ),
+                'input'       => array(
+                    'job_id'     => array( 'type' => 'string', 'description' => 'Job UUID.' ),
+                    'batch_size' => array( 'type' => 'integer', 'default' => 50, 'minimum' => 1, 'maximum' => 200 ),
+                ),
+                'callback'    => 'execute_process_file_scan_batch',
+                'readonly'    => false,
+            ),
+            array(
+                'name'        => 'aipatch/baseline-build',
+                'label'       => __( 'Build File Baseline', 'aipatch-security-scanner' ),
+                'description' => __( 'Build or refresh the known-good file hash baseline.', 'aipatch-security-scanner' ),
+                'input'       => array(),
+                'callback'    => 'execute_baseline_build',
+                'readonly'    => false,
+            ),
+            array(
+                'name'        => 'aipatch/baseline-diff',
+                'label'       => __( 'Baseline Integrity Diff', 'aipatch-security-scanner' ),
+                'description' => __( 'Compare current filesystem against the stored baseline to detect modified, missing, and new files.', 'aipatch-security-scanner' ),
+                'input'       => array(),
+                'callback'    => 'execute_baseline_diff',
+            ),
+            array(
+                'name'        => 'aipatch/baseline-stats',
+                'label'       => __( 'Baseline Statistics', 'aipatch-security-scanner' ),
+                'description' => __( 'Returns statistics about the stored file baseline.', 'aipatch-security-scanner' ),
+                'input'       => array(),
+                'callback'    => 'execute_baseline_stats',
+            ),
+            array(
+                'name'        => 'aipatch/list-jobs',
+                'label'       => __( 'List Jobs', 'aipatch-security-scanner' ),
+                'description' => __( 'List scan/audit jobs with optional filters.', 'aipatch-security-scanner' ),
+                'input'       => array(
+                    'job_type' => array( 'type' => 'string' ),
+                    'status'   => array( 'type' => 'string' ),
+                    'limit'    => array( 'type' => 'integer', 'default' => 20 ),
+                ),
+                'callback'    => 'execute_list_jobs',
+            ),
+            array(
+                'name'        => 'aipatch/apply-remediation',
+                'label'       => __( 'Apply Remediation', 'aipatch-security-scanner' ),
+                'description' => __( 'Apply a security fix for a finding. Stores rollback data for undo capability.', 'aipatch-security-scanner' ),
+                'input'       => array(
+                    'finding_fingerprint' => array( 'type' => 'string', 'required' => true ),
+                    'action_type'         => array( 'type' => 'string', 'required' => true, 'enum' => array( 'wp_option', 'delete_file', 'rename_file', 'file_patch', 'htaccess_rule', 'manual' ) ),
+                    'description'         => array( 'type' => 'string' ),
+                    'params'              => array( 'type' => 'object' ),
+                ),
+                'callback'    => 'execute_apply_remediation',
+                'readonly'    => false,
+            ),
+            array(
+                'name'        => 'aipatch/rollback-remediation',
+                'label'       => __( 'Rollback Remediation', 'aipatch-security-scanner' ),
+                'description' => __( 'Roll back a previously applied remediation and reopen the linked finding.', 'aipatch-security-scanner' ),
+                'input'       => array(
+                    'remediation_id' => array( 'type' => 'integer', 'required' => true ),
+                ),
+                'callback'    => 'execute_rollback_remediation',
+                'readonly'    => false,
+            ),
+            array(
+                'name'        => 'aipatch/list-remediations',
+                'label'       => __( 'List Remediations', 'aipatch-security-scanner' ),
+                'description' => __( 'List remediation records with optional filters.', 'aipatch-security-scanner' ),
+                'input'       => array(
+                    'finding_fingerprint' => array( 'type' => 'string' ),
+                    'action_type'         => array( 'type' => 'string' ),
+                    'status'              => array( 'type' => 'string' ),
+                    'limit'               => array( 'type' => 'integer', 'default' => 50 ),
+                    'offset'              => array( 'type' => 'integer', 'default' => 0 ),
+                ),
+                'callback'    => 'execute_list_remediations',
+            ),
+        );
+
+        foreach ( $abilities as $ability ) {
+            $is_readonly = isset( $ability['readonly'] ) ? $ability['readonly'] : true;
+            $result = call_user_func(
+                'wp_register_ability',
+                $ability['name'],
+                array(
+                    'label'               => $ability['label'],
+                    'description'         => $ability['description'],
+                    'category'            => 'aipatch-security',
+                    'input_schema'        => array(
+                        'type'       => 'object',
+                        'properties' => $ability['input'],
+                    ),
+                    'output_schema'       => array( 'type' => 'object' ),
+                    'execute_callback'    => array( $this, $ability['callback'] ),
+                    'permission_callback' => array( $this, 'can_run_readonly_abilities' ),
+                    'meta'                => array(
+                        'show_in_rest' => true,
+                        'mcp'          => array(
+                            'public'   => true,
+                            'type'     => 'tool',
+                            'readonly' => $is_readonly,
+                        ),
+                    ),
+                )
+            );
+
+            if ( is_wp_error( $result ) ) {
+                $this->logger->warning(
+                    'ability_register_failed',
+                    sprintf( 'Failed to register %s: %s', $ability['name'], $result->get_error_message() )
+                );
+            }
+        }
+    }
+
+    /* -- Execute callbacks for new abilities -- */
+
+    /**
+     * List persistent findings.
+     *
+     * @param array $input Input.
+     * @return array|WP_Error
+     */
+    public function execute_list_findings( $input = array() ) {
+        if ( ! $this->findings_store ) {
+            return new WP_Error( 'aipatch_module_unavailable', 'Findings store not available.', array( 'status' => 400 ) );
+        }
+        $input = is_array( $input ) ? $input : array();
+
+        $rows = $this->findings_store->query( array(
+            'status'   => isset( $input['status'] ) ? sanitize_key( $input['status'] ) : 'open',
+            'severity' => isset( $input['severity'] ) ? sanitize_key( $input['severity'] ) : '',
+            'category' => isset( $input['category'] ) ? sanitize_text_field( $input['category'] ) : '',
+            'limit'    => isset( $input['limit'] ) ? absint( $input['limit'] ) : 50,
+        ) );
+
+        return array( 'success' => true, 'count' => count( $rows ), 'findings' => $rows );
+    }
+
+    /**
+     * Findings statistics.
+     *
+     * @return array|WP_Error
+     */
+    public function execute_findings_stats() {
+        if ( ! $this->findings_store ) {
+            return new WP_Error( 'aipatch_module_unavailable', 'Findings store not available.', array( 'status' => 400 ) );
+        }
+        return array( 'success' => true, 'stats' => $this->findings_store->stats() );
+    }
+
+    /**
+     * Dismiss a finding.
+     *
+     * @param array $input Input.
+     * @return array|WP_Error
+     */
+    public function execute_dismiss_finding( $input = array() ) {
+        if ( ! $this->findings_store ) {
+            return new WP_Error( 'aipatch_module_unavailable', 'Findings store not available.', array( 'status' => 400 ) );
+        }
+        $input = is_array( $input ) ? $input : array();
+        $fp    = isset( $input['fingerprint'] ) ? sanitize_text_field( $input['fingerprint'] ) : '';
+        if ( empty( $fp ) ) {
+            return new WP_Error( 'aipatch_missing_param', 'fingerprint is required.', array( 'status' => 400 ) );
+        }
+
+        $dismissed = $this->findings_store->dismiss( $fp );
+        return array( 'success' => $dismissed, 'fingerprint' => $fp );
+    }
+
+    /**
+     * Start a file scan job.
+     *
+     * @param array $input Input.
+     * @return array|WP_Error
+     */
+    public function execute_start_file_scan( $input = array() ) {
+        if ( ! $this->file_scanner ) {
+            return new WP_Error( 'aipatch_module_unavailable', 'File scanner not available.', array( 'status' => 400 ) );
+        }
+        $input   = is_array( $input ) ? $input : array();
+        $options = array();
+
+        if ( ! empty( $input['max_files'] ) ) {
+            $options['max_files'] = absint( $input['max_files'] );
+        }
+
+        $job_id = $this->file_scanner->start( $options );
+        if ( ! $job_id ) {
+            return new WP_Error( 'aipatch_scan_start_failed', 'Failed to start file scan.', array( 'status' => 500 ) );
+        }
+
+        return array(
+            'success' => true,
+            'job_id'  => $job_id,
+            'message' => 'File scan job created. Use aipatch/process-file-scan-batch to advance.',
+        );
+    }
+
+    /**
+     * Get file scan progress.
+     *
+     * @param array $input Input.
+     * @return array|WP_Error
+     */
+    public function execute_file_scan_progress( $input = array() ) {
+        if ( ! $this->job_manager ) {
+            return new WP_Error( 'aipatch_module_unavailable', 'Job manager not available.', array( 'status' => 400 ) );
+        }
+        $input  = is_array( $input ) ? $input : array();
+        $job_id = isset( $input['job_id'] ) ? sanitize_text_field( $input['job_id'] ) : '';
+        if ( empty( $job_id ) ) {
+            return new WP_Error( 'aipatch_missing_param', 'job_id is required.', array( 'status' => 400 ) );
+        }
+
+        $summary = $this->job_manager->summary( $job_id );
+        if ( ! $summary ) {
+            return new WP_Error( 'aipatch_job_not_found', 'Job not found.', array( 'status' => 404 ) );
+        }
+
+        return array( 'success' => true, 'job' => $summary );
+    }
+
+    /**
+     * Get file scan results.
+     *
+     * @param array $input Input.
+     * @return array|WP_Error
+     */
+    public function execute_file_scan_results( $input = array() ) {
+        if ( ! $this->file_scanner ) {
+            return new WP_Error( 'aipatch_module_unavailable', 'File scanner not available.', array( 'status' => 400 ) );
+        }
+        $input  = is_array( $input ) ? $input : array();
+        $job_id = isset( $input['job_id'] ) ? sanitize_text_field( $input['job_id'] ) : '';
+        if ( empty( $job_id ) ) {
+            return new WP_Error( 'aipatch_missing_param', 'job_id is required.', array( 'status' => 400 ) );
+        }
+
+        return array(
+            'success' => true,
+            'data'    => $this->file_scanner->get_results( $job_id, array(
+                'min_risk' => isset( $input['min_risk'] ) ? absint( $input['min_risk'] ) : 15,
+                'limit'    => isset( $input['limit'] ) ? absint( $input['limit'] ) : 100,
+            ) ),
+        );
+    }
+
+    /**
+     * Process next batch of a file scan.
+     *
+     * @param array $input Input.
+     * @return array|WP_Error
+     */
+    public function execute_process_file_scan_batch( $input = array() ) {
+        if ( ! $this->file_scanner ) {
+            return new WP_Error( 'aipatch_module_unavailable', 'File scanner not available.', array( 'status' => 400 ) );
+        }
+        $input      = is_array( $input ) ? $input : array();
+        $job_id     = isset( $input['job_id'] ) ? sanitize_text_field( $input['job_id'] ) : '';
+        $batch_size = isset( $input['batch_size'] ) ? absint( $input['batch_size'] ) : 50;
+
+        if ( empty( $job_id ) ) {
+            return new WP_Error( 'aipatch_missing_param', 'job_id is required.', array( 'status' => 400 ) );
+        }
+
+        $processed = $this->file_scanner->process_batch( $job_id, $batch_size );
+        $summary   = $this->job_manager ? $this->job_manager->summary( $job_id ) : null;
+
+        return array(
+            'success'   => true,
+            'processed' => $processed,
+            'job'       => $summary,
+        );
+    }
+
+    /**
+     * Build file baseline.
+     *
+     * @return array|WP_Error
+     */
+    public function execute_baseline_build() {
+        if ( ! $this->file_baseline ) {
+            return new WP_Error( 'aipatch_module_unavailable', 'File baseline not available.', array( 'status' => 400 ) );
+        }
+
+        $stats = $this->file_baseline->build();
+        return array( 'success' => true, 'build_stats' => $stats, 'baseline_stats' => $this->file_baseline->stats() );
+    }
+
+    /**
+     * Baseline integrity diff.
+     *
+     * @return array|WP_Error
+     */
+    public function execute_baseline_diff() {
+        if ( ! $this->file_baseline ) {
+            return new WP_Error( 'aipatch_module_unavailable', 'File baseline not available.', array( 'status' => 400 ) );
+        }
+
+        $diff = $this->file_baseline->diff();
+        return array(
+            'success'         => true,
+            'modified_count'  => count( $diff['modified'] ),
+            'missing_count'   => count( $diff['missing'] ),
+            'new_count'       => count( $diff['new'] ),
+            'diff'            => $diff,
+        );
+    }
+
+    /**
+     * Baseline statistics.
+     *
+     * @return array|WP_Error
+     */
+    public function execute_baseline_stats() {
+        if ( ! $this->file_baseline ) {
+            return new WP_Error( 'aipatch_module_unavailable', 'File baseline not available.', array( 'status' => 400 ) );
+        }
+        return array( 'success' => true, 'stats' => $this->file_baseline->stats() );
+    }
+
+    /**
+     * List jobs.
+     *
+     * @param array $input Input.
+     * @return array|WP_Error
+     */
+    public function execute_list_jobs( $input = array() ) {
+        if ( ! $this->job_manager ) {
+            return new WP_Error( 'aipatch_module_unavailable', 'Job manager not available.', array( 'status' => 400 ) );
+        }
+        $input = is_array( $input ) ? $input : array();
+
+        $jobs = $this->job_manager->list_jobs( array(
+            'job_type' => isset( $input['job_type'] ) ? sanitize_key( $input['job_type'] ) : '',
+            'status'   => isset( $input['status'] ) ? sanitize_key( $input['status'] ) : '',
+            'limit'    => isset( $input['limit'] ) ? absint( $input['limit'] ) : 20,
+        ) );
+
+        return array( 'success' => true, 'count' => count( $jobs ), 'jobs' => $jobs );
+    }
+
+    /* ---------------------------------------------------------------
+     * Remediation callbacks
+     * ------------------------------------------------------------- */
+
+    /**
+     * Apply a remediation.
+     *
+     * @param array $input Input.
+     * @return array|WP_Error
+     */
+    public function execute_apply_remediation( $input = array() ) {
+        if ( ! $this->remediation_engine ) {
+            return new WP_Error( 'aipatch_module_unavailable', 'Remediation engine not available.', array( 'status' => 400 ) );
+        }
+        $input = is_array( $input ) ? $input : array();
+
+        $result = $this->remediation_engine->apply( array(
+            'finding_fingerprint' => isset( $input['finding_fingerprint'] ) ? $input['finding_fingerprint'] : '',
+            'action_type'         => isset( $input['action_type'] ) ? $input['action_type'] : '',
+            'description'         => isset( $input['description'] ) ? $input['description'] : '',
+            'params'              => isset( $input['params'] ) && is_array( $input['params'] ) ? $input['params'] : array(),
+        ) );
+
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return array( 'success' => true, 'remediation' => $result );
+    }
+
+    /**
+     * Roll back a remediation.
+     *
+     * @param array $input Input.
+     * @return array|WP_Error
+     */
+    public function execute_rollback_remediation( $input = array() ) {
+        if ( ! $this->remediation_engine ) {
+            return new WP_Error( 'aipatch_module_unavailable', 'Remediation engine not available.', array( 'status' => 400 ) );
+        }
+        $input = is_array( $input ) ? $input : array();
+
+        $id = isset( $input['remediation_id'] ) ? absint( $input['remediation_id'] ) : 0;
+        if ( 0 === $id ) {
+            return new WP_Error( 'aipatch_missing_param', 'remediation_id is required.', array( 'status' => 400 ) );
+        }
+
+        $result = $this->remediation_engine->rollback( $id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return array( 'success' => true, 'remediation' => $result );
+    }
+
+    /**
+     * List remediations.
+     *
+     * @param array $input Input.
+     * @return array|WP_Error
+     */
+    public function execute_list_remediations( $input = array() ) {
+        if ( ! $this->remediation_engine ) {
+            return new WP_Error( 'aipatch_module_unavailable', 'Remediation engine not available.', array( 'status' => 400 ) );
+        }
+        $input = is_array( $input ) ? $input : array();
+
+        $records = $this->remediation_engine->list_remediations( array(
+            'finding_fingerprint' => isset( $input['finding_fingerprint'] ) ? $input['finding_fingerprint'] : '',
+            'action_type'         => isset( $input['action_type'] ) ? $input['action_type'] : '',
+            'status'              => isset( $input['status'] ) ? $input['status'] : '',
+            'limit'               => isset( $input['limit'] ) ? absint( $input['limit'] ) : 50,
+            'offset'              => isset( $input['offset'] ) ? absint( $input['offset'] ) : 0,
+        ) );
+
+        return array( 'success' => true, 'count' => count( $records ), 'remediations' => $records );
     }
 }

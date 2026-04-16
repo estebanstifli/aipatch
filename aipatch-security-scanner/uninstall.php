@@ -31,12 +31,22 @@ foreach ( $aipatch_options as $aipsc_option ) {
 
 // Remove the custom tables.
 global $wpdb;
-$aipsc_logs_table = $wpdb->prefix . 'aipsc_logs';
-$aipsc_scans_table = $wpdb->prefix . 'aipsc_scan_history';
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
-$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $aipsc_logs_table ) );
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
-$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $aipsc_scans_table ) );
+$aipsc_tables = array(
+    $wpdb->prefix . 'aipsc_remediations',
+    $wpdb->prefix . 'aipsc_file_scan_results',
+    $wpdb->prefix . 'aipsc_file_baseline',
+    $wpdb->prefix . 'aipsc_vulnerability_cache',
+    $wpdb->prefix . 'aipsc_findings',
+    $wpdb->prefix . 'aipsc_job_items',
+    $wpdb->prefix . 'aipsc_jobs',
+    $wpdb->prefix . 'aipsc_scan_history',
+    $wpdb->prefix . 'aipsc_logs',
+);
+
+foreach ( $aipsc_tables as $aipsc_table ) {
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+    $wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $aipsc_table ) );
+}
 
 // Clear scheduled cron events.
 wp_clear_scheduled_hook( 'aipatch_daily_scan' );
