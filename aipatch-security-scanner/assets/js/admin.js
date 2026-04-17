@@ -131,7 +131,7 @@
             populateRecommendations(data.recommendations);
         } else if (data.has_scan) {
             var ac = $('aipatch-all-clear');
-            if (ac) ac.style.display = '';
+            if (ac) ac.classList.remove('aipatch-hidden');
         }
 
         // Dismissed
@@ -218,7 +218,7 @@
         });
 
         el.innerHTML = html;
-        section.style.display = '';
+        section.classList.remove('aipatch-hidden');
 
         // Bind dismiss buttons
         el.querySelectorAll('[data-dismiss-id]').forEach(function (btn) {
@@ -259,7 +259,7 @@
                 + '</div>';
         });
         list.innerHTML = html;
-        section.style.display = '';
+        section.classList.remove('aipatch-hidden');
 
         list.querySelectorAll('[data-restore-id]').forEach(function (btn) {
             btn.addEventListener('click', function () {
@@ -313,8 +313,8 @@
         // Hide scan panel, show progress
         var panel = $('aipatch-scan-panel');
         var prog  = $('aipatch-scan-progress');
-        if (panel) panel.style.display = 'none';
-        if (prog)  prog.style.display = '';
+        if (panel) panel.classList.add('aipatch-hidden');
+        if (prog)  prog.classList.remove('aipatch-hidden');
 
         // Reset progress
         updateProgressBar(0);
@@ -447,8 +447,8 @@
     function resetScanPanel() {
         var panel = $('aipatch-scan-panel');
         var prog  = $('aipatch-scan-progress');
-        if (panel) panel.style.display = '';
-        if (prog)  prog.style.display = 'none';
+        if (panel) panel.classList.remove('aipatch-hidden');
+        if (prog)  prog.classList.add('aipatch-hidden');
         currentScanId = null;
     }
 
@@ -467,18 +467,18 @@
             .then(function (res) {
                 if (!res.success || !res.data || res.data.length < 2) {
                     // Hide chart section entirely — no blank space
-                    section.style.display = 'none';
+                    section.classList.add('aipatch-hidden');
                     return;
                 }
                 // Show section with animation
-                section.style.display = '';
+                section.classList.remove('aipatch-hidden');
                 requestAnimationFrame(function () {
                     section.classList.add('aipatch-chart-visible');
                 });
                 drawChart(canvas, res.data);
             })
             .catch(function () {
-                section.style.display = 'none';
+                section.classList.add('aipatch-hidden');
             });
     }
 
@@ -681,6 +681,20 @@
     }
 
     /* -----------------------------------------------------------
+     * Clear Logs confirmation
+     * --------------------------------------------------------- */
+
+    function initClearLogs() {
+        var btn = $('aipatch-clear-logs-btn');
+        if (!btn) return;
+        btn.addEventListener('click', function (e) {
+            if (!confirm(i18n.confirmClear)) {
+                e.preventDefault();
+            }
+        });
+    }
+
+    /* -----------------------------------------------------------
      * Init
      * --------------------------------------------------------- */
 
@@ -694,6 +708,7 @@
         addSpinnerStyle();
         initDashboard();
         initScanPanel();
+        initClearLogs();
         initRunPerformance();
         initHardeningToggles();
         initExportButtons();

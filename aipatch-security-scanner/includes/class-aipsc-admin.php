@@ -223,6 +223,7 @@ class AIPSC_Admin {
                 'dismiss'           => __( 'Dismiss', 'aipatch-security-scanner' ),
                 'restore'           => __( 'Restore', 'aipatch-security-scanner' ),
                 'noRecommendations' => __( 'No active recommendations. Your site looks good!', 'aipatch-security-scanner' ),
+                /* translators: %d: Number of dismissed issues. */
                 'dismissedCount'    => __( 'Dismissed Issues (%d)', 'aipatch-security-scanner' ),
                 'stepSoftware'      => __( 'Checking Core & Software...', 'aipatch-security-scanner' ),
                 'stepUsers'         => __( 'Analyzing Users & Access...', 'aipatch-security-scanner' ),

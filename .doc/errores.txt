@@ -1,4 +1,7 @@
-Checks complete. Errors were found.
+FILE: includes/class-aipsc-admin.php
+Line	Column	Type	Code	Message	Edit Link
+226	40	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
 
 FILE: includes/audit/checks/class-check-auto-updates.php
 Line	Column	Type	Code	Message	Edit Link
@@ -37,3 +40,5 @@ FILE: includes/class-aipsc-remediation-engine.php
 Line	Column	Type	Code	Message	Edit Link
 250	13	WARNING	WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber	Incorrect number of replacements passed to $wpdb->prepare(). Found 1 replacement parameters, expected 2.	View in code editor (opens in a new tab)
 251	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$where_sql} at "SELECT * FROM {$wpdb->prefix}aipsc_remediations WHERE {$where_sql} ORDER BY created_at DESC LIMIT %d OFFSET %d"	View in code editor (opens in a new tab)
+
+Thank you for creating with WordPress.Version 6.9.4

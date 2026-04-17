@@ -71,7 +71,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     </div>
 
     <!-- Scan Progress (hidden until scan starts) -->
-    <div class="aipatch-scan-progress" id="aipatch-scan-progress" style="display:none">
+    <div class="aipatch-scan-progress aipatch-hidden" id="aipatch-scan-progress">
         <div class="aipatch-progress-header">
             <div class="aipatch-progress-title-row">
                 <span class="dashicons dashicons-update aipatch-spin" id="aipatch-progress-icon"></span>
@@ -86,7 +86,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     </div>
 
     <!-- Score Trend Chart (hidden until data loaded → slides in) -->
-    <div class="aipatch-section aipatch-chart-section" id="aipatch-chart-section" style="display:none">
+    <div class="aipatch-section aipatch-chart-section aipatch-hidden" id="aipatch-chart-section">
         <div class="aipatch-section-header">
             <h2><?php esc_html_e( 'Score Trend', 'aipatch-security-scanner' ); ?></h2>
             <div class="aipatch-export-buttons">
@@ -98,7 +98,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         </div>
         <div class="aipatch-chart-container">
             <canvas id="aipatch-score-chart" height="200"></canvas>
-            <p class="aipatch-chart-empty" style="display:none;"><?php esc_html_e( 'Run at least 2 scans to see the trend.', 'aipatch-security-scanner' ); ?></p>
+            <p class="aipatch-chart-empty aipatch-hidden"><?php esc_html_e( 'Run at least 2 scans to see the trend.', 'aipatch-security-scanner' ); ?></p>
         </div>
     </div>
 
@@ -106,7 +106,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     <div class="aipatch-cards-grid" id="aipatch-cards-grid">
         <?php for ( $aipsc_i = 0; $aipsc_i < 8; $aipsc_i++ ) : ?>
         <div class="aipatch-card aipatch-card-skeleton">
-            <div class="aipatch-card-icon aipatch-skeleton-pulse" style="width:24px;height:24px;border-radius:4px"></div>
+            <div class="aipatch-card-icon aipatch-skeleton-pulse aipatch-skeleton-icon"></div>
             <div class="aipatch-card-content">
                 <span class="aipatch-card-value"><span class="aipatch-skeleton-text">&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
                 <span class="aipatch-card-label"><span class="aipatch-skeleton-text">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
@@ -116,13 +116,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     </div>
 
     <!-- Recommendations (populated by JS) -->
-    <div class="aipatch-section" id="aipatch-recommendations-section" style="display:none">
+    <div class="aipatch-section aipatch-hidden" id="aipatch-recommendations-section">
         <h2><?php esc_html_e( 'Recommended Actions', 'aipatch-security-scanner' ); ?></h2>
         <div class="aipatch-recommendations" id="aipatch-recommendations"></div>
     </div>
 
     <!-- All Clear (shown by JS when no recommendations) -->
-    <div class="aipatch-section" id="aipatch-all-clear" style="display:none">
+    <div class="aipatch-section aipatch-hidden" id="aipatch-all-clear">
         <div class="aipatch-all-clear">
             <span class="dashicons dashicons-yes-alt"></span>
             <p><?php esc_html_e( 'No active recommendations. Your site looks good!', 'aipatch-security-scanner' ); ?></p>
@@ -130,7 +130,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     </div>
 
     <!-- Dismissed Issues (populated by JS) -->
-    <div class="aipatch-section aipatch-section-collapsed" id="aipatch-dismissed-section" style="display:none">
+    <div class="aipatch-section aipatch-section-collapsed aipatch-hidden" id="aipatch-dismissed-section">
         <h2 id="aipatch-dismissed-title"></h2>
         <div class="aipatch-dismissed-list" id="aipatch-dismissed-list"></div>
     </div>

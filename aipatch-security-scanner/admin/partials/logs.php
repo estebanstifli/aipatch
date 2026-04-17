@@ -86,7 +86,7 @@ $aipsc_base_url = admin_url( 'admin.php?page=aipatch-security-scanner-logs' );
 
         <form method="post" class="aipatch-inline-form">
             <?php wp_nonce_field( 'aipatch_clear_logs', 'aipatch_clear_nonce' ); ?>
-            <button type="submit" name="aipatch_clear_logs" value="1" class="button" onclick="return confirm(aipatchAdmin.i18n.confirmClear);">
+            <button type="submit" name="aipatch_clear_logs" value="1" class="button" id="aipatch-clear-logs-btn">
                 <span class="dashicons dashicons-trash"></span>
                 <?php esc_html_e( 'Clear All Logs', 'aipatch-security-scanner' ); ?>
             </button>

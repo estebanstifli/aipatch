@@ -8,6 +8,10 @@
    Layout & General
    --------------------------------------------------------------- */
 
+.aipatch-hidden {
+    display: none;
+}
+
 .aipatch-wrap {
     max-width: 1200px;
 }
@@ -730,6 +734,12 @@
 
 .aipatch-card-skeleton .aipatch-skeleton-pulse {
     background-color: #e2e4e7;
+}
+
+.aipatch-skeleton-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
 }
 
 /* ---------------------------------------------------------------
