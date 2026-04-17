@@ -1,17 +1,267 @@
-FILE: C:\Users\Esteban\Local Sites\jaja1\app\public\wp-content\plugins\aipatch-security-scanner\includes\class-aipsc-logger.php
-Line	Column	Type	Code	Message
-143	82	ERROR	WordPress.DB.PreparedSQL.NotPrepared	Use placeholders and $wpdb->prepare(); found $order_sql
-163	64	ERROR	WordPress.DB.PreparedSQL.NotPrepared	Use placeholders and $wpdb->prepare(); found $order_sql
-182	62	ERROR	WordPress.DB.PreparedSQL.NotPrepared	Use placeholders and $wpdb->prepare(); found $order_sql
-200	42	ERROR	WordPress.DB.PreparedSQL.NotPrepared	Use placeholders and $wpdb->prepare(); found $order_sql
-142	17	WARNING	WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber	Incorrect number of replacements passed to $wpdb->prepare(). Found 5 replacement parameters, expected 3.
-162	17	WARNING	WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber	Incorrect number of replacements passed to $wpdb->prepare(). Found 4 replacement parameters, expected 2.
-181	17	WARNING	WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber	Incorrect number of replacements passed to $wpdb->prepare(). Found 4 replacement parameters, expected 2.
-199	17	WARNING	WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber	Incorrect number of replacements passed to $wpdb->prepare(). Found 3 replacement parameters, expected 1.
+FILE: includes/audit/checks/class-check-application-passwords.php
+Line	Column	Type	Code	Message	Edit Link
+51	25	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to _n() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
 
-FILE: C:\Users\Esteban\Local Sites\jaja1\app\public\wp-content\plugins\aipatch-security-scanner\includes\class-aipsc-logger.php
+FILE: includes/audit/checks/class-check-auto-updates.php
+Line	Column	Type	Code	Message	Edit Link
+74	25	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+78	25	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-backup-files.php
+Line	Column	Type	Code	Message	Edit Link
+64	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-debug-log.php
+Line	Column	Type	Code	Message	Edit Link
+40	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-file-permissions.php
+Line	Column	Type	Code	Message	Edit Link
+51	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-inactive-admins.php
+Line	Column	Type	Code	Message	Edit Link
+60	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to _n() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+64	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-inactive-plugins.php
+Line	Column	Type	Code	Message	Edit Link
+53	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to _n() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+57	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+74	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-php-version.php
+Line	Column	Type	Code	Message	Edit Link
+37	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-phpinfo.php
+Line	Column	Type	Code	Message	Edit Link
+38	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-plugins-outdated.php
+Line	Column	Type	Code	Message	Edit Link
+53	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to _n() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+57	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-salt-keys.php
+Line	Column	Type	Code	Message	Edit Link
+54	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to _n() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+58	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-security-headers.php
+Line	Column	Type	Code	Message	Edit Link
+62	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to _n() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+66	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-sensitive-files.php
+Line	Column	Type	Code	Message	Edit Link
+50	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to _n() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+54	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-themes-outdated.php
+Line	Column	Type	Code	Message	Edit Link
+47	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to _n() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+51	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-too-many-admins.php
+Line	Column	Type	Code	Message	Edit Link
+37	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-unused-themes.php
+Line	Column	Type	Code	Message	Edit Link
+49	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to _n() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+53	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+70	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-user-id-one.php
+Line	Column	Type	Code	Message	Edit Link
+38	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-wp-version.php
+Line	Column	Type	Code	Message	Edit Link
+50	21	ERROR	WordPress.WP.I18n.MissingTranslatorsComment	A function call to __() with texts containing placeholders was found, but was not accompanied by a "translators:" comment on the line above to clarify the meaning of the placeholders.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+
+FILE: .distignore
 Line	Column	Type	Code	Message
-141	29	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $order_sql used in $wpdb->get_results()\n$order_sql assigned unsafely at line 127.
-161	29	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $order_sql used in $wpdb->get_results()\n$order_sql assigned unsafely at line 127.
-180	29	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $order_sql used in $wpdb->get_results()\n$order_sql assigned unsafely at line 127.
-198	29	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $order_sql used in $wpdb->get_results()\n$order_sql assigned unsafely at line 127.
+0	0	WARNING	hidden_files	Hidden files are not permitted.
+
+FILE: includes/class-aipsc-file-scanner.php
+Line	Column	Type	Code	Message	Edit Link
+354	76	ERROR	WordPress.Security.EscapeOutput.ExceptionNotEscaped	All output should be run through an escaping function (see the Security sections in the WordPress Developer Handbooks), found '$file_path'.
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-auto-updates.php
+Line	Column	Type	Code	Message	Edit Link
+0	0	WARNING	update_modification_detected	Plugin Updater detected.
+Detected code which may be altering WordPress update routines. Detected: auto_update_plugin
+Learn more (opens in a new tab)	View in code editor (opens in a new tab)
+
+FILE: includes/class-aipsc-scanner.php
+Line	Column	Type	Code	Message	Edit Link
+1	1	ERROR	Generic.Files.ByteOrderMark.Found	File contains UTF-8 byte order mark, which may corrupt your application	View in code editor (opens in a new tab)
+
+FILE: includes/class-aipsc-remediation-engine.php
+Line	Column	Type	Code	Message	Edit Link
+465	13	ERROR	WordPress.WP.AlternativeFunctions.file_system_operations_chmod	File operations should use WP_Filesystem methods instead of direct PHP filesystem calls. Found: chmod().	View in code editor (opens in a new tab)
+500	16	ERROR	WordPress.WP.AlternativeFunctions.rename_rename	rename() is discouraged. Use WP_Filesystem::move() to rename a file.	View in code editor (opens in a new tab)
+515	16	ERROR	WordPress.WP.AlternativeFunctions.rename_rename	rename() is discouraged. Use WP_Filesystem::move() to rename a file.	View in code editor (opens in a new tab)
+145	29	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT * FROM {$table} WHERE id = %d LIMIT 1"	View in code editor (opens in a new tab)
+253	13	WARNING	WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber	Incorrect number of replacements passed to $wpdb->prepare(). Found 1 replacement parameters, expected 2.	View in code editor (opens in a new tab)
+254	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT * FROM {$table} WHERE {$where_sql} ORDER BY created_at DESC LIMIT %d OFFSET %d"	View in code editor (opens in a new tab)
+254	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$where_sql} at "SELECT * FROM {$table} WHERE {$where_sql} ORDER BY created_at DESC LIMIT %d OFFSET %d"	View in code editor (opens in a new tab)
+292	13	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT status, COUNT(*) as cnt FROM {$table} GROUP BY status"	View in code editor (opens in a new tab)
+298	13	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT action_type, COUNT(*) as cnt FROM {$table} GROUP BY action_type"	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-auto-updates.php
+Line	Column	Type	Code	Message	Edit Link
+43	75	WARNING	WordPress.PHP.DevelopmentFunctions.error_log_var_export	var_export() found. Debug code should not normally be used in production.	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-cookie-security.php
+Line	Column	Type	Code	Message	Edit Link
+24	66	WARNING	WordPress.PHP.DevelopmentFunctions.error_log_var_export	var_export() found. Debug code should not normally be used in production.	View in code editor (opens in a new tab)
+36	68	WARNING	WordPress.PHP.DevelopmentFunctions.error_log_var_export	var_export() found. Debug code should not normally be used in production.	View in code editor (opens in a new tab)
+48	68	WARNING	WordPress.PHP.DevelopmentFunctions.error_log_var_export	var_export() found. Debug code should not normally be used in production.	View in code editor (opens in a new tab)
+
+FILE: includes/class-aipsc-file-baseline.php
+Line	Column	Type	Code	Message	Edit Link
+81	21	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT id FROM {$table} WHERE file_path = %s LIMIT 1"	View in code editor (opens in a new tab)
+145	46	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT * FROM {$table}"	View in code editor (opens in a new tab)
+213	13	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT origin_type, COUNT(*) as cnt FROM {$table} GROUP BY origin_type"	View in code editor (opens in a new tab)
+218	34	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT COUNT(*) FROM {$table}"	View in code editor (opens in a new tab)
+242	37	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT id, file_path FROM {$table}"	View in code editor (opens in a new tab)
+259	29	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "DELETE FROM {$table} WHERE id IN ({$placeholders})"	View in code editor (opens in a new tab)
+259	29	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$placeholders} at "DELETE FROM {$table} WHERE id IN ({$placeholders})"	View in code editor (opens in a new tab)
+259	81	WARNING	WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare	Replacement variables found, but no valid placeholders found in the query.	View in code editor (opens in a new tab)
+
+FILE: includes/class-aipsc-file-scanner.php
+Line	Column	Type	Code	Message	Edit Link
+331	13	WARNING	WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber	Incorrect number of replacements passed to $wpdb->prepare(). Found 1 replacement parameters, expected 2.	View in code editor (opens in a new tab)
+332	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$where_clause} at "SELECT * FROM {$wpdb->prefix}aipsc_file_scan_results WHERE {$where_clause} ORDER BY risk_score DESC LIMIT %d OFFSET %d"	View in code editor (opens in a new tab)
+515	37	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT file_path, sha256, origin_type, first_seen, last_seen FROM {$table}"	View in code editor (opens in a new tab)
+658	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT file_path, risk_score, classification, signals_json, sha256, file_size FROM {$table} WHERE job_id = %s AND risk_score >= 15"	View in code editor (opens in a new tab)
+702	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT classification, COUNT(*) as cnt FROM {$table} WHERE job_id = %s GROUP BY classification"	View in code editor (opens in a new tab)
+711	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT COUNT(*) as total, MAX(risk_score) as max_risk, AVG(risk_score) as avg_risk FROM {$table} WHERE job_id = %s"	View in code editor (opens in a new tab)
+
+FILE: includes/class-aipsc-findings-store.php
+Line	Column	Type	Code	Message	Edit Link
+58	21	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT id, status FROM {$table} WHERE fingerprint = %s LIMIT 1"	View in code editor (opens in a new tab)
+103	21	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "UPDATE {$table} SET status = 'resolved', resolved_at = %s WHERE status = 'open' AND fingerprint NOT IN ({$placeholders})"	View in code editor (opens in a new tab)
+103	21	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$placeholders} at "UPDATE {$table} SET status = 'resolved', resolved_at = %s WHERE status = 'open' AND fingerprint NOT IN ({$placeholders})"	View in code editor (opens in a new tab)
+162	13	WARNING	WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber	Incorrect number of replacements passed to $wpdb->prepare(). Found 1 replacement parameters, expected 2.	View in code editor (opens in a new tab)
+163	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$where_clause} at "SELECT * FROM {$wpdb->prefix}aipsc_findings WHERE {$where_clause} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d"	View in code editor (opens in a new tab)
+163	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$orderby} at "SELECT * FROM {$wpdb->prefix}aipsc_findings WHERE {$where_clause} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d"	View in code editor (opens in a new tab)
+163	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$order} at "SELECT * FROM {$wpdb->prefix}aipsc_findings WHERE {$where_clause} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d"	View in code editor (opens in a new tab)
+236	13	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT status, COUNT(*) as cnt FROM {$table} GROUP BY status"	View in code editor (opens in a new tab)
+242	13	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT severity, COUNT(*) as cnt FROM {$table} WHERE status = 'open' GROUP BY severity"	View in code editor (opens in a new tab)
+326	21	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT id, status, severity, meta_json FROM {$table} WHERE fingerprint = %s LIMIT 1"	View in code editor (opens in a new tab)
+379	21	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "UPDATE {$table} SET status = 'resolved', resolved_at = %s WHERE status = 'open' AND source = 'file_scanner' AND fingerprint NOT IN ({$placeholders})"	View in code editor (opens in a new tab)
+379	21	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$placeholders} at "UPDATE {$table} SET status = 'resolved', resolved_at = %s WHERE status = 'open' AND source = 'file_scanner' AND fingerprint NOT IN ({$placeholders})"	View in code editor (opens in a new tab)
+388	21	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "UPDATE {$table} SET status = 'resolved', resolved_at = %s WHERE status = 'open' AND source = 'file_scanner'"	View in code editor (opens in a new tab)
+426	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT * FROM {$table} WHERE first_seen >= %s{$source_clause} ORDER BY severity DESC"	View in code editor (opens in a new tab)
+426	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$source_clause} at "SELECT * FROM {$table} WHERE first_seen >= %s{$source_clause} ORDER BY severity DESC"	View in code editor (opens in a new tab)
+435	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT * FROM {$table} WHERE status = 'resolved' AND resolved_at >= %s{$source_clause} ORDER BY severity DESC"	View in code editor (opens in a new tab)
+435	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$source_clause} at "SELECT * FROM {$table} WHERE status = 'resolved' AND resolved_at >= %s{$source_clause} ORDER BY severity DESC"	View in code editor (opens in a new tab)
+
+FILE: includes/class-aipsc-job-manager.php
+Line	Column	Type	Code	Message	Edit Link
+219	13	WARNING	WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber	Incorrect number of replacements passed to $wpdb->prepare(). Found 1 replacement parameters, expected 2.	View in code editor (opens in a new tab)
+279	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT * FROM {$table} WHERE job_id = %s AND status = %s ORDER BY id ASC LIMIT %d"	View in code editor (opens in a new tab)
+296	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "UPDATE {$table} SET status = 'running', attempts = attempts + 1 WHERE id IN ({$placeholders})"	View in code editor (opens in a new tab)
+296	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$placeholders} at "UPDATE {$table} SET status = 'running', attempts = attempts + 1 WHERE id IN ({$placeholders})"	View in code editor (opens in a new tab)
+296	112	WARNING	WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare	Replacement variables found, but no valid placeholders found in the query.	View in code editor (opens in a new tab)
+
+FILE: includes/class-aipsc-vulnerability-cache.php
+Line	Column	Type	Code	Message	Edit Link
+41	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT data_json, expires_at FROM {$table} WHERE slug = %s AND software_type = %s AND provider = %s LIMIT 1"	View in code editor (opens in a new tab)
+83	17	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "DELETE FROM {$table} WHERE slug = %s AND software_type = %s AND provider = %s"	View in code editor (opens in a new tab)
+148	40	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT COUNT(*) FROM {$table}"	View in code editor (opens in a new tab)
+152	29	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT COUNT(*) FROM {$table} WHERE expires_at < %s"	View in code editor (opens in a new tab)
+157	13	WARNING	WordPress.DB.PreparedSQL.InterpolatedNotPrepared	Use placeholders and $wpdb->prepare(); found interpolated variable {$table} at "SELECT provider, COUNT(*) as cnt FROM {$table} GROUP BY provider"	View in code editor (opens in a new tab)
+
+FILE: readme.txt
+Line	Column	Type	Code	Message	Edit Link
+0	0	WARNING	readme_parser_warnings_trimmed_short_description	The "Short Description" section is too long and was truncated. A maximum of 150 characters is supported.	View in code editor (opens in a new tab)
+
+FILE: includes/audit/checks/class-check-application-passwords.php
+Line	Column	Type	Code	Message	Edit Link
+31	49	WARNING	WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound	Hook names invoked by a theme/plugin should start with the theme/plugin prefix. Found: "wp_is_application_passwords_available".	View in code editor (opens in a new tab)
+
+FILE: includes/class-aipsc-file-baseline.php
+Line	Column	Type	Code	Message	Edit Link
+79	32	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_row()	View in code editor (opens in a new tab)
+145	33	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_results()\n$table assigned unsafely at line 142.	View in code editor (opens in a new tab)
+212	29	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_results()\n$table assigned unsafely at line 209.	View in code editor (opens in a new tab)
+218	25	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_var()\n$table assigned unsafely at line 209.	View in code editor (opens in a new tab)
+242	24	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_results()\n$table assigned unsafely at line 239.	View in code editor (opens in a new tab)
+258	29	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->query()\n$table assigned unsafely at line 239.	View in code editor (opens in a new tab)
+
+FILE: includes/class-aipsc-file-scanner.php
+Line	Column	Type	Code	Message	Edit Link
+330	24	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $where_clause used in $wpdb->get_results()\n$where_clause assigned unsafely at line 325.	View in code editor (opens in a new tab)
+515	24	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_results()\n$table assigned unsafely at line 512.	View in code editor (opens in a new tab)
+656	24	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_results()\n$table assigned unsafely at line 653.	View in code editor (opens in a new tab)
+700	28	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_results()\n$table assigned unsafely at line 697.	View in code editor (opens in a new tab)
+709	23	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_row()\n$table assigned unsafely at line 697.	View in code editor (opens in a new tab)
+
+FILE: includes/class-aipsc-findings-store.php
+Line	Column	Type	Code	Message	Edit Link
+56	32	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_row()	View in code editor (opens in a new tab)
+101	47	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->query()	View in code editor (opens in a new tab)
+161	23	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $where_clause used in $wpdb->get_results()\n$where_clause assigned unsafely at line 156.	View in code editor (opens in a new tab)
+235	29	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_results()\n$table assigned unsafely at line 232.	View in code editor (opens in a new tab)
+241	31	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_results()\n$table assigned unsafely at line 232.	View in code editor (opens in a new tab)
+324	32	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_row()	View in code editor (opens in a new tab)
+377	47	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->query()	View in code editor (opens in a new tab)
+386	47	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->query()	View in code editor (opens in a new tab)
+424	23	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_results()\n$table assigned unsafely at line 410.	View in code editor (opens in a new tab)
+433	28	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_results()\n$table assigned unsafely at line 410.	View in code editor (opens in a new tab)
+
+FILE: includes/class-aipsc-job-manager.php
+Line	Column	Type	Code	Message	Edit Link
+218	23	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $where_clause used in $wpdb->get_results()\n$where_clause assigned unsafely at line 213.	View in code editor (opens in a new tab)
+277	25	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_results()\n$table assigned unsafely at line 274.	View in code editor (opens in a new tab)
+294	16	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->query()\n$table assigned unsafely at line 274.	View in code editor (opens in a new tab)
+
+FILE: includes/class-aipsc-remediation-engine.php
+Line	Column	Type	Code	Message	Edit Link
+144	26	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_row()\n$table assigned unsafely at line 141.	View in code editor (opens in a new tab)
+252	23	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_results()\n$table assigned unsafely at line 249.	View in code editor (opens in a new tab)
+291	29	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_results()\n$table assigned unsafely at line 288.	View in code editor (opens in a new tab)
+297	29	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_results()\n$table assigned unsafely at line 288.	View in code editor (opens in a new tab)
+
+FILE: includes/class-aipsc-vulnerability-cache.php
+Line	Column	Type	Code	Message	Edit Link
+39	23	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_row()\n$table assigned unsafely at line 36.	View in code editor (opens in a new tab)
+81	16	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->query()	View in code editor (opens in a new tab)
+148	31	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_var()	View in code editor (opens in a new tab)
+151	33	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_var()	View in code editor (opens in a new tab)
+156	31	WARNING	PluginCheck.Security.DirectDB.UnescapedDBParameter	Unescaped parameter $table used in $wpdb->get_results()	View in code editor (opens in a new tab)

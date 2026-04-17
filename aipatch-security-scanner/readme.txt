@@ -8,7 +8,7 @@ Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Professional security audit engine for WordPress. 36 automated checks, malware file scanning, file integrity baseline, vulnerability intelligence, one-click remediation with rollback, and a full MCP surface for AI security agents.
+Professional security audit engine for WordPress. 36 automated checks, multi-layer malware file scanning with family classification, WordPress core integrity verification, file integrity baseline, vulnerability intelligence, one-click remediation with rollback, and 23 MCP abilities for AI security agents.
 
 == Description ==
 
@@ -19,7 +19,7 @@ Professional security audit engine for WordPress. 36 automated checks, malware f
 Most WordPress security plugins are either too simple to be useful or too heavy to be practical. Aipatch takes a different approach:
 
 * **Audit-first architecture.** Every check is a standalone, testable module that returns structured findings with severity, confidence, evidence, and fingerprints.
-* **Built for automation.** 17 MCP abilities expose the full audit, scanning, and remediation surface to external AI agents — making Aipatch the first WordPress security plugin designed for agentic workflows.
+* **Built for automation.** 23 MCP abilities expose the full audit, scanning, and remediation surface to external AI agents — making Aipatch the first WordPress security plugin designed for agentic workflows.
 * **Zero external dependencies.** Everything runs locally. No accounts, no cloud services, no API keys required.
 * **Reversible by design.** Every automated remediation stores rollback data so you can undo any change with one click.
 
@@ -44,9 +44,9 @@ Every finding includes a severity (critical / high / medium / low / info), confi
 
 A logarithmic scoring engine computes an overall security score and per-area breakdown across six risk dimensions: software, access control, configuration, infrastructure, malware surface, and vulnerability exposure. Severity weights and confidence multipliers ensure the score reflects actual risk, not just issue count.
 
-**Malware File Scanner**
+**Multi-Layer Malware File Scanner**
 
-A heuristic file scanner with 27 detection signatures and Shannon entropy analysis detects:
+A three-layer file scanner (content 55%, context 25%, integrity 20%) with 27 detection signatures, Shannon entropy analysis, and malware family classification detects:
 
 * Code execution patterns: eval(), assert(), create_function(), preg_replace /e
 * System command functions: shell_exec, exec, passthru, backtick operators
@@ -56,6 +56,12 @@ A heuristic file scanner with 27 detection signatures and Shannon entropy analys
 * WordPress-specific threats: unauthorized admin creation, critical option injection, security function removal
 
 Scanning runs in batches via an async job system with configurable batch sizes — safe for shared hosting.
+
+Files are classified into 11 malware families (web shell, obfuscated loader, dropper, persistence backdoor, cloaked PHP, code injector, and more) with confidence scores and remediation hints.
+
+**WordPress Core Integrity Verification**
+
+Verifies every core file against official checksums from api.wordpress.org. Detects modified core files (checksum mismatch), missing core files, and unexpected files planted in wp-admin/ or wp-includes/. Core tampering findings are automatically escalated to critical severity with zero false-positive likelihood.
 
 **File Integrity Baseline**
 
@@ -101,29 +107,49 @@ Built-in performance profiling to identify slow queries, high memory usage, and 
 
 10 authenticated endpoints under the `aipatch-security-scanner/v1` namespace for triggering scans, retrieving summaries, toggling hardening, exporting logs, and running performance diagnostics.
 
-= MCP Surface for AI Agents (17 Abilities) =
+= MCP Surface for AI Agents (23 Abilities) =
 
-Aipatch exposes 17 structured abilities via the WordPress Abilities API — making your site's security surface fully accessible to external AI agents, coding assistants, and orchestration tools:
+Aipatch exposes 23 structured abilities via the WordPress Abilities API — making your site's security surface fully accessible to external AI agents, coding assistants, and orchestration tools:
 
-* **aipatch/audit-site** — Run a full 36-check security audit
-* **aipatch/audit-suspicious** — Scan for suspicious files with configurable scope
-* **aipatch/list-findings** — Query persistent findings with filters
-* **aipatch/findings-stats** — Aggregate finding statistics
-* **aipatch/dismiss-finding** — Dismiss a finding as accepted risk
-* **aipatch/start-file-scan** — Launch an async malware scan job
+**Audit & Scanning**
+
+* **aipatch/audit-site** — Run a full 36-check security audit with scored findings
+* **aipatch/audit-suspicious** — Quick heuristic scan for suspicious files
+* **aipatch/start-file-scan** — Launch an async multi-layer malware scan job
+* **aipatch/process-file-scan-batch** — Process next batch of files in a running scan
 * **aipatch/file-scan-progress** — Check file scan progress
-* **aipatch/file-scan-results** — Retrieve scan results with risk filtering
-* **aipatch/process-file-scan-batch** — Process next batch of files
-* **aipatch/baseline-build** — Build or refresh file integrity baseline
-* **aipatch/baseline-diff** — Compare current files against baseline
-* **aipatch/baseline-stats** — Baseline statistics
-* **aipatch/list-jobs** — List scan/audit jobs
+* **aipatch/file-scan-results** — Retrieve enriched scan results with family, reasons, layer scores
+* **aipatch/get-scan-summary** — Comprehensive latest scan summary with classification breakdown
+* **aipatch/list-suspicious-files** — List suspicious files from latest scan (no job_id needed)
+
+**Integrity & Baseline**
+
+* **aipatch/verify-core-integrity** — Verify WP core files against official api.wordpress.org checksums
+* **aipatch/baseline-build** — Build or refresh the known-good file hash baseline
+* **aipatch/baseline-diff** — Compare current filesystem against stored baseline
+* **aipatch/baseline-stats** — Baseline statistics by origin type
+* **aipatch/get-baseline-drift** — Combined baseline drift + core integrity report
+
+**Findings & Monitoring**
+
+* **aipatch/list-findings** — Query persistent findings with status/severity/category filters
+* **aipatch/findings-stats** — Aggregate finding statistics
+* **aipatch/findings-diff** — New and resolved findings since a point in time
+* **aipatch/get-file-finding-detail** — Single finding with decoded metadata, layer scores, family
+* **aipatch/dismiss-finding** — Dismiss a finding as accepted risk
+
+**Remediation**
+
 * **aipatch/apply-remediation** — Apply a security fix with rollback support
 * **aipatch/rollback-remediation** — Undo a previously applied fix
-* **aipatch/list-remediations** — List remediation history
-* **aipatch/get-async-job-status** — Check async job status
+* **aipatch/list-remediations** — List remediation history with filters
 
-All abilities include typed input/output schemas, permission checks, and structured error responses.
+**Jobs & Status**
+
+* **aipatch/list-jobs** — List scan/audit jobs with filters
+* **aipatch/get-async-job-status** — Check async job status and retrieve results
+
+20 abilities are read-only; only 3 (dismiss, apply-remediation, rollback) modify site state. All abilities include typed input/output schemas, permission checks (`manage_options`), and structured error responses.
 
 = What Aipatch Does NOT Do =
 
@@ -157,7 +183,7 @@ No. Everything runs locally with zero external dependencies. The vulnerability p
 
 = Can Aipatch detect malware? =
 
-Yes. The heuristic file scanner uses 27 detection signatures covering code execution, obfuscation, backdoor patterns, and WordPress-specific threats, plus Shannon entropy analysis for encoded payloads. Files are classified as clean, suspicious, risky, or malicious with a 0–100 risk score.
+Yes. The multi-layer file scanner uses 27 detection signatures covering code execution, obfuscation, backdoor patterns, and WordPress-specific threats, plus Shannon entropy analysis for encoded payloads. Files are classified as clean, suspicious, risky, or malicious with a 0–100 risk score and assigned to one of 11 malware families (web shell, obfuscated loader, dropper, backdoor, etc.) with confidence levels. WordPress core files are additionally verified against official checksums from api.wordpress.org.
 
 = What happens if a remediation breaks something? =
 
@@ -169,7 +195,7 @@ Yes. Aipatch focuses on auditing, scanning, and remediation — not request filt
 
 = What is the MCP surface? =
 
-MCP (Model Context Protocol) is the standard for AI agents to interact with tools. Aipatch exposes 17 structured abilities via the WordPress Abilities API, allowing AI agents to audit your site, scan for malware, manage findings, and apply fixes — all through typed, permissioned tool calls.
+MCP (Model Context Protocol) is the standard for AI agents to interact with tools. Aipatch exposes 23 structured abilities via the WordPress Abilities API, allowing AI agents to audit your site, scan for malware, verify core integrity, track findings over time, and apply fixes — all through typed, permissioned tool calls. 20 are read-only; only 3 modify site state.
 
 = What data does it store? =
 
@@ -202,7 +228,9 @@ PHP 7.4 or higher. WordPress 6.5 or higher.
 * Persistent findings store with deduplication, automatic resolution, and dismissal tracking.
 * Vulnerability intelligence caching layer with decorator pattern.
 * One-click remediation engine with full rollback support (6 action types).
-* 17 MCP abilities via WordPress Abilities API for AI agent integration.
+* 23 MCP abilities via WordPress Abilities API for AI agent integration.
+* WordPress core integrity verification against official api.wordpress.org checksums.
+* Multi-layer scoring engine (content 55%, context 25%, integrity 20%) with 11 malware family classification.
 * 7 new database tables (9 total) for jobs, findings, baselines, scan results, vulnerability cache, and remediations.
 * New audit checks: cookie security, backup files, phpinfo exposure, CORS, uploads index, login URL, database credentials.
 * Hardening: added author scanning protection.
@@ -225,7 +253,7 @@ PHP 7.4 or higher. WordPress 6.5 or higher.
 == Upgrade Notice ==
 
 = 1.0.2 =
-Major upgrade: 36 audit checks, malware file scanner, file integrity baseline, remediation engine with rollback, and 17 MCP abilities for AI agents. Database will be upgraded automatically.
+Major upgrade: 36 audit checks, multi-layer malware file scanner with family classification, WordPress core integrity verification, file integrity baseline, remediation engine with rollback, and 23 MCP abilities for AI agents. Database will be upgraded automatically.
 
 = 1.0.1 =
 Maintenance release for WordPress.org submission updates.

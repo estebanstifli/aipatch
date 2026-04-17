@@ -1013,7 +1013,6 @@ class AIPSC_Abilities {
                     'max_files'  => array( 'type' => 'integer', 'default' => 10000 ),
                 ),
                 'callback'    => 'execute_start_file_scan',
-                'readonly'    => false,
             ),
             array(
                 'name'        => 'aipatch/file-scan-progress',
@@ -1044,7 +1043,6 @@ class AIPSC_Abilities {
                     'batch_size' => array( 'type' => 'integer', 'default' => 50, 'minimum' => 1, 'maximum' => 200 ),
                 ),
                 'callback'    => 'execute_process_file_scan_batch',
-                'readonly'    => false,
             ),
             array(
                 'name'        => 'aipatch/baseline-build',
@@ -1052,7 +1050,6 @@ class AIPSC_Abilities {
                 'description' => __( 'Build or refresh the known-good file hash baseline.', 'aipatch-security-scanner' ),
                 'input'       => array(),
                 'callback'    => 'execute_baseline_build',
-                'readonly'    => false,
             ),
             array(
                 'name'        => 'aipatch/baseline-diff',
