@@ -58,6 +58,11 @@ class AIPSC_File_Scanner {
     private $baseline;
 
     /**
+     * @var AIPSC_Findings_Store|null
+     */
+    private $findings_store;
+
+    /**
      * Baseline index cache (loaded once per batch).
      *
      * @var array<string, array>|null
@@ -67,14 +72,16 @@ class AIPSC_File_Scanner {
     /**
      * Constructor.
      *
-     * @param AIPSC_Job_Manager        $job_manager Job manager instance.
-     * @param AIPSC_Logger             $logger      Logger instance.
-     * @param AIPSC_File_Baseline|null $baseline    Optional baseline for integrity checks.
+     * @param AIPSC_Job_Manager        $job_manager     Job manager instance.
+     * @param AIPSC_Logger             $logger          Logger instance.
+     * @param AIPSC_File_Baseline|null $baseline        Optional baseline for integrity checks.
+     * @param AIPSC_Findings_Store|null $findings_store Optional findings store for persistence.
      */
-    public function __construct( AIPSC_Job_Manager $job_manager, AIPSC_Logger $logger, $baseline = null ) {
-        $this->job_manager = $job_manager;
-        $this->logger      = $logger;
-        $this->baseline    = $baseline;
+    public function __construct( AIPSC_Job_Manager $job_manager, AIPSC_Logger $logger, $baseline = null, $findings_store = null ) {
+        $this->job_manager    = $job_manager;
+        $this->logger         = $logger;
+        $this->baseline       = $baseline;
+        $this->findings_store = $findings_store;
     }
 
     /**
@@ -560,19 +567,79 @@ class AIPSC_File_Scanner {
     private function finalise_job( $job_id ) {
         $stats = $this->compute_stats( $job_id );
 
+        // Sync relevant file results into persistent findings store.
+        $findings_sync = $this->sync_findings_for_job( $job_id );
+        if ( ! empty( $findings_sync ) ) {
+            $stats['findings_sync'] = $findings_sync;
+        }
+
         $this->job_manager->complete( $job_id, $stats );
 
         $this->logger->info(
             'file_scan',
             sprintf(
-                'File scan completed: %s — %d files, %d suspicious, %d risky, %d malicious.',
+                'File scan completed: %s — %d files, %d suspicious, %d risky, %d malicious. Findings: %d new, %d updated, %d resolved.',
                 $job_id,
                 $stats['total_files'],
                 $stats['by_classification']['suspicious'],
                 $stats['by_classification']['risky'],
-                $stats['by_classification']['malicious']
+                $stats['by_classification']['malicious'],
+                isset( $findings_sync['inserted'] ) ? $findings_sync['inserted'] : 0,
+                isset( $findings_sync['updated'] ) ? $findings_sync['updated'] : 0,
+                isset( $findings_sync['resolved'] ) ? $findings_sync['resolved'] : 0
             )
         );
+    }
+
+    /**
+     * Sync file scan results into the persistent findings store.
+     *
+     * Reads all results for the job with risk_score >= 15, decodes their
+     * enriched data, and feeds them into the findings store for deduplication
+     * and tracking.
+     *
+     * @param string $job_id Job UUID.
+     * @return array Sync statistics or empty array if store unavailable.
+     */
+    private function sync_findings_for_job( $job_id ) {
+        if ( null === $this->findings_store ) {
+            return array();
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'aipsc_file_scan_results';
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT file_path, risk_score, classification, signals_json, sha256, file_size FROM {$table} WHERE job_id = %s AND risk_score >= 15",
+                $job_id
+            )
+        );
+
+        if ( empty( $rows ) ) {
+            // No findings — still call sync to auto-resolve previously open file_scanner findings.
+            return $this->findings_store->sync_file_findings( array(), $job_id );
+        }
+
+        $file_results = array();
+        foreach ( $rows as $row ) {
+            $enriched = ! empty( $row->signals_json ) ? json_decode( $row->signals_json, true ) : array();
+            if ( ! is_array( $enriched ) ) {
+                $enriched = array();
+            }
+
+            // Merge DB-level fields with decoded enriched data.
+            $file_results[] = array_merge( $enriched, array(
+                'file_path'      => $row->file_path,
+                'risk_score'     => (int) $row->risk_score,
+                'classification' => $row->classification,
+                'sha256'         => $row->sha256,
+                'file_size'      => (int) $row->file_size,
+            ) );
+        }
+
+        return $this->findings_store->sync_file_findings( $file_results, $job_id );
     }
 
     /**

@@ -278,6 +278,173 @@ class AIPSC_Findings_Store {
     }
 
     /* ---------------------------------------------------------------
+     * File Scanner Sync
+     * ------------------------------------------------------------- */
+
+    /**
+     * Synchronise file scanner results into persistent findings.
+     *
+     * Each file with risk_score >= 15 becomes one finding. Deduplication
+     * is by file path fingerprint. Only source='file_scanner' findings
+     * are auto-resolved, preserving audit-engine findings.
+     *
+     * @param array  $file_results Array of enriched file result arrays.
+     *               Each must contain at minimum: file_path, risk_score,
+     *               risk_level/classification, and optionally the full
+     *               enriched data from signals_json.
+     * @param string $job_id       Current job ID (stored in meta).
+     * @return array{ inserted: int, updated: int, resolved: int, unchanged: int }
+     */
+    public function sync_file_findings( array $file_results, $job_id = '' ) {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'aipsc_findings';
+        $now   = current_time( 'mysql', true );
+        $stats = array( 'inserted' => 0, 'updated' => 0, 'resolved' => 0, 'unchanged' => 0 );
+
+        $seen_fingerprints = array();
+
+        foreach ( $file_results as $fr ) {
+            $score = isset( $fr['risk_score'] ) ? (int) $fr['risk_score'] : 0;
+
+            // Only persist actionable findings.
+            if ( $score < 15 ) {
+                continue;
+            }
+
+            $file_path   = isset( $fr['file_path'] ) ? $fr['file_path'] : '';
+            $fingerprint = hash( 'sha256', 'file_scan:' . $file_path );
+
+            $seen_fingerprints[] = $fingerprint;
+
+            // Build the finding data from the file scan result.
+            $data = $this->file_result_to_row( $fr, $fingerprint, $job_id, $now );
+
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $existing = $wpdb->get_row(
+                $wpdb->prepare(
+                    "SELECT id, status, severity, meta_json FROM {$table} WHERE fingerprint = %s LIMIT 1",
+                    $fingerprint
+                )
+            );
+
+            if ( $existing ) {
+                $update = array(
+                    'last_seen'       => $now,
+                    'severity'        => $data['severity'],
+                    'confidence'      => $data['confidence'],
+                    'description'     => $data['description'],
+                    'why_it_matters'  => $data['why_it_matters'],
+                    'recommendation'  => $data['recommendation'],
+                    'evidence'        => $data['evidence'],
+                    'meta_json'       => $data['meta_json'],
+                    'title'           => $data['title'],
+                    'category'        => $data['category'],
+                    'false_positive_likelihood' => $data['false_positive_likelihood'],
+                );
+
+                // Reopen resolved findings that reappear.
+                if ( self::STATUS_RESOLVED === $existing->status ) {
+                    $update['status']      = self::STATUS_OPEN;
+                    $update['resolved_at'] = null;
+                    $stats['updated']++;
+                } else {
+                    // Check if anything material changed.
+                    $old_severity = $existing->severity;
+                    if ( $old_severity !== $data['severity'] ) {
+                        $stats['updated']++;
+                    } else {
+                        $stats['unchanged']++;
+                    }
+                }
+
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                $wpdb->update( $table, $update, array( 'id' => $existing->id ) );
+            } else {
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+                $wpdb->insert( $table, $data );
+                $stats['inserted']++;
+            }
+        }
+
+        // Auto-resolve file_scanner findings NOT in current scan.
+        // Scoped to source = 'file_scanner' to avoid touching audit-engine findings.
+        if ( ! empty( $seen_fingerprints ) ) {
+            $placeholders = implode( ',', array_fill( 0, count( $seen_fingerprints ), '%s' ) );
+            $values       = array_merge( array( $now ), $seen_fingerprints );
+
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            $stats['resolved'] = (int) $wpdb->query(
+                $wpdb->prepare(
+                    "UPDATE {$table} SET status = 'resolved', resolved_at = %s WHERE status = 'open' AND source = 'file_scanner' AND fingerprint NOT IN ({$placeholders})",
+                    $values
+                )
+            );
+        } else {
+            // No findings at all — resolve all open file_scanner findings.
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $stats['resolved'] = (int) $wpdb->query(
+                $wpdb->prepare(
+                    "UPDATE {$table} SET status = 'resolved', resolved_at = %s WHERE status = 'open' AND source = 'file_scanner'",
+                    $now
+                )
+            );
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Get findings diff relative to a point in time.
+     *
+     * Returns findings grouped as new, resolved, or changed since
+     * the given timestamp.
+     *
+     * @param string $since    Datetime string (UTC).
+     * @param string $source   Optional source filter (e.g. 'file_scanner').
+     * @return array{ new: array, resolved: array, risk_increased: array, risk_decreased: array }
+     */
+    public function diff_since( $since, $source = '' ) {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'aipsc_findings';
+
+        $source_clause = '';
+        $values_new    = array( $since );
+        $values_res    = array( $since );
+
+        if ( '' !== $source ) {
+            $source_clause = ' AND source = %s';
+            $values_new[]  = $source;
+            $values_res[]  = $source;
+        }
+
+        // New findings: first_seen >= $since.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $new = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM {$table} WHERE first_seen >= %s{$source_clause} ORDER BY severity DESC",
+                $values_new
+            )
+        );
+
+        // Resolved findings: resolved_at >= $since.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $resolved = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM {$table} WHERE status = 'resolved' AND resolved_at >= %s{$source_clause} ORDER BY severity DESC",
+                $values_res
+            )
+        );
+
+        return array(
+            'new'      => $new,
+            'resolved' => $resolved,
+            'since'    => $since,
+        );
+    }
+
+    /* ---------------------------------------------------------------
      * Internal
      * ------------------------------------------------------------- */
 
@@ -305,6 +472,107 @@ class AIPSC_Findings_Store {
             'meta_json'               => wp_json_encode( $result->get_meta() ),
             'fixable'                 => $result->is_fixable() ? 1 : 0,
             'false_positive_likelihood' => $result->get_false_positive_likelihood(),
+            'first_seen'              => $now,
+            'last_seen'               => $now,
+        );
+    }
+
+    /**
+     * Convert a file scanner result array to a findings DB row.
+     *
+     * @param array  $fr          Enriched file result (decoded signals_json + file_path + risk_score).
+     * @param string $fingerprint Pre-computed fingerprint.
+     * @param string $job_id      Job ID for tracking.
+     * @param string $now         Current datetime.
+     * @return array
+     */
+    private function file_result_to_row( array $fr, $fingerprint, $job_id, $now ) {
+        $file_path   = isset( $fr['file_path'] ) ? $fr['file_path'] : '';
+        $risk_score  = isset( $fr['risk_score'] ) ? (int) $fr['risk_score'] : 0;
+        $risk_level  = isset( $fr['risk_level'] ) ? $fr['risk_level'] : 'suspicious';
+        $family      = isset( $fr['family'] ) ? $fr['family'] : '';
+        $family_label = isset( $fr['family_label'] ) ? $fr['family_label'] : '';
+        $family_confidence = isset( $fr['family_confidence'] ) ? $fr['family_confidence'] : 'low';
+        $remediation = isset( $fr['remediation_hint'] ) ? $fr['remediation_hint'] : '';
+        $matched_rules = isset( $fr['matched_rules'] ) ? $fr['matched_rules'] : array();
+        $reasons     = isset( $fr['reasons'] ) ? $fr['reasons'] : array();
+        $sha256      = isset( $fr['sha256'] ) ? $fr['sha256'] : '';
+
+        // Severity from risk_level.
+        $severity_map = array(
+            'malicious'  => 'critical',
+            'risky'      => 'high',
+            'suspicious' => 'medium',
+        );
+        $severity = isset( $severity_map[ $risk_level ] ) ? $severity_map[ $risk_level ] : 'medium';
+
+        // FP likelihood from family confidence (inverse).
+        $fp_map = array(
+            'high'   => 'none',
+            'medium' => 'low',
+            'low'    => 'medium',
+            'none'   => 'high',
+        );
+        $fp_likelihood = isset( $fp_map[ $family_confidence ] ) ? $fp_map[ $family_confidence ] : 'low';
+
+        // Title.
+        $title = $family_label
+            ? sprintf( '%s — %s', $family_label, $file_path )
+            : sprintf( 'Suspicious file — %s', $file_path );
+
+        // Category from family or fallback.
+        $category = ! empty( $family ) ? $family : 'file_scan';
+
+        // Description.
+        $description = ! empty( $reasons )
+            ? implode( '; ', array_slice( $reasons, 0, 5 ) )
+            : sprintf( 'File scored %d/100 in risk analysis.', $risk_score );
+
+        $why_it_matters = 'malicious' === $risk_level
+            ? 'This file shows strong indicators of malicious code and may actively compromise the site.'
+            : ( 'risky' === $risk_level
+                ? 'This file contains patterns commonly associated with backdoors or malware.'
+                : 'This file contains suspicious patterns that warrant manual review.' );
+
+        // Evidence: top matched rules.
+        $evidence = ! empty( $matched_rules )
+            ? implode( ', ', array_slice( $matched_rules, 0, 10 ) )
+            : '';
+
+        // Meta: everything useful for UI/MCP.
+        $meta = array(
+            'job_id'            => $job_id,
+            'file_path'         => $file_path,
+            'risk_score'        => $risk_score,
+            'risk_level'        => $risk_level,
+            'family'            => $family,
+            'family_label'      => $family_label,
+            'family_confidence' => $family_confidence,
+            'sha256'            => $sha256,
+            'matched_rules'     => $matched_rules,
+            'context_flags'     => isset( $fr['context_flags'] ) ? $fr['context_flags'] : array(),
+            'integrity_flags'   => isset( $fr['integrity_flags'] ) ? $fr['integrity_flags'] : array(),
+            'layer_scores'      => isset( $fr['layer_scores'] ) ? $fr['layer_scores'] : array(),
+            'is_new'            => ! empty( $fr['is_new'] ),
+            'is_modified'       => ! empty( $fr['is_modified'] ),
+        );
+
+        return array(
+            'finding_id'              => 'file_scan:' . $file_path,
+            'fingerprint'             => $fingerprint,
+            'title'                   => $title,
+            'severity'                => $severity,
+            'confidence'              => $family_confidence ?: 'low',
+            'category'                => $category,
+            'status'                  => self::STATUS_OPEN,
+            'source'                  => 'file_scanner',
+            'description'             => $description,
+            'why_it_matters'          => $why_it_matters,
+            'recommendation'          => $remediation ?: 'Review this file manually and delete if it is not part of a known plugin or theme.',
+            'evidence'                => $evidence,
+            'meta_json'               => wp_json_encode( $meta ),
+            'fixable'                 => 0,
+            'false_positive_likelihood' => $fp_likelihood,
             'first_seen'              => $now,
             'last_seen'               => $now,
         );

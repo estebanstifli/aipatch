@@ -1111,6 +1111,16 @@ class AIPSC_Abilities {
                 ),
                 'callback'    => 'execute_list_remediations',
             ),
+            array(
+                'name'        => 'aipatch/findings-diff',
+                'label'       => __( 'Findings Diff', 'aipatch-security-scanner' ),
+                'description' => __( 'Compare findings since a point in time: new findings, resolved findings. Useful to see what changed between scans.', 'aipatch-security-scanner' ),
+                'input'       => array(
+                    'since'  => array( 'type' => 'string', 'description' => 'UTC datetime (Y-m-d H:i:s). Defaults to 24 hours ago.' ),
+                    'source' => array( 'type' => 'string', 'description' => 'Filter by source: file_scanner, scanner, or empty for all.' ),
+                ),
+                'callback'    => 'execute_findings_diff',
+            ),
         );
 
         foreach ( $abilities as $ability ) {
@@ -1183,6 +1193,41 @@ class AIPSC_Abilities {
             return new WP_Error( 'aipatch_module_unavailable', 'Findings store not available.', array( 'status' => 400 ) );
         }
         return array( 'success' => true, 'stats' => $this->findings_store->stats() );
+    }
+
+    /**
+     * Findings diff since a point in time.
+     *
+     * @param array $input Input.
+     * @return array|WP_Error
+     */
+    public function execute_findings_diff( $input = array() ) {
+        if ( ! $this->findings_store ) {
+            return new WP_Error( 'aipatch_module_unavailable', 'Findings store not available.', array( 'status' => 400 ) );
+        }
+        $input  = is_array( $input ) ? $input : array();
+        $since  = isset( $input['since'] ) ? sanitize_text_field( $input['since'] ) : '';
+        $source = isset( $input['source'] ) ? sanitize_key( $input['source'] ) : '';
+
+        if ( empty( $since ) ) {
+            $since = gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS );
+        }
+
+        $diff = $this->findings_store->diff_since( $since, $source );
+
+        return array(
+            'success' => true,
+            'since'   => $since,
+            'source'  => $source,
+            'new'     => array(
+                'count'    => count( $diff['new'] ),
+                'findings' => $diff['new'],
+            ),
+            'resolved' => array(
+                'count'    => count( $diff['resolved'] ),
+                'findings' => $diff['resolved'],
+            ),
+        );
     }
 
     /**
