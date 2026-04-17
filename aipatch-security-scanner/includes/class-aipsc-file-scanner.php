@@ -25,7 +25,17 @@ class AIPSC_File_Scanner {
      *
      * @var string[]
      */
-    private static $default_extensions = array( 'php', 'phtml', 'php5', 'php7', 'pht', 'phps', 'shtml' );
+    private static $default_extensions = array( 'php', 'phtml', 'phar', 'php5', 'php7', 'pht', 'phps', 'shtml' );
+
+    /**
+     * Non-PHP extensions to also scan inside uploads (hidden PHP detection).
+     *
+     * @var string[]
+     */
+    private static $uploads_extra_extensions = array(
+        'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'ico', 'svg',
+        'htm', 'html', 'css', 'js', 'txt', 'xml', 'json',
+    );
 
     /**
      * Max file size to read (2 MB).
@@ -82,10 +92,11 @@ class AIPSC_File_Scanner {
      */
     public function start( array $options = array() ) {
         $defaults = array(
-            'root'       => ABSPATH,
-            'extensions' => self::$default_extensions,
-            'exclude'    => array( 'node_modules', '.git', 'vendor', 'cache' ),
-            'max_files'  => 50000,
+            'root'          => ABSPATH,
+            'extensions'    => self::$default_extensions,
+            'exclude'       => array( 'node_modules', '.git', 'vendor', 'cache' ),
+            'max_files'     => 50000,
+            'scan_uploads'  => true,
         );
         $options = wp_parse_args( $options, $defaults );
 
@@ -95,6 +106,28 @@ class AIPSC_File_Scanner {
             $options['exclude'],
             $options['max_files']
         );
+
+        // Also enumerate non-PHP files in uploads for hidden PHP detection.
+        if ( $options['scan_uploads'] ) {
+            $upload_info = wp_upload_dir();
+            $uploads_dir = isset( $upload_info['basedir'] ) ? $upload_info['basedir'] : '';
+
+            if ( '' !== $uploads_dir && is_dir( $uploads_dir ) ) {
+                $remaining = $options['max_files'] > 0
+                    ? max( 0, $options['max_files'] - count( $files ) )
+                    : 0;
+
+                if ( 0 === $options['max_files'] || $remaining > 0 ) {
+                    $uploads_files = $this->enumerate_files(
+                        $uploads_dir,
+                        self::$uploads_extra_extensions,
+                        $options['exclude'],
+                        $remaining
+                    );
+                    $files = array_unique( array_merge( $files, $uploads_files ) );
+                }
+            }
+        }
 
         if ( empty( $files ) ) {
             $this->logger->warning( 'file_scan', 'No scannable files found.' );
@@ -317,8 +350,16 @@ class AIPSC_File_Scanner {
         $sha256   = hash( 'sha256', $content );
         $relative = $this->relative_path( $file_path );
 
-        // Heuristic signals.
-        $signals = AIPSC_File_Heuristics::analyse( $content, $relative );
+        // Determine analysis method based on file extension.
+        $ext    = strtolower( pathinfo( $file_path, PATHINFO_EXTENSION ) );
+        $is_php = in_array( $ext, self::$default_extensions, true );
+
+        // Heuristic signals (full analysis for PHP, hidden-PHP check for other files).
+        if ( $is_php ) {
+            $signals = AIPSC_File_Heuristics::analyse( $content, $relative );
+        } else {
+            $signals = AIPSC_File_Heuristics::analyse_non_php( $content, $relative );
+        }
 
         // Integrity info from baseline.
         $integrity_info = $this->get_integrity_info( $relative, $sha256 );

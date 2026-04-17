@@ -278,6 +278,85 @@ class AIPSC_File_Heuristics {
     }
 
     /**
+     * Analyse a non-PHP file for hidden PHP code.
+     *
+     * Used to detect PHP code embedded in files with non-PHP extensions
+     * (e.g., PHP inside .jpg, .png, .ico files in uploads).
+     *
+     * @param string $content File content.
+     * @param string $path    Relative file path (for context).
+     * @return array Array of signal arrays (same format as analyse()).
+     */
+    public static function analyse_non_php( $content, $path = '' ) {
+        $signals = array();
+
+        // ── Detect PHP opening tags ──────────────────────────────
+        $php_tag_checks = array(
+            'hidden_php_full_tag' => array(
+                'pattern'     => '/<\?php\b/i',
+                'weight'      => 9,
+                'label'       => 'PHP opening tag in non-PHP file',
+                'description' => '<?php tag found inside a non-PHP file.',
+            ),
+            'hidden_php_short_echo' => array(
+                'pattern'     => '/<\?=/',
+                'weight'      => 8,
+                'label'       => 'PHP short echo tag in non-PHP file',
+                'description' => '<?= short echo tag found inside a non-PHP file.',
+            ),
+            'hidden_php_short_tag' => array(
+                'pattern'     => '/<\?\s+(?:\$|echo|print|if|for|while|function|class|return|eval|assert)\b/',
+                'weight'      => 8,
+                'label'       => 'PHP short open tag in non-PHP file',
+                'description' => 'PHP short open tag followed by PHP keyword.',
+            ),
+        );
+
+        $has_php = false;
+
+        foreach ( $php_tag_checks as $sig_id => $sig ) {
+            if ( preg_match( $sig['pattern'], $content, $match, PREG_OFFSET_CAPTURE ) ) {
+                $offset  = $match[0][1];
+                $line    = substr_count( $content, "\n", 0, $offset ) + 1;
+                $snippet = self::extract_snippet( $content, $offset );
+
+                $signals[] = array(
+                    'sig_id'      => $sig_id,
+                    'label'       => $sig['label'],
+                    'weight'      => $sig['weight'],
+                    'description' => $sig['description'],
+                    'tags'        => array( 'hidden_php', 'dangerous' ),
+                    'line'        => $line,
+                    'snippet'     => $snippet,
+                    'occurrences' => 1,
+                );
+
+                $has_php = true;
+            }
+        }
+
+        // If PHP code detected, run full signature analysis on the content.
+        if ( $has_php ) {
+            $full_signals = self::analyse( $content, $path );
+            foreach ( $full_signals as $sig ) {
+                if ( ! in_array( 'hidden_php', $sig['tags'], true ) ) {
+                    $sig['tags'][] = 'hidden_php';
+                }
+                $signals[] = $sig;
+            }
+        } else {
+            // Even without PHP tags, check for high entropy (encoded payloads).
+            $entropy_signal = self::check_entropy( $content );
+            if ( $entropy_signal ) {
+                $entropy_signal['tags'][] = 'hidden_php';
+                $signals[] = $entropy_signal;
+            }
+        }
+
+        return $signals;
+    }
+
+    /**
      * Shannon entropy check for the file.
      *
      * @param string $content File content.

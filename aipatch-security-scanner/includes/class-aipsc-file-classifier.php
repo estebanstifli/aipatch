@@ -52,6 +52,8 @@ class AIPSC_File_Classifier {
         array( 'tags' => array( 'exec', 'write' ),                  'bonus' => 10, 'reason' => 'Execution + file writes (dropper)' ),
         array( 'tags' => array( 'obfuscation', 'write', 'exec' ),   'bonus' => 18, 'reason' => 'Obfuscated dropper with execution' ),
         array( 'tags' => array( 'backdoor' ),                       'bonus' => 15, 'reason' => 'Backdoor signature' ),
+        array( 'tags' => array( 'hidden_php', 'exec' ),             'bonus' => 20, 'reason' => 'Hidden PHP with code execution' ),
+        array( 'tags' => array( 'hidden_php', 'obfuscation' ),      'bonus' => 18, 'reason' => 'Hidden PHP with obfuscation' ),
     );
 
     /* ---------------------------------------------------------------
@@ -83,18 +85,24 @@ class AIPSC_File_Classifier {
         '#/(?:phpunit|codeception|behat|phpstan|psalm)#i',
     );
 
+    /** PHP-executable extensions. */
+    private static $php_extensions = array( 'php', 'phtml', 'phar', 'php5', 'php7', 'pht', 'phps', 'shtml', 'cgi' );
+
     /* ---------------------------------------------------------------
      * Family guess mapping.
      * ------------------------------------------------------------- */
 
     private static $family_map = array(
-        'web_shell_keywords'    => 'webshell',
-        'superglobal_exec'      => 'backdoor',
-        'hidden_iframe'         => 'injector',
-        'wp_unauthorized_admin' => 'backdoor',
-        'wp_option_injection'   => 'injector',
-        'disable_security'      => 'backdoor',
-        'gzinflate_obfusc'      => 'obfuscated-payload',
+        'web_shell_keywords'      => 'webshell',
+        'superglobal_exec'        => 'backdoor',
+        'hidden_iframe'           => 'injector',
+        'wp_unauthorized_admin'   => 'backdoor',
+        'wp_option_injection'     => 'injector',
+        'disable_security'        => 'backdoor',
+        'gzinflate_obfusc'        => 'obfuscated-payload',
+        'hidden_php_full_tag'     => 'cloaked-php',
+        'hidden_php_short_echo'   => 'cloaked-php',
+        'hidden_php_short_tag'    => 'cloaked-php',
     );
 
     /* ---------------------------------------------------------------
@@ -319,44 +327,95 @@ class AIPSC_File_Classifier {
         $basename  = basename( $path );
         $extension = strtolower( pathinfo( $path, PATHINFO_EXTENSION ) );
 
-        // ── Path location ──
-        if ( false !== strpos( $path, '/uploads/' ) ) {
-            $score    += 40;
-            $flags[]   = 'php_in_uploads';
-            $reasons[] = 'PHP file inside uploads directory';
-        }
+        $in_uploads = self::is_in_uploads( $path );
+        $is_php_ext = in_array( $extension, self::$php_extensions, true );
 
-        if ( preg_match( '#^wp-(includes|admin)/#', $path ) && ! empty( $signals ) ) {
-            $score    += 20;
-            $flags[]   = 'suspicious_in_core';
-            $reasons[] = 'Suspicious signals in WordPress core path';
-        }
+        // ── Uploads-specific scoring ──
+        if ( $in_uploads ) {
+            // Check if signals contain hidden_php tags (non-PHP file with PHP inside).
+            $has_hidden_php = false;
+            foreach ( $signals as $s ) {
+                if ( in_array( 'hidden_php', isset( $s['tags'] ) ? $s['tags'] : array(), true ) ) {
+                    $has_hidden_php = true;
+                    break;
+                }
+            }
 
-        // Root-level PHP files that aren't standard WP files.
-        if ( ! preg_match( '#/#', $path ) && ! self::is_known_root_file( $basename ) ) {
-            $score    += 15;
-            $flags[]   = 'unknown_root_file';
-            $reasons[] = 'Unknown PHP file in site root';
-        }
+            if ( $is_php_ext ) {
+                $score    += 50;
+                $flags[]   = 'unexpected_upload_executable';
+                $reasons[] = 'Executable PHP file in uploads directory';
+            } elseif ( $has_hidden_php ) {
+                $score    += 55;
+                $flags[]   = 'cloaked_php_in_non_php_file';
+                $reasons[] = 'Hidden PHP code detected in non-PHP file in uploads';
+            }
 
-        // ── Suspicious filename ──
-        foreach ( self::$suspicious_names as $pattern ) {
-            if ( preg_match( $pattern, $basename ) ) {
-                $score    += 25;
-                $flags[]   = 'suspicious_filename';
-                $reasons[] = 'Suspicious filename pattern: ' . $basename;
-                break;
+            // Double extension in uploads.
+            if ( preg_match( '/\.\w+\.\w+$/', $basename ) ) {
+                if ( $is_php_ext ) {
+                    $score    += 30;
+                    $flags[]   = 'suspicious_double_extension_upload';
+                    $reasons[] = 'Double extension ending in PHP in uploads: ' . $basename;
+                } elseif ( preg_match( '/\.(?:php\w*|phtml|phar|pht|shtml)\./i', $basename ) ) {
+                    $score    += 25;
+                    $flags[]   = 'suspicious_double_extension_upload';
+                    $reasons[] = 'Double extension with PHP as inner extension in uploads: ' . $basename;
+                }
+            }
+
+            // Random/gibberish filename in uploads.
+            if ( self::is_random_filename( $basename ) ) {
+                $score    += 20;
+                $flags[]   = 'random_filename_uploads';
+                $reasons[] = 'Random/gibberish filename in uploads: ' . $basename;
+            }
+
+            // Suspicious filename patterns in uploads get extra boost.
+            foreach ( self::$suspicious_names as $pattern ) {
+                if ( preg_match( $pattern, $basename ) ) {
+                    $score    += 30;
+                    $flags[]   = 'suspicious_filename';
+                    $reasons[] = 'Suspicious filename pattern in uploads: ' . $basename;
+                    break;
+                }
             }
         }
 
-        // ── Double extensions (e.g. image.php.jpg or file.jpg.php) ──
-        if ( preg_match( '/\.\w+\.\w+$/', $basename ) && 'php' === $extension ) {
-            $score    += 20;
-            $flags[]   = 'double_extension';
-            $reasons[] = 'Double extension detected: ' . $basename;
+        // ── Path location (non-uploads) ──
+        if ( ! $in_uploads ) {
+            if ( preg_match( '#^wp-(includes|admin)/#', $path ) && ! empty( $signals ) ) {
+                $score    += 20;
+                $flags[]   = 'suspicious_in_core';
+                $reasons[] = 'Suspicious signals in WordPress core path';
+            }
+
+            // Root-level PHP files that aren't standard WP files.
+            if ( ! preg_match( '#/#', $path ) && ! self::is_known_root_file( $basename ) ) {
+                $score    += 15;
+                $flags[]   = 'unknown_root_file';
+                $reasons[] = 'Unknown PHP file in site root';
+            }
+
+            // ── Suspicious filename (non-uploads) ──
+            foreach ( self::$suspicious_names as $pattern ) {
+                if ( preg_match( $pattern, $basename ) ) {
+                    $score    += 25;
+                    $flags[]   = 'suspicious_filename';
+                    $reasons[] = 'Suspicious filename pattern: ' . $basename;
+                    break;
+                }
+            }
+
+            // ── Double extensions (non-uploads) ──
+            if ( preg_match( '/\.\w+\.\w+$/', $basename ) && $is_php_ext ) {
+                $score    += 20;
+                $flags[]   = 'double_extension';
+                $reasons[] = 'Double extension detected: ' . $basename;
+            }
         }
 
-        // ── Rare PHP extension ──
+        // ── Rare PHP extension (applies everywhere) ──
         if ( in_array( $extension, self::$rare_extensions, true ) ) {
             $score    += 15;
             $flags[]   = 'rare_extension';
@@ -364,13 +423,13 @@ class AIPSC_File_Classifier {
         }
 
         // ── Dot-prefixed hidden file ──
-        if ( 0 === strpos( $basename, '.' ) && 'php' === $extension ) {
+        if ( 0 === strpos( $basename, '.' ) && $is_php_ext ) {
             $score    += 20;
             $flags[]   = 'hidden_file';
             $reasons[] = 'Hidden PHP file (dot-prefix)';
         }
 
-        // ── Unexpected location: theme file outside themes, etc. ──
+        // ── Unexpected location: file in unusual wp-content subdirectory ──
         if ( preg_match( '#wp-content/(?!plugins|themes|mu-plugins|uploads)#', $path ) && ! empty( $signals ) ) {
             $score    += 10;
             $flags[]   = 'unexpected_wp_content';
@@ -455,21 +514,28 @@ class AIPSC_File_Classifier {
         $multiplier = 1.0;
         $reasons    = array();
 
-        // ── Known vendor path ──
-        foreach ( self::$vendor_indicators as $pattern ) {
-            if ( preg_match( $pattern, $path ) ) {
-                $multiplier *= 0.35;
-                $reasons[]   = 'File in known vendor/dev path';
-                break;
+        // Files in uploads with signals should not get vendor/benign reductions.
+        $in_uploads = self::is_in_uploads( $path );
+
+        // ── Known vendor path (skip in uploads) ──
+        if ( ! $in_uploads ) {
+            foreach ( self::$vendor_indicators as $pattern ) {
+                if ( preg_match( $pattern, $path ) ) {
+                    $multiplier *= 0.35;
+                    $reasons[]   = 'File in known vendor/dev path';
+                    break;
+                }
             }
         }
 
-        // ── Generic benign path (tests, fixtures, CI) ──
-        foreach ( self::$benign_paths as $pattern ) {
-            if ( preg_match( $pattern, $path ) ) {
-                $multiplier *= 0.50;
-                $reasons[]   = 'File in test/fixture/CI directory';
-                break;
+        // ── Generic benign path (tests, fixtures, CI — skip in uploads) ──
+        if ( ! $in_uploads ) {
+            foreach ( self::$benign_paths as $pattern ) {
+                if ( preg_match( $pattern, $path ) ) {
+                    $multiplier *= 0.50;
+                    $reasons[]   = 'File in test/fixture/CI directory';
+                    break;
+                }
             }
         }
 
@@ -541,5 +607,51 @@ class AIPSC_File_Classifier {
             'wp-config-local.php',
         );
         return in_array( $basename, $known, true );
+    }
+
+    /**
+     * Check if a path is inside the uploads directory.
+     *
+     * @param string $path Relative file path.
+     * @return bool
+     */
+    private static function is_in_uploads( $path ) {
+        return ( false !== strpos( $path, '/uploads/' ) || 0 === strpos( $path, 'uploads/' ) );
+    }
+
+    /**
+     * Detect random/gibberish filenames commonly used by malware droppers.
+     *
+     * @param string $basename File basename.
+     * @return bool
+     */
+    private static function is_random_filename( $basename ) {
+        $name = pathinfo( $basename, PATHINFO_FILENAME );
+        $len  = strlen( $name );
+
+        // Single-character names (except common ones).
+        if ( 1 === $len ) {
+            return true;
+        }
+
+        // Pure hex string >= 8 chars.
+        if ( $len >= 8 && preg_match( '/^[a-f0-9]+$/i', $name ) ) {
+            return true;
+        }
+
+        // Long alphanumeric with very low vowel ratio (consonant soup).
+        if ( $len >= 8 && preg_match( '/^[a-z0-9]+$/i', $name ) ) {
+            $vowels = preg_match_all( '/[aeiou]/i', $name );
+            if ( $len > 0 && ( $vowels / $len ) < 0.15 ) {
+                return true;
+            }
+        }
+
+        // Typical dropper temp-style names.
+        if ( $len > 10 && preg_match( '/^(?:tmp|temp|cache|sess)[_\-]?[a-z0-9]+$/i', $name ) ) {
+            return true;
+        }
+
+        return false;
     }
 }
