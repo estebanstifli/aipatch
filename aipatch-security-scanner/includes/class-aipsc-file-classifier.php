@@ -99,34 +99,122 @@ class AIPSC_File_Classifier {
     private static $family_map = array(
         // Individual signatures.
         'web_shell_keywords'      => 'webshell',
-        'superglobal_exec'        => 'backdoor',
+        'superglobal_exec'        => 'persistence_backdoor',
         'hidden_iframe'           => 'injector',
-        'wp_unauthorized_admin'   => 'backdoor',
+        'wp_unauthorized_admin'   => 'persistence_backdoor',
         'wp_option_injection'     => 'injector',
-        'disable_security'        => 'backdoor',
-        'gzinflate_obfusc'        => 'obfuscated-payload',
-        'hidden_php_full_tag'     => 'cloaked-php',
-        'hidden_php_short_echo'   => 'cloaked-php',
-        'hidden_php_short_tag'    => 'cloaked-php',
-        'dynamic_include'         => 'backdoor',
-        'call_user_func'          => 'backdoor',
-        'register_shutdown'       => 'backdoor',
-        'ini_set_disable'         => 'backdoor',
-        'array_map_exec'          => 'obfuscated-payload',
+        'disable_security'        => 'persistence_backdoor',
+        'gzinflate_obfusc'        => 'obfuscated_loader',
+        'hidden_php_full_tag'     => 'cloaked_php',
+        'hidden_php_short_echo'   => 'cloaked_php',
+        'hidden_php_short_tag'    => 'cloaked_php',
+        'dynamic_include'         => 'persistence_backdoor',
+        'call_user_func'          => 'persistence_backdoor',
+        'register_shutdown'       => 'persistence_backdoor',
+        'ini_set_disable'         => 'persistence_backdoor',
+        'array_map_exec'          => 'obfuscated_loader',
         // Compound rules.
-        'eval_base64'             => 'obfuscated-payload',
-        'gzinflate_base64'        => 'obfuscated-payload',
-        'assert_superglobal'      => 'backdoor',
+        'eval_base64'             => 'obfuscated_loader',
+        'gzinflate_base64'        => 'obfuscated_loader',
+        'assert_superglobal'      => 'persistence_backdoor',
         'remote_fetch_exec'       => 'dropper',
         'remote_fetch_write'      => 'dropper',
         'upload_to_exec'          => 'dropper',
-        'stealth_backdoor'        => 'backdoor',
-        'ini_override_exec'       => 'backdoor',
-        'error_suppress_obfusc'   => 'obfuscated-payload',
-        'payload_reconstruct'     => 'obfuscated-payload',
-        'chr_chain_exec'          => 'obfuscated-payload',
-        'hex_assembly_exec'       => 'obfuscated-payload',
-        'xor_exec'                => 'obfuscated-payload',
+        'stealth_backdoor'        => 'persistence_backdoor',
+        'ini_override_exec'       => 'persistence_backdoor',
+        'error_suppress_obfusc'   => 'obfuscated_loader',
+        'payload_reconstruct'     => 'obfuscated_loader',
+        'chr_chain_exec'          => 'obfuscated_loader',
+        'hex_assembly_exec'       => 'obfuscated_loader',
+        'xor_exec'                => 'obfuscated_loader',
+        'preg_replace_callback_exec' => 'obfuscated_loader',
+        // Network / fetcher signatures.
+        'wp_remote_get'           => 'remote_fetcher',
+        'curl_setopt_url'         => 'remote_fetcher',
+        'file_get_contents_url'   => 'remote_fetcher',
+        'fsockopen'               => 'remote_fetcher',
+        // Upload handling.
+        'move_uploaded_file'      => 'unexpected_upload_executable',
+        'upload_chmod'            => 'dropper',
+    );
+
+    /* ---------------------------------------------------------------
+     * Family definitions — canonical families with metadata.
+     * ------------------------------------------------------------- */
+
+    /**
+     * Family metadata: label, description, remediation hint,
+     * and tag affinity scores used for weighted family election.
+     *
+     * @var array<string, array>
+     */
+    private static $family_definitions = array(
+        'webshell' => array(
+            'label'            => 'Web Shell',
+            'description'      => 'Interactive malicious shell providing remote access to the server.',
+            'remediation_hint' => 'Delete the file immediately. Check for additional backdoors and review server access logs.',
+            'tag_affinity'     => array( 'backdoor' => 3, 'exec' => 2, 'system' => 2, 'userinput' => 2, 'dangerous' => 1 ),
+        ),
+        'obfuscated_loader' => array(
+            'label'            => 'Obfuscated Loader',
+            'description'      => 'Encoded/compressed payload designed to evade detection and execute hidden code.',
+            'remediation_hint' => 'Delete the file. Decode payload offline for IOC extraction if needed.',
+            'tag_affinity'     => array( 'obfuscation' => 3, 'exec' => 2, 'dangerous' => 1, 'compound' => 2, 'entropy' => 2 ),
+        ),
+        'dropper' => array(
+            'label'            => 'Dropper',
+            'description'      => 'Downloads or writes malicious files to disk. Often first stage of multi-phase attacks.',
+            'remediation_hint' => 'Delete the file. Scan uploads and writable directories for dropped payloads.',
+            'tag_affinity'     => array( 'network' => 3, 'write' => 3, 'exec' => 1, 'upload' => 2, 'dangerous' => 1 ),
+        ),
+        'remote_fetcher' => array(
+            'label'            => 'Remote Fetcher',
+            'description'      => 'Fetches remote content using user-controlled or hardcoded URLs; potential SSRF or payload download.',
+            'remediation_hint' => 'Review the remote URLs. If user-controlled, patch or delete. Check for data exfiltration.',
+            'tag_affinity'     => array( 'network' => 3, 'userinput' => 2, 'dangerous' => 1 ),
+        ),
+        'persistence_backdoor' => array(
+            'label'            => 'Persistence Backdoor',
+            'description'      => 'Backdoor designed to maintain access: admin creation, security bypass, or hidden exec.',
+            'remediation_hint' => 'Delete the file. Audit admin users, reset passwords, and check for scheduled tasks.',
+            'tag_affinity'     => array( 'backdoor' => 3, 'exec' => 2, 'userinput' => 2, 'wp_specific' => 2, 'dangerous' => 1 ),
+        ),
+        'cloaked_php' => array(
+            'label'            => 'Cloaked PHP',
+            'description'      => 'PHP code hidden inside a non-PHP file (image, text, etc.) to bypass extension restrictions.',
+            'remediation_hint' => 'Delete the file. Check uploads directory for similar cloaked files.',
+            'tag_affinity'     => array( 'hidden_php' => 4, 'dangerous' => 1, 'exec' => 1, 'obfuscation' => 1 ),
+        ),
+        'modified_core' => array(
+            'label'            => 'Modified Core File',
+            'description'      => 'A WordPress core file has been modified from its original state.',
+            'remediation_hint' => 'Reinstall WordPress core files via wp-cli or dashboard. Compare with original using checksums.',
+            'tag_affinity'     => array( 'dangerous' => 1 ),
+        ),
+        'unexpected_upload_executable' => array(
+            'label'            => 'Unexpected Upload Executable',
+            'description'      => 'Executable PHP file found in the uploads directory where only media should exist.',
+            'remediation_hint' => 'Delete the file. Add server-level protection to block PHP execution in uploads.',
+            'tag_affinity'     => array( 'upload' => 2, 'exec' => 1, 'dangerous' => 1 ),
+        ),
+        'injector' => array(
+            'label'            => 'Code Injector',
+            'description'      => 'Injects malicious content (iframes, scripts, options) into pages or database.',
+            'remediation_hint' => 'Delete the file. Scan database for injected content (siteurl, home, blogname).',
+            'tag_affinity'     => array( 'injection' => 3, 'wp_specific' => 2, 'write' => 1 ),
+        ),
+        'unknown_suspicious' => array(
+            'label'            => 'Unknown Suspicious',
+            'description'      => 'File has suspicious characteristics but does not match a known malware family.',
+            'remediation_hint' => 'Review the file manually. Check signals and context for assessment.',
+            'tag_affinity'     => array(),
+        ),
+        'mixed_signals' => array(
+            'label'            => 'Mixed Signals',
+            'description'      => 'File matches multiple families with no clear winner. May be polymorphic or multi-purpose.',
+            'remediation_hint' => 'Review manually. Consider quarantining and analysing offline.',
+            'tag_affinity'     => array(),
+        ),
     );
 
     /* ---------------------------------------------------------------
@@ -176,41 +264,35 @@ class AIPSC_File_Classifier {
         $context_flags = $context['flags'];
         $integrity_flags = $integrity['flags'];
 
-        // Top signal and family guess.
-        $top_signal   = '';
-        $family_guess = '';
-        $max_w        = 0;
+        // Top signal.
+        $top_signal = '';
+        $max_w      = 0;
         foreach ( $signals as $s ) {
             if ( $s['weight'] > $max_w ) {
                 $max_w      = $s['weight'];
                 $top_signal = $s['label'];
-                if ( isset( self::$family_map[ $s['sig_id'] ] ) ) {
-                    $family_guess = self::$family_map[ $s['sig_id'] ];
-                }
-            }
-        }
-        // If no specific family from top signal, try any matched family.
-        if ( '' === $family_guess && ! empty( $signals ) ) {
-            foreach ( $signals as $s ) {
-                if ( isset( self::$family_map[ $s['sig_id'] ] ) ) {
-                    $family_guess = self::$family_map[ $s['sig_id'] ];
-                    break;
-                }
             }
         }
 
+        // Family classification — structured.
+        $family_result = self::classify_family( $signals, $context_flags, $integrity_flags, $score );
+
         return array(
-            'risk_score'      => $score,
-            'risk_level'      => self::label( $score ),
-            'classification'  => self::label( $score ), // backward compat
-            'family_guess'    => $family_guess,
-            'top_signal'      => $top_signal,
-            'signal_count'    => count( $signals ),
-            'reasons'         => $reasons,
-            'matched_rules'   => $matched_rules,
-            'context_flags'   => $context_flags,
-            'integrity_flags' => $integrity_flags,
-            'layer_scores'    => array(
+            'risk_score'        => $score,
+            'risk_level'        => self::label( $score ),
+            'classification'    => self::label( $score ), // backward compat
+            'family'            => $family_result['family'],
+            'family_label'      => $family_result['label'],
+            'family_confidence' => $family_result['confidence'],
+            'remediation_hint'  => $family_result['remediation_hint'],
+            'family_guess'      => $family_result['family'], // backward compat
+            'top_signal'        => $top_signal,
+            'signal_count'      => count( $signals ),
+            'reasons'           => $reasons,
+            'matched_rules'     => $matched_rules,
+            'context_flags'     => $context_flags,
+            'integrity_flags'   => $integrity_flags,
+            'layer_scores'      => array(
                 'content'   => $content['score'],
                 'context'   => $context['score'],
                 'integrity' => $integrity['score'],
@@ -236,6 +318,173 @@ class AIPSC_File_Classifier {
             return self::CLASS_SUSPICIOUS;
         }
         return self::CLASS_CLEAN;
+    }
+
+    /* ---------------------------------------------------------------
+     * Family Classification Engine
+     * ------------------------------------------------------------- */
+
+    /**
+     * Determine the malware family, confidence level, and remediation hint
+     * based on signal families, context flags, integrity flags, and tag
+     * affinity scoring.
+     *
+     * @param array  $signals         Heuristic signals.
+     * @param array  $context_flags   Flags from score_context().
+     * @param array  $integrity_flags Flags from score_integrity().
+     * @param int    $risk_score      Final composite risk score.
+     * @return array {family, label, confidence, remediation_hint}
+     */
+    private static function classify_family( array $signals, array $context_flags, array $integrity_flags, $risk_score ) {
+
+        $fallback = array(
+            'family'           => '',
+            'label'            => '',
+            'confidence'       => 'none',
+            'remediation_hint' => '',
+        );
+
+        // Nothing to classify for clean files.
+        if ( $risk_score < 15 && empty( $signals ) ) {
+            return $fallback;
+        }
+
+        // ── 1. Context / integrity override families ────────────
+        // These flags already carry strong family semantics.
+        $override_family = '';
+        if ( in_array( 'modified_core_file', $integrity_flags, true )
+            || in_array( 'modified_sensitive_file', $integrity_flags, true ) ) {
+            $override_family = 'modified_core';
+        }
+        if ( in_array( 'unexpected_upload_executable', $context_flags, true ) && '' === $override_family ) {
+            $override_family = 'unexpected_upload_executable';
+        }
+        if ( in_array( 'cloaked_php_in_non_php_file', $context_flags, true ) && '' === $override_family ) {
+            $override_family = 'cloaked_php';
+        }
+
+        // ── 2. Count family votes from signal sig_ids ───────────
+        $family_votes = array(); // family => weighted count
+        $tag_pool     = array(); // tag   => total weight
+
+        foreach ( $signals as $s ) {
+            $sid = $s['sig_id'];
+            $w   = max( 1, (int) $s['weight'] );
+
+            // Accumulate family votes.
+            if ( isset( self::$family_map[ $sid ] ) ) {
+                $fam = self::$family_map[ $sid ];
+                if ( ! isset( $family_votes[ $fam ] ) ) {
+                    $family_votes[ $fam ] = 0;
+                }
+                $family_votes[ $fam ] += $w;
+            }
+
+            // Accumulate tags for affinity scoring.
+            if ( ! empty( $s['tags'] ) && is_array( $s['tags'] ) ) {
+                foreach ( $s['tags'] as $tag ) {
+                    if ( ! isset( $tag_pool[ $tag ] ) ) {
+                        $tag_pool[ $tag ] = 0;
+                    }
+                    $tag_pool[ $tag ] += $w;
+                }
+            }
+        }
+
+        // ── 3. Tag-affinity scoring ─────────────────────────────
+        // For each family definition, compute an affinity score by
+        // cross-referencing the tag pool with the family's affinities.
+        $affinity_scores = array();
+        foreach ( self::$family_definitions as $fam_key => $def ) {
+            if ( 'unknown_suspicious' === $fam_key || 'mixed_signals' === $fam_key ) {
+                continue;
+            }
+            $aff = 0;
+            foreach ( $def['tag_affinity'] as $tag => $multiplier ) {
+                if ( isset( $tag_pool[ $tag ] ) ) {
+                    $aff += $tag_pool[ $tag ] * $multiplier;
+                }
+            }
+            if ( $aff > 0 ) {
+                $affinity_scores[ $fam_key ] = $aff;
+            }
+        }
+
+        // ── 4. Merge votes + affinity into final scores ─────────
+        $final_scores = array();
+        $all_families = array_unique( array_merge( array_keys( $family_votes ), array_keys( $affinity_scores ) ) );
+
+        foreach ( $all_families as $fam ) {
+            $vote = isset( $family_votes[ $fam ] ) ? $family_votes[ $fam ] : 0;
+            $aff  = isset( $affinity_scores[ $fam ] ) ? $affinity_scores[ $fam ] : 0;
+            // Vote weight is 60%, affinity is 40%.
+            $final_scores[ $fam ] = ( $vote * 0.6 ) + ( $aff * 0.4 );
+        }
+
+        // Apply context override boost.
+        if ( '' !== $override_family ) {
+            if ( ! isset( $final_scores[ $override_family ] ) ) {
+                $final_scores[ $override_family ] = 0;
+            }
+            $final_scores[ $override_family ] += 100;
+        }
+
+        // ── 5. Elect winner ─────────────────────────────────────
+        if ( empty( $final_scores ) ) {
+            // No family signals at all — unknown_suspicious if score warrants.
+            if ( $risk_score >= 15 ) {
+                $def = self::$family_definitions['unknown_suspicious'];
+                return array(
+                    'family'           => 'unknown_suspicious',
+                    'label'            => $def['label'],
+                    'confidence'       => 'low',
+                    'remediation_hint' => $def['remediation_hint'],
+                );
+            }
+            return $fallback;
+        }
+
+        arsort( $final_scores );
+        $ranked  = array_keys( $final_scores );
+        $winner  = $ranked[0];
+        $top_val = $final_scores[ $winner ];
+
+        // ── 6. Confidence calculation ───────────────────────────
+        $confidence = 'low';
+        if ( count( $ranked ) >= 2 ) {
+            $second_val = $final_scores[ $ranked[1] ];
+            $gap        = ( $second_val > 0 ) ? ( $top_val / $second_val ) : PHP_INT_MAX;
+
+            if ( $gap >= 3.0 ) {
+                $confidence = 'high';
+            } elseif ( $gap >= 1.5 ) {
+                $confidence = 'medium';
+            } else {
+                // Close contest — mixed signals.
+                $winner     = 'mixed_signals';
+                $confidence = 'low';
+            }
+        } else {
+            // Single family — confidence depends on vote strength.
+            $confidence = ( $top_val >= 10 ) ? 'high' : ( ( $top_val >= 4 ) ? 'medium' : 'low' );
+        }
+
+        // Override bumps confidence.
+        if ( '' !== $override_family && $winner === $override_family ) {
+            $confidence = 'high';
+        }
+
+        // ── 7. Build result ─────────────────────────────────────
+        $def = isset( self::$family_definitions[ $winner ] )
+            ? self::$family_definitions[ $winner ]
+            : self::$family_definitions['unknown_suspicious'];
+
+        return array(
+            'family'           => $winner,
+            'label'            => $def['label'],
+            'confidence'       => $confidence,
+            'remediation_hint' => $def['remediation_hint'],
+        );
     }
 
     /* ---------------------------------------------------------------

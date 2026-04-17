@@ -188,18 +188,22 @@ class AIPSC_File_Scanner {
 
                 // Build enriched JSON payload for storage.
                 $enriched_json = wp_json_encode( array(
-                    'signals'         => $scan_result['signals'],
-                    'reasons'         => $scan_result['reasons'],
-                    'matched_rules'   => $scan_result['matched_rules'],
-                    'context_flags'   => $scan_result['context_flags'],
-                    'integrity_flags' => $scan_result['integrity_flags'],
-                    'layer_scores'    => isset( $scan_result['layer_scores'] ) ? $scan_result['layer_scores'] : array(),
-                    'family_guess'    => $scan_result['family_guess'],
-                    'risk_level'      => $scan_result['risk_level'],
-                    'is_new'          => ! empty( $scan_result['is_new'] ),
-                    'is_modified'     => ! empty( $scan_result['is_modified'] ),
-                    'first_seen'      => isset( $scan_result['first_seen'] ) ? $scan_result['first_seen'] : '',
-                    'last_seen'       => isset( $scan_result['last_seen'] ) ? $scan_result['last_seen'] : '',
+                    'signals'           => $scan_result['signals'],
+                    'reasons'           => $scan_result['reasons'],
+                    'matched_rules'     => $scan_result['matched_rules'],
+                    'context_flags'     => $scan_result['context_flags'],
+                    'integrity_flags'   => $scan_result['integrity_flags'],
+                    'layer_scores'      => isset( $scan_result['layer_scores'] ) ? $scan_result['layer_scores'] : array(),
+                    'family'            => $scan_result['family'],
+                    'family_label'      => $scan_result['family_label'],
+                    'family_confidence' => $scan_result['family_confidence'],
+                    'remediation_hint'  => $scan_result['remediation_hint'],
+                    'family_guess'      => $scan_result['family_guess'],
+                    'risk_level'        => $scan_result['risk_level'],
+                    'is_new'            => ! empty( $scan_result['is_new'] ),
+                    'is_modified'       => ! empty( $scan_result['is_modified'] ),
+                    'first_seen'        => isset( $scan_result['first_seen'] ) ? $scan_result['first_seen'] : '',
+                    'last_seen'         => isset( $scan_result['last_seen'] ) ? $scan_result['last_seen'] : '',
                 ) );
 
                 // Store in file_scan_results table.
@@ -220,10 +224,12 @@ class AIPSC_File_Scanner {
                 );
 
                 $this->job_manager->complete_item( $item->id, array(
-                    'risk_score'     => $scan_result['risk_score'],
-                    'classification' => $scan_result['classification'],
-                    'family_guess'   => $scan_result['family_guess'],
-                    'risk_level'     => $scan_result['risk_level'],
+                    'risk_score'        => $scan_result['risk_score'],
+                    'classification'    => $scan_result['classification'],
+                    'family'            => $scan_result['family'],
+                    'family_confidence' => $scan_result['family_confidence'],
+                    'family_guess'      => $scan_result['family_guess'],
+                    'risk_level'        => $scan_result['risk_level'],
                 ) );
             } catch ( \Exception $e ) {
                 $this->job_manager->fail_item( $item->id, $e->getMessage() );
@@ -336,17 +342,21 @@ class AIPSC_File_Scanner {
         // Skip files that are too large.
         if ( $file_size > self::MAX_FILE_SIZE ) {
             return array(
-                'risk_score'      => 0,
-                'risk_level'      => 'clean',
-                'classification'  => 'skipped',
-                'family_guess'    => '',
-                'signals'         => array(),
-                'reasons'         => array(),
-                'matched_rules'   => array(),
-                'context_flags'   => array(),
-                'integrity_flags' => array(),
-                'sha256'          => '',
-                'file_size'       => $file_size,
+                'risk_score'        => 0,
+                'risk_level'        => 'clean',
+                'classification'    => 'skipped',
+                'family'            => '',
+                'family_label'      => '',
+                'family_confidence' => 'none',
+                'remediation_hint'  => '',
+                'family_guess'      => '',
+                'signals'           => array(),
+                'reasons'           => array(),
+                'matched_rules'     => array(),
+                'context_flags'     => array(),
+                'integrity_flags'   => array(),
+                'sha256'            => '',
+                'file_size'         => $file_size,
             );
         }
 
@@ -374,22 +384,26 @@ class AIPSC_File_Scanner {
         $integrity_status = isset( $integrity_info['status'] ) ? $integrity_info['status'] : 'unknown';
 
         return array(
-            'risk_score'      => $result['risk_score'],
-            'risk_level'      => $result['risk_level'],
-            'classification'  => $result['classification'],
-            'family_guess'    => $result['family_guess'],
-            'signals'         => $signals,
-            'reasons'         => $result['reasons'],
-            'matched_rules'   => $result['matched_rules'],
-            'context_flags'   => $result['context_flags'],
-            'integrity_flags' => $result['integrity_flags'],
-            'layer_scores'    => $result['layer_scores'],
-            'sha256'          => $sha256,
-            'file_size'       => $file_size,
-            'is_new'          => 'new' === $integrity_status,
-            'is_modified'     => 'modified' === $integrity_status,
-            'first_seen'      => isset( $integrity_info['first_seen'] ) ? $integrity_info['first_seen'] : '',
-            'last_seen'       => isset( $integrity_info['last_seen'] ) ? $integrity_info['last_seen'] : '',
+            'risk_score'        => $result['risk_score'],
+            'risk_level'        => $result['risk_level'],
+            'classification'    => $result['classification'],
+            'family'            => $result['family'],
+            'family_label'      => $result['family_label'],
+            'family_confidence' => $result['family_confidence'],
+            'remediation_hint'  => $result['remediation_hint'],
+            'family_guess'      => $result['family_guess'],
+            'signals'           => $signals,
+            'reasons'           => $result['reasons'],
+            'matched_rules'     => $result['matched_rules'],
+            'context_flags'     => $result['context_flags'],
+            'integrity_flags'   => $result['integrity_flags'],
+            'layer_scores'      => $result['layer_scores'],
+            'sha256'            => $sha256,
+            'file_size'         => $file_size,
+            'is_new'            => 'new' === $integrity_status,
+            'is_modified'       => 'modified' === $integrity_status,
+            'first_seen'        => isset( $integrity_info['first_seen'] ) ? $integrity_info['first_seen'] : '',
+            'last_seen'         => isset( $integrity_info['last_seen'] ) ? $integrity_info['last_seen'] : '',
         );
     }
 
