@@ -63,6 +63,11 @@ class AIPSC_File_Scanner {
     private $findings_store;
 
     /**
+     * @var AIPSC_Core_Verifier|null
+     */
+    private $core_verifier;
+
+    /**
      * Baseline index cache (loaded once per batch).
      *
      * @var array<string, array>|null
@@ -72,16 +77,18 @@ class AIPSC_File_Scanner {
     /**
      * Constructor.
      *
-     * @param AIPSC_Job_Manager        $job_manager     Job manager instance.
-     * @param AIPSC_Logger             $logger          Logger instance.
-     * @param AIPSC_File_Baseline|null $baseline        Optional baseline for integrity checks.
-     * @param AIPSC_Findings_Store|null $findings_store Optional findings store for persistence.
+     * @param AIPSC_Job_Manager         $job_manager     Job manager instance.
+     * @param AIPSC_Logger              $logger          Logger instance.
+     * @param AIPSC_File_Baseline|null  $baseline        Optional baseline for integrity checks.
+     * @param AIPSC_Findings_Store|null $findings_store  Optional findings store for persistence.
+     * @param AIPSC_Core_Verifier|null  $core_verifier   Optional core checksum verifier.
      */
-    public function __construct( AIPSC_Job_Manager $job_manager, AIPSC_Logger $logger, $baseline = null, $findings_store = null ) {
+    public function __construct( AIPSC_Job_Manager $job_manager, AIPSC_Logger $logger, $baseline = null, $findings_store = null, $core_verifier = null ) {
         $this->job_manager    = $job_manager;
         $this->logger         = $logger;
         $this->baseline       = $baseline;
         $this->findings_store = $findings_store;
+        $this->core_verifier  = $core_verifier;
     }
 
     /**
@@ -209,6 +216,9 @@ class AIPSC_File_Scanner {
                     'risk_level'        => $scan_result['risk_level'],
                     'is_new'            => ! empty( $scan_result['is_new'] ),
                     'is_modified'       => ! empty( $scan_result['is_modified'] ),
+                    'core_tampered'     => ! empty( $scan_result['core_tampered'] ),
+                    'unexpected_in_core' => ! empty( $scan_result['unexpected_in_core'] ),
+                    'core_checksum'     => isset( $scan_result['core_checksum'] ) ? $scan_result['core_checksum'] : '',
                     'first_seen'        => isset( $scan_result['first_seen'] ) ? $scan_result['first_seen'] : '',
                     'last_seen'         => isset( $scan_result['last_seen'] ) ? $scan_result['last_seen'] : '',
                 ) );
@@ -382,13 +392,15 @@ class AIPSC_File_Scanner {
             $signals = AIPSC_File_Heuristics::analyse_non_php( $content, $relative );
         }
 
-        // Integrity info from baseline.
+        // Integrity info from baseline + core checksum verification.
         $integrity_info = $this->get_integrity_info( $relative, $sha256 );
 
         // Layered classification.
         $result = AIPSC_File_Classifier::classify( $signals, $relative, $integrity_info, $sha256 );
 
         $integrity_status = isset( $integrity_info['status'] ) ? $integrity_info['status'] : 'unknown';
+        $core_tampered    = ! empty( $integrity_info['core_tampered'] );
+        $unexpected_core  = ! empty( $integrity_info['unexpected_in_core'] );
 
         return array(
             'risk_score'        => $result['risk_score'],
@@ -409,6 +421,9 @@ class AIPSC_File_Scanner {
             'file_size'         => $file_size,
             'is_new'            => 'new' === $integrity_status,
             'is_modified'       => 'modified' === $integrity_status,
+            'core_tampered'     => $core_tampered,
+            'unexpected_in_core' => $unexpected_core,
+            'core_checksum'     => isset( $integrity_info['core_checksum'] ) ? $integrity_info['core_checksum'] : '',
             'first_seen'        => isset( $integrity_info['first_seen'] ) ? $integrity_info['first_seen'] : '',
             'last_seen'         => isset( $integrity_info['last_seen'] ) ? $integrity_info['last_seen'] : '',
         );
@@ -422,40 +437,68 @@ class AIPSC_File_Scanner {
      * @return array Integrity status array.
      */
     private function get_integrity_info( $relative, $sha256 ) {
-        if ( null === $this->baseline ) {
-            return array( 'status' => 'unknown' );
+        $info = array( 'status' => 'unknown' );
+
+        // ── Baseline check ──────────────────────────────────────
+        if ( null !== $this->baseline ) {
+            if ( null === $this->baseline_index ) {
+                $this->baseline_index = $this->load_baseline_index();
+            }
+
+            if ( ! isset( $this->baseline_index[ $relative ] ) ) {
+                $info = array(
+                    'status'      => 'new',
+                    'origin_type' => '',
+                    'first_seen'  => '',
+                    'last_seen'   => '',
+                );
+            } else {
+                $entry = $this->baseline_index[ $relative ];
+
+                $base = array(
+                    'origin_type' => $entry['origin_type'],
+                    'first_seen'  => $entry['first_seen'],
+                    'last_seen'   => $entry['last_seen'],
+                );
+
+                if ( $entry['sha256'] === $sha256 ) {
+                    $info = array_merge( array( 'status' => 'unchanged' ), $base );
+                } else {
+                    $info = array_merge( array(
+                        'status'     => 'modified',
+                        'sha256_was' => $entry['sha256'],
+                    ), $base );
+                }
+            }
         }
 
-        // Lazy-load baseline index once per scanner lifetime.
-        if ( null === $this->baseline_index ) {
-            $this->baseline_index = $this->load_baseline_index();
+        // ── Official core checksum verification ─────────────────
+        // Layer on top of baseline: provides authoritative ground truth
+        // for WP core files regardless of baseline state.
+        if ( null !== $this->core_verifier ) {
+            $core_check = $this->core_verifier->verify_file( $relative );
+
+            $info['core_checksum'] = $core_check['status']; // match|modified|missing|not_core|unavailable
+
+            if ( 'modified' === $core_check['status'] ) {
+                // Core file officially tampered — override status to modified
+                // even if baseline says unchanged (baseline could have captured
+                // an already-compromised state).
+                $info['status']              = 'modified';
+                $info['core_tampered']       = true;
+                $info['core_expected_md5']   = isset( $core_check['expected_md5'] ) ? $core_check['expected_md5'] : '';
+                $info['core_actual_md5']     = isset( $core_check['actual_md5'] ) ? $core_check['actual_md5'] : '';
+                $info['origin_type']         = 'core';
+            } elseif ( 'not_core' === $core_check['status'] ) {
+                // File is NOT in the official core manifest.
+                $is_core_path = (bool) preg_match( '#^wp-(admin|includes)/#', $relative );
+                if ( $is_core_path ) {
+                    $info['unexpected_in_core'] = true;
+                }
+            }
         }
 
-        if ( ! isset( $this->baseline_index[ $relative ] ) ) {
-            return array(
-                'status'      => 'new',
-                'origin_type' => '',
-                'first_seen'  => '',
-                'last_seen'   => '',
-            );
-        }
-
-        $entry = $this->baseline_index[ $relative ];
-
-        $base = array(
-            'origin_type' => $entry['origin_type'],
-            'first_seen'  => $entry['first_seen'],
-            'last_seen'   => $entry['last_seen'],
-        );
-
-        if ( $entry['sha256'] === $sha256 ) {
-            return array_merge( array( 'status' => 'unchanged' ), $base );
-        }
-
-        return array_merge( array(
-            'status'     => 'modified',
-            'sha256_was' => $entry['sha256'],
-        ), $base );
+        return $info;
     }
 
     /**

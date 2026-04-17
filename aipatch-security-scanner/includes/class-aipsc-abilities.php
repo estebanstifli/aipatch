@@ -40,6 +40,9 @@ class AIPSC_Abilities {
     /** @var AIPSC_Remediation_Engine|null */
     private $remediation_engine;
 
+    /** @var AIPSC_Core_Verifier|null */
+    private $core_verifier;
+
     /**
      * Constructor.
      *
@@ -57,6 +60,7 @@ class AIPSC_Abilities {
         $this->file_baseline      = isset( $extra_modules['file_baseline'] ) ? $extra_modules['file_baseline'] : null;
         $this->job_manager        = isset( $extra_modules['job_manager'] ) ? $extra_modules['job_manager'] : null;
         $this->remediation_engine = isset( $extra_modules['remediation_engine'] ) ? $extra_modules['remediation_engine'] : null;
+        $this->core_verifier      = isset( $extra_modules['core_verifier'] ) ? $extra_modules['core_verifier'] : null;
     }
 
     /**
@@ -1121,6 +1125,54 @@ class AIPSC_Abilities {
                 ),
                 'callback'    => 'execute_findings_diff',
             ),
+
+            /* ── Phase 8: New enriched abilities ──────────────── */
+
+            array(
+                'name'        => 'aipatch/verify-core-integrity',
+                'label'       => __( 'Verify Core Integrity', 'aipatch-security-scanner' ),
+                'description' => __( 'Verify WordPress core files against official checksums from api.wordpress.org. Returns modified, missing, and unexpected files in core directories.', 'aipatch-security-scanner' ),
+                'input'       => array(
+                    'force_refresh' => array( 'type' => 'boolean', 'default' => false, 'description' => 'Force refresh of cached checksums.' ),
+                ),
+                'callback'    => 'execute_verify_core_integrity',
+            ),
+            array(
+                'name'        => 'aipatch/list-suspicious-files',
+                'label'       => __( 'List Suspicious Files', 'aipatch-security-scanner' ),
+                'description' => __( 'Query file scan results filtered by minimum risk score and classification. Returns enriched data with family, reasons, integrity flags, and core tampering indicators.', 'aipatch-security-scanner' ),
+                'input'       => array(
+                    'min_risk'       => array( 'type' => 'integer', 'default' => 30, 'minimum' => 1, 'maximum' => 100, 'description' => 'Minimum risk score threshold.' ),
+                    'classification' => array( 'type' => 'string', 'enum' => array( 'suspicious', 'risky', 'malicious' ), 'description' => 'Filter by classification level.' ),
+                    'limit'          => array( 'type' => 'integer', 'default' => 50, 'minimum' => 1, 'maximum' => 200 ),
+                ),
+                'callback'    => 'execute_list_suspicious_files',
+            ),
+            array(
+                'name'        => 'aipatch/get-file-finding-detail',
+                'label'       => __( 'Get File Finding Detail', 'aipatch-security-scanner' ),
+                'description' => __( 'Get detailed information about a specific finding by fingerprint, including decoded metadata with family classification, integrity flags, core tampering, and layer scores.', 'aipatch-security-scanner' ),
+                'input'       => array(
+                    'fingerprint' => array( 'type' => 'string', 'description' => 'SHA-256 fingerprint of the finding.' ),
+                ),
+                'callback'    => 'execute_get_file_finding_detail',
+            ),
+            array(
+                'name'        => 'aipatch/get-scan-summary',
+                'label'       => __( 'Get Scan Summary', 'aipatch-security-scanner' ),
+                'description' => __( 'Get a comprehensive summary of the latest completed file scan job including scan statistics, classification breakdown, findings synchronization results, and core integrity status.', 'aipatch-security-scanner' ),
+                'input'       => array(),
+                'callback'    => 'execute_get_scan_summary',
+            ),
+            array(
+                'name'        => 'aipatch/get-baseline-drift',
+                'label'       => __( 'Get Baseline Drift', 'aipatch-security-scanner' ),
+                'description' => __( 'Get a combined integrity report with baseline drift (modified, missing, new files) plus core integrity verification (tampered core files, unexpected core files).', 'aipatch-security-scanner' ),
+                'input'       => array(
+                    'include_core_check' => array( 'type' => 'boolean', 'default' => true, 'description' => 'Include WordPress core integrity verification.' ),
+                ),
+                'callback'    => 'execute_get_baseline_drift',
+            ),
         );
 
         foreach ( $abilities as $ability ) {
@@ -1319,12 +1371,54 @@ class AIPSC_Abilities {
             return new WP_Error( 'aipatch_missing_param', 'job_id is required.', array( 'status' => 400 ) );
         }
 
+        $raw = $this->file_scanner->get_results( $job_id, array(
+            'min_risk' => isset( $input['min_risk'] ) ? absint( $input['min_risk'] ) : 15,
+            'limit'    => isset( $input['limit'] ) ? absint( $input['limit'] ) : 100,
+        ) );
+
+        // Enrich each result row by decoding signals_json.
+        $enriched = array();
+        if ( ! empty( $raw['results'] ) && is_array( $raw['results'] ) ) {
+            foreach ( $raw['results'] as $row ) {
+                $item = array(
+                    'file_path'      => isset( $row->file_path ) ? $row->file_path : '',
+                    'risk_score'     => isset( $row->risk_score ) ? (int) $row->risk_score : 0,
+                    'classification' => isset( $row->classification ) ? $row->classification : '',
+                    'sha256'         => isset( $row->sha256 ) ? $row->sha256 : '',
+                    'file_size'      => isset( $row->file_size ) ? (int) $row->file_size : 0,
+                    'scanned_at'     => isset( $row->scanned_at ) ? $row->scanned_at : '',
+                );
+
+                $decoded = ! empty( $row->signals_json ) ? json_decode( $row->signals_json, true ) : array();
+                if ( is_array( $decoded ) ) {
+                    $item['family']             = isset( $decoded['family'] ) ? $decoded['family'] : '';
+                    $item['family_label']       = isset( $decoded['family_label'] ) ? $decoded['family_label'] : '';
+                    $item['family_confidence']  = isset( $decoded['family_confidence'] ) ? $decoded['family_confidence'] : '';
+                    $item['risk_level']         = isset( $decoded['risk_level'] ) ? $decoded['risk_level'] : '';
+                    $item['reasons']            = isset( $decoded['reasons'] ) ? $decoded['reasons'] : array();
+                    $item['matched_rules']      = isset( $decoded['matched_rules'] ) ? $decoded['matched_rules'] : array();
+                    $item['context_flags']      = isset( $decoded['context_flags'] ) ? $decoded['context_flags'] : array();
+                    $item['integrity_flags']    = isset( $decoded['integrity_flags'] ) ? $decoded['integrity_flags'] : array();
+                    $item['layer_scores']       = isset( $decoded['layer_scores'] ) ? $decoded['layer_scores'] : array();
+                    $item['remediation_hint']   = isset( $decoded['remediation_hint'] ) ? $decoded['remediation_hint'] : '';
+                    $item['core_tampered']      = ! empty( $decoded['core_tampered'] );
+                    $item['unexpected_in_core'] = ! empty( $decoded['unexpected_in_core'] );
+                    $item['core_checksum']      = isset( $decoded['core_checksum'] ) ? $decoded['core_checksum'] : '';
+                    $item['is_new']             = ! empty( $decoded['is_new'] );
+                    $item['is_modified']        = ! empty( $decoded['is_modified'] );
+                }
+
+                $enriched[] = $item;
+            }
+        }
+
         return array(
             'success' => true,
-            'data'    => $this->file_scanner->get_results( $job_id, array(
-                'min_risk' => isset( $input['min_risk'] ) ? absint( $input['min_risk'] ) : 15,
-                'limit'    => isset( $input['limit'] ) ? absint( $input['limit'] ) : 100,
-            ) ),
+            'data'    => array(
+                'job'     => isset( $raw['job'] ) ? $raw['job'] : null,
+                'results' => $enriched,
+                'stats'   => isset( $raw['stats'] ) ? $raw['stats'] : array(),
+            ),
         );
     }
 
@@ -1499,5 +1593,305 @@ class AIPSC_Abilities {
         ) );
 
         return array( 'success' => true, 'count' => count( $records ), 'remediations' => $records );
+    }
+
+    /* ---------------------------------------------------------------
+     * Phase 8: New enriched MCP abilities
+     * ------------------------------------------------------------- */
+
+    /**
+     * Verify WordPress core integrity against official checksums.
+     *
+     * @param array $input Input.
+     * @return array|WP_Error
+     */
+    public function execute_verify_core_integrity( $input = array() ) {
+        if ( ! $this->core_verifier ) {
+            return new WP_Error( 'aipatch_module_unavailable', 'Core verifier not available.', array( 'status' => 400 ) );
+        }
+
+        $input         = is_array( $input ) ? $input : array();
+        $force_refresh = isset( $input['force_refresh'] ) ? rest_sanitize_boolean( $input['force_refresh'] ) : false;
+
+        $report = $this->core_verifier->verify_core( $force_refresh );
+
+        $this->logger->info(
+            'ability_verify_core',
+            __( 'Core integrity verification ability executed.', 'aipatch-security-scanner' ),
+            array(
+                'verified'    => $report['verified'],
+                'modified'    => count( $report['modified'] ),
+                'missing'     => count( $report['missing'] ),
+                'unexpected'  => count( $report['unexpected'] ),
+            )
+        );
+
+        return array(
+            'success'            => true,
+            'generated_at_gmt'   => gmdate( 'c' ),
+            'wp_version'         => $report['wp_version'],
+            'checksums_available' => $report['checksums_available'],
+            'verified'           => $report['verified'],
+            'modified_count'     => count( $report['modified'] ),
+            'missing_count'      => count( $report['missing'] ),
+            'unexpected_count'   => count( $report['unexpected'] ),
+            'modified'           => $report['modified'],
+            'missing'            => $report['missing'],
+            'unexpected'         => $report['unexpected'],
+        );
+    }
+
+    /**
+     * List suspicious files from the latest scan with enriched data.
+     *
+     * @param array $input Input.
+     * @return array|WP_Error
+     */
+    public function execute_list_suspicious_files( $input = array() ) {
+        $input = is_array( $input ) ? $input : array();
+
+        $min_risk       = isset( $input['min_risk'] ) ? absint( $input['min_risk'] ) : 30;
+        $classification = isset( $input['classification'] ) ? sanitize_key( $input['classification'] ) : '';
+        $limit          = isset( $input['limit'] ) ? absint( $input['limit'] ) : 50;
+
+        // Find the latest completed file_scan job.
+        $job = $this->get_latest_file_scan_job();
+        if ( ! $job ) {
+            return new WP_Error( 'aipatch_no_scan', 'No completed file scan found. Run aipatch/start-file-scan first.', array( 'status' => 404 ) );
+        }
+
+        if ( ! $this->file_scanner ) {
+            return new WP_Error( 'aipatch_module_unavailable', 'File scanner not available.', array( 'status' => 400 ) );
+        }
+
+        $raw = $this->file_scanner->get_results( $job->job_id, array(
+            'min_risk'       => $min_risk,
+            'classification' => $classification,
+            'limit'          => $limit,
+        ) );
+
+        $enriched = $this->enrich_scan_results( isset( $raw['results'] ) ? $raw['results'] : array() );
+
+        return array(
+            'success'          => true,
+            'generated_at_gmt' => gmdate( 'c' ),
+            'job_id'           => $job->job_id,
+            'scan_completed_at' => isset( $job->updated_at ) ? $job->updated_at : '',
+            'filters'          => array(
+                'min_risk'       => $min_risk,
+                'classification' => $classification,
+                'limit'          => $limit,
+            ),
+            'count'            => count( $enriched ),
+            'files'            => $enriched,
+            'stats'            => isset( $raw['stats'] ) ? $raw['stats'] : array(),
+        );
+    }
+
+    /**
+     * Get detailed information about a specific finding.
+     *
+     * @param array $input Input.
+     * @return array|WP_Error
+     */
+    public function execute_get_file_finding_detail( $input = array() ) {
+        if ( ! $this->findings_store ) {
+            return new WP_Error( 'aipatch_module_unavailable', 'Findings store not available.', array( 'status' => 400 ) );
+        }
+        $input = is_array( $input ) ? $input : array();
+        $fp    = isset( $input['fingerprint'] ) ? sanitize_text_field( $input['fingerprint'] ) : '';
+        if ( empty( $fp ) ) {
+            return new WP_Error( 'aipatch_missing_param', 'fingerprint is required.', array( 'status' => 400 ) );
+        }
+
+        $row = $this->findings_store->get_by_fingerprint( $fp );
+        if ( ! $row ) {
+            return new WP_Error( 'aipatch_finding_not_found', 'Finding not found.', array( 'status' => 404 ) );
+        }
+
+        $detail = (array) $row;
+
+        // Decode meta_json into structured fields.
+        $meta = array();
+        if ( ! empty( $detail['meta_json'] ) ) {
+            $decoded = json_decode( $detail['meta_json'], true );
+            if ( is_array( $decoded ) ) {
+                $meta = $decoded;
+            }
+        }
+
+        $detail['meta'] = $meta;
+        unset( $detail['meta_json'] );
+
+        return array( 'success' => true, 'finding' => $detail );
+    }
+
+    /**
+     * Get a comprehensive summary of the latest completed file scan.
+     *
+     * @param array $input Input.
+     * @return array|WP_Error
+     */
+    public function execute_get_scan_summary( $input = array() ) {
+        $job = $this->get_latest_file_scan_job();
+        if ( ! $job ) {
+            return new WP_Error( 'aipatch_no_scan', 'No completed file scan found. Run aipatch/start-file-scan first.', array( 'status' => 404 ) );
+        }
+
+        $summary = $this->job_manager ? $this->job_manager->summary( $job->job_id ) : null;
+        $result  = isset( $job->result_json ) ? json_decode( $job->result_json, true ) : array();
+        if ( ! is_array( $result ) ) {
+            $result = array();
+        }
+
+        // Findings stats (overall + file_scanner source).
+        $findings_stats = null;
+        if ( $this->findings_store ) {
+            $findings_stats = $this->findings_store->stats();
+        }
+
+        // Core integrity summary if available.
+        $core_summary = null;
+        if ( $this->core_verifier ) {
+            $core = $this->core_verifier->verify_core();
+            $core_summary = array(
+                'verified'         => $core['verified'],
+                'modified_count'   => count( $core['modified'] ),
+                'missing_count'    => count( $core['missing'] ),
+                'unexpected_count' => count( $core['unexpected'] ),
+            );
+        }
+
+        return array(
+            'success'          => true,
+            'generated_at_gmt' => gmdate( 'c' ),
+            'job_id'           => $job->job_id,
+            'job_status'       => isset( $job->status ) ? $job->status : '',
+            'started_at'       => isset( $job->created_at ) ? $job->created_at : '',
+            'completed_at'     => isset( $job->updated_at ) ? $job->updated_at : '',
+            'scan_stats'       => $result,
+            'job_summary'      => $summary,
+            'findings_stats'   => $findings_stats,
+            'core_integrity'   => $core_summary,
+        );
+    }
+
+    /**
+     * Get combined baseline drift and core integrity report.
+     *
+     * @param array $input Input.
+     * @return array|WP_Error
+     */
+    public function execute_get_baseline_drift( $input = array() ) {
+        if ( ! $this->file_baseline ) {
+            return new WP_Error( 'aipatch_module_unavailable', 'File baseline not available.', array( 'status' => 400 ) );
+        }
+
+        $input              = is_array( $input ) ? $input : array();
+        $include_core_check = isset( $input['include_core_check'] ) ? rest_sanitize_boolean( $input['include_core_check'] ) : true;
+
+        $diff   = $this->file_baseline->diff();
+        $stats  = $this->file_baseline->stats();
+
+        $response = array(
+            'success'          => true,
+            'generated_at_gmt' => gmdate( 'c' ),
+            'baseline_stats'   => $stats,
+            'drift'            => array(
+                'modified_count' => count( $diff['modified'] ),
+                'missing_count'  => count( $diff['missing'] ),
+                'new_count'      => count( $diff['new'] ),
+                'modified'       => array_slice( $diff['modified'], 0, 100 ),
+                'missing'        => array_slice( $diff['missing'], 0, 100 ),
+                'new'            => array_slice( $diff['new'], 0, 100 ),
+            ),
+        );
+
+        if ( $include_core_check && $this->core_verifier ) {
+            $core = $this->core_verifier->verify_core();
+            $response['core_integrity'] = array(
+                'wp_version'          => $core['wp_version'],
+                'checksums_available' => $core['checksums_available'],
+                'verified'            => $core['verified'],
+                'modified_count'      => count( $core['modified'] ),
+                'missing_count'       => count( $core['missing'] ),
+                'unexpected_count'    => count( $core['unexpected'] ),
+                'modified'            => $core['modified'],
+                'missing'             => $core['missing'],
+                'unexpected'          => $core['unexpected'],
+            );
+        }
+
+        return $response;
+    }
+
+    /* ---------------------------------------------------------------
+     * Phase 8 helpers
+     * ------------------------------------------------------------- */
+
+    /**
+     * Find the latest completed file_scan job.
+     *
+     * @return object|null
+     */
+    private function get_latest_file_scan_job() {
+        if ( ! $this->job_manager ) {
+            return null;
+        }
+
+        $jobs = $this->job_manager->list_jobs( array(
+            'job_type' => 'file_scan',
+            'status'   => 'completed',
+            'limit'    => 1,
+        ) );
+
+        return ! empty( $jobs ) ? $jobs[0] : null;
+    }
+
+    /**
+     * Enrich raw DB result rows by decoding signals_json.
+     *
+     * @param array $rows Raw DB rows.
+     * @return array Enriched items.
+     */
+    private function enrich_scan_results( $rows ) {
+        $enriched = array();
+        if ( ! is_array( $rows ) ) {
+            return $enriched;
+        }
+
+        foreach ( $rows as $row ) {
+            $item = array(
+                'file_path'      => isset( $row->file_path ) ? $row->file_path : '',
+                'risk_score'     => isset( $row->risk_score ) ? (int) $row->risk_score : 0,
+                'classification' => isset( $row->classification ) ? $row->classification : '',
+                'sha256'         => isset( $row->sha256 ) ? $row->sha256 : '',
+                'file_size'      => isset( $row->file_size ) ? (int) $row->file_size : 0,
+                'scanned_at'     => isset( $row->scanned_at ) ? $row->scanned_at : '',
+            );
+
+            $decoded = ! empty( $row->signals_json ) ? json_decode( $row->signals_json, true ) : array();
+            if ( is_array( $decoded ) ) {
+                $item['family']             = isset( $decoded['family'] ) ? $decoded['family'] : '';
+                $item['family_label']       = isset( $decoded['family_label'] ) ? $decoded['family_label'] : '';
+                $item['family_confidence']  = isset( $decoded['family_confidence'] ) ? $decoded['family_confidence'] : '';
+                $item['risk_level']         = isset( $decoded['risk_level'] ) ? $decoded['risk_level'] : '';
+                $item['reasons']            = isset( $decoded['reasons'] ) ? $decoded['reasons'] : array();
+                $item['matched_rules']      = isset( $decoded['matched_rules'] ) ? $decoded['matched_rules'] : array();
+                $item['context_flags']      = isset( $decoded['context_flags'] ) ? $decoded['context_flags'] : array();
+                $item['integrity_flags']    = isset( $decoded['integrity_flags'] ) ? $decoded['integrity_flags'] : array();
+                $item['layer_scores']       = isset( $decoded['layer_scores'] ) ? $decoded['layer_scores'] : array();
+                $item['remediation_hint']   = isset( $decoded['remediation_hint'] ) ? $decoded['remediation_hint'] : '';
+                $item['core_tampered']      = ! empty( $decoded['core_tampered'] );
+                $item['unexpected_in_core'] = ! empty( $decoded['unexpected_in_core'] );
+                $item['core_checksum']      = isset( $decoded['core_checksum'] ) ? $decoded['core_checksum'] : '';
+                $item['is_new']             = ! empty( $decoded['is_new'] );
+                $item['is_modified']        = ! empty( $decoded['is_modified'] );
+            }
+
+            $enriched[] = $item;
+        }
+
+        return $enriched;
     }
 }

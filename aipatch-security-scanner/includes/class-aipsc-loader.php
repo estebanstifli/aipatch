@@ -113,6 +113,7 @@ class AIPSC_Loader {
         require_once $includes . 'class-aipsc-file-classifier.php';
         require_once $includes . 'class-aipsc-file-scanner.php';
         require_once $includes . 'class-aipsc-file-baseline.php';
+        require_once $includes . 'class-aipsc-core-verifier.php';
         require_once $includes . 'class-aipsc-remediation-engine.php';
         require_once $includes . 'class-aipsc-vulnerability-cache.php';
         require_once $includes . 'class-aipsc-vulnerabilities.php';
@@ -187,12 +188,18 @@ class AIPSC_Loader {
             $this->modules['logger']
         );
 
-        // File scanner (uses job manager for batch processing + baseline for integrity + findings store).
+        // Core integrity verifier (official WordPress checksums).
+        $this->modules['core_verifier'] = new AIPSC_Core_Verifier(
+            $this->modules['logger']
+        );
+
+        // File scanner (uses job manager for batch processing + baseline for integrity + findings store + core verifier).
         $this->modules['file_scanner'] = new AIPSC_File_Scanner(
             $this->modules['job_manager'],
             $this->modules['logger'],
             $this->modules['file_baseline'],
-            $this->modules['findings_store']
+            $this->modules['findings_store'],
+            $this->modules['core_verifier']
         );
 
         // Scanner (bridges the audit engine for backward compatibility).
@@ -243,6 +250,7 @@ class AIPSC_Loader {
                 'file_baseline'      => $this->modules['file_baseline'],
                 'job_manager'        => $this->modules['job_manager'],
                 'remediation_engine' => $this->modules['remediation'],
+                'core_verifier'      => $this->modules['core_verifier'],
             )
         );
         $this->modules['abilities']->init();

@@ -352,10 +352,36 @@ class AIPSC_File_Classifier {
         // ── 1. Context / integrity override families ────────────
         // These flags already carry strong family semantics.
         $override_family = '';
-        if ( in_array( 'modified_core_file', $integrity_flags, true )
-            || in_array( 'modified_sensitive_file', $integrity_flags, true ) ) {
+
+        // Core tampering — highest priority overrides.
+        if ( in_array( 'core_file_modified', $integrity_flags, true )
+            || in_array( 'core_tampered_with_signals', $integrity_flags, true ) ) {
             $override_family = 'modified_core';
         }
+        if ( in_array( 'unexpected_core_file', $integrity_flags, true )
+            || in_array( 'unexpected_core_file_with_signals', $integrity_flags, true ) ) {
+            // Unexpected file in core path — not an official core file.
+            // If it has signals it's more likely a webshell or backdoor injected there.
+            $has_exec_tags = false;
+            foreach ( $signals as $s ) {
+                $tags = isset( $s['tags'] ) ? $s['tags'] : array();
+                if ( in_array( 'exec', $tags, true ) || in_array( 'backdoor', $tags, true ) ) {
+                    $has_exec_tags = true;
+                    break;
+                }
+            }
+            if ( '' === $override_family ) {
+                $override_family = $has_exec_tags ? 'webshell' : 'modified_core';
+            }
+        }
+
+        // Baseline-only core modifications (when official checksums unavailable).
+        if ( '' === $override_family
+            && ( in_array( 'modified_core_file', $integrity_flags, true )
+                || in_array( 'modified_sensitive_file', $integrity_flags, true ) ) ) {
+            $override_family = 'modified_core';
+        }
+
         if ( in_array( 'unexpected_upload_executable', $context_flags, true ) && '' === $override_family ) {
             $override_family = 'unexpected_upload_executable';
         }
@@ -755,6 +781,52 @@ class AIPSC_File_Classifier {
         $in_uploads  = self::is_in_uploads( $path );
         $in_core     = preg_match( '#^wp-(includes|admin)/#', $path );
         $in_root     = ( '' !== $path && false === strpos( $path, '/' ) );
+
+        // ── Official core checksum results (highest authority) ──
+        $core_tampered      = ! empty( $info['core_tampered'] );
+        $unexpected_in_core = ! empty( $info['unexpected_in_core'] );
+        $core_checksum      = isset( $info['core_checksum'] ) ? $info['core_checksum'] : '';
+
+        if ( $core_tampered ) {
+            // Verified against api.wordpress.org — definitive tampering.
+            $score    += 80;
+            $flags[]   = 'core_file_modified';
+            $reasons[] = 'Core file modified — checksum mismatch against official WordPress release';
+
+            if ( $has_signals ) {
+                $score    += 20;
+                $flags[]   = 'core_tampered_with_signals';
+                $reasons[] = 'Tampered core file also contains suspicious patterns';
+            }
+
+            // Already at/near max. Skip the regular status-based scoring
+            // to avoid double-counting.
+            return array(
+                'score'   => (int) round( min( 100, max( 0, $score ) ) ),
+                'reasons' => $reasons,
+                'flags'   => $flags,
+            );
+        }
+
+        if ( $unexpected_in_core ) {
+            // File exists in wp-admin/ or wp-includes/ but is NOT in
+            // the official core manifest — injected file.
+            $score    += 60;
+            $flags[]   = 'unexpected_core_file';
+            $reasons[] = 'File not part of official WordPress distribution found in core directory';
+
+            if ( $has_signals ) {
+                $score    += 25;
+                $flags[]   = 'unexpected_core_file_with_signals';
+                $reasons[] = 'Unexpected core file also has suspicious code patterns';
+            }
+
+            return array(
+                'score'   => (int) round( min( 100, max( 0, $score ) ) ),
+                'reasons' => $reasons,
+                'flags'   => $flags,
+            );
+        }
 
         switch ( $status ) {
             case 'new':

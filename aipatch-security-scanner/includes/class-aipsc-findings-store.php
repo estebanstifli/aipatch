@@ -497,42 +497,94 @@ class AIPSC_Findings_Store {
         $matched_rules = isset( $fr['matched_rules'] ) ? $fr['matched_rules'] : array();
         $reasons     = isset( $fr['reasons'] ) ? $fr['reasons'] : array();
         $sha256      = isset( $fr['sha256'] ) ? $fr['sha256'] : '';
+        $core_tampered    = ! empty( $fr['core_tampered'] );
+        $unexpected_core  = ! empty( $fr['unexpected_in_core'] );
+        $integrity_flags  = isset( $fr['integrity_flags'] ) ? $fr['integrity_flags'] : array();
 
-        // Severity from risk_level.
-        $severity_map = array(
-            'malicious'  => 'critical',
-            'risky'      => 'high',
-            'suspicious' => 'medium',
-        );
-        $severity = isset( $severity_map[ $risk_level ] ) ? $severity_map[ $risk_level ] : 'medium';
+        // ── Severity determination ──────────────────────────────
+        // Core tampering always gets critical/high regardless of risk_level.
+        if ( $core_tampered ) {
+            $severity = 'critical';
+        } elseif ( $unexpected_core ) {
+            $severity = 'high';
+        } else {
+            $severity_map = array(
+                'malicious'  => 'critical',
+                'risky'      => 'high',
+                'suspicious' => 'medium',
+            );
+            $severity = isset( $severity_map[ $risk_level ] ) ? $severity_map[ $risk_level ] : 'medium';
+        }
 
-        // FP likelihood from family confidence (inverse).
-        $fp_map = array(
-            'high'   => 'none',
-            'medium' => 'low',
-            'low'    => 'medium',
-            'none'   => 'high',
-        );
-        $fp_likelihood = isset( $fp_map[ $family_confidence ] ) ? $fp_map[ $family_confidence ] : 'low';
+        // FP likelihood — core findings verified against official checksums
+        // have zero false positive likelihood.
+        if ( $core_tampered ) {
+            $fp_likelihood = 'none';
+        } elseif ( $unexpected_core ) {
+            $fp_likelihood = 'none';
+        } else {
+            $fp_map = array(
+                'high'   => 'none',
+                'medium' => 'low',
+                'low'    => 'medium',
+                'none'   => 'high',
+            );
+            $fp_likelihood = isset( $fp_map[ $family_confidence ] ) ? $fp_map[ $family_confidence ] : 'low';
+        }
 
-        // Title.
-        $title = $family_label
-            ? sprintf( '%s — %s', $family_label, $file_path )
-            : sprintf( 'Suspicious file — %s', $file_path );
+        // ── Title ───────────────────────────────────────────────
+        if ( $core_tampered ) {
+            $title = sprintf( 'Core file tampered — %s', $file_path );
+        } elseif ( $unexpected_core ) {
+            $title = sprintf( 'Unexpected file in core directory — %s', $file_path );
+        } elseif ( $family_label ) {
+            $title = sprintf( '%s — %s', $family_label, $file_path );
+        } else {
+            $title = sprintf( 'Suspicious file — %s', $file_path );
+        }
 
         // Category from family or fallback.
         $category = ! empty( $family ) ? $family : 'file_scan';
 
-        // Description.
-        $description = ! empty( $reasons )
-            ? implode( '; ', array_slice( $reasons, 0, 5 ) )
-            : sprintf( 'File scored %d/100 in risk analysis.', $risk_score );
+        // ── Description ─────────────────────────────────────────
+        if ( $core_tampered ) {
+            $description = sprintf(
+                'WordPress core file has been modified. Official checksum mismatch detected for %s. %s',
+                $file_path,
+                ! empty( $reasons ) ? implode( '; ', array_slice( $reasons, 0, 3 ) ) : ''
+            );
+        } elseif ( $unexpected_core ) {
+            $description = sprintf(
+                'File %s exists in a WordPress core directory but is not part of the official WordPress distribution.',
+                $file_path
+            );
+        } elseif ( ! empty( $reasons ) ) {
+            $description = implode( '; ', array_slice( $reasons, 0, 5 ) );
+        } else {
+            $description = sprintf( 'File scored %d/100 in risk analysis.', $risk_score );
+        }
 
-        $why_it_matters = 'malicious' === $risk_level
-            ? 'This file shows strong indicators of malicious code and may actively compromise the site.'
-            : ( 'risky' === $risk_level
-                ? 'This file contains patterns commonly associated with backdoors or malware.'
-                : 'This file contains suspicious patterns that warrant manual review.' );
+        // ── Why it matters ──────────────────────────────────────
+        if ( $core_tampered ) {
+            $why_it_matters = 'Modified core files are a strong indicator of compromise. Attackers often inject backdoors into core files to survive plugin updates and maintain persistent access.';
+        } elseif ( $unexpected_core ) {
+            $why_it_matters = 'Files in wp-admin/ or wp-includes/ that are not part of the official WordPress release are highly suspicious. Attackers plant files here because these directories are rarely inspected manually.';
+        } elseif ( 'malicious' === $risk_level ) {
+            $why_it_matters = 'This file shows strong indicators of malicious code and may actively compromise the site.';
+        } elseif ( 'risky' === $risk_level ) {
+            $why_it_matters = 'This file contains patterns commonly associated with backdoors or malware.';
+        } else {
+            $why_it_matters = 'This file contains suspicious patterns that warrant manual review.';
+        }
+
+        // ── Recommendation ──────────────────────────────────────
+        if ( $core_tampered ) {
+            $recommendation = $remediation ?: 'Reinstall WordPress core files immediately via wp-cli (wp core download --force) or dashboard one-click reinstall. Then scan for persistence backdoors.';
+        } elseif ( $unexpected_core ) {
+            $recommendation = $remediation ?: 'Delete this file after verifying it is not a legitimate server-level addition. Scan for additional injected files.';
+        } else {
+            $recommendation = $remediation ?: 'Review this file manually and delete if it is not part of a known plugin or theme.';
+        }
 
         // Evidence: top matched rules.
         $evidence = ! empty( $matched_rules )
@@ -541,20 +593,23 @@ class AIPSC_Findings_Store {
 
         // Meta: everything useful for UI/MCP.
         $meta = array(
-            'job_id'            => $job_id,
-            'file_path'         => $file_path,
-            'risk_score'        => $risk_score,
-            'risk_level'        => $risk_level,
-            'family'            => $family,
-            'family_label'      => $family_label,
-            'family_confidence' => $family_confidence,
-            'sha256'            => $sha256,
-            'matched_rules'     => $matched_rules,
-            'context_flags'     => isset( $fr['context_flags'] ) ? $fr['context_flags'] : array(),
-            'integrity_flags'   => isset( $fr['integrity_flags'] ) ? $fr['integrity_flags'] : array(),
-            'layer_scores'      => isset( $fr['layer_scores'] ) ? $fr['layer_scores'] : array(),
-            'is_new'            => ! empty( $fr['is_new'] ),
-            'is_modified'       => ! empty( $fr['is_modified'] ),
+            'job_id'             => $job_id,
+            'file_path'          => $file_path,
+            'risk_score'         => $risk_score,
+            'risk_level'         => $risk_level,
+            'family'             => $family,
+            'family_label'       => $family_label,
+            'family_confidence'  => $family_confidence,
+            'sha256'             => $sha256,
+            'matched_rules'      => $matched_rules,
+            'context_flags'      => isset( $fr['context_flags'] ) ? $fr['context_flags'] : array(),
+            'integrity_flags'    => $integrity_flags,
+            'layer_scores'       => isset( $fr['layer_scores'] ) ? $fr['layer_scores'] : array(),
+            'is_new'             => ! empty( $fr['is_new'] ),
+            'is_modified'        => ! empty( $fr['is_modified'] ),
+            'core_tampered'      => $core_tampered,
+            'unexpected_in_core' => $unexpected_core,
+            'core_checksum'      => isset( $fr['core_checksum'] ) ? $fr['core_checksum'] : '',
         );
 
         return array(
@@ -562,16 +617,16 @@ class AIPSC_Findings_Store {
             'fingerprint'             => $fingerprint,
             'title'                   => $title,
             'severity'                => $severity,
-            'confidence'              => $family_confidence ?: 'low',
+            'confidence'              => $core_tampered || $unexpected_core ? 'high' : ( $family_confidence ?: 'low' ),
             'category'                => $category,
             'status'                  => self::STATUS_OPEN,
             'source'                  => 'file_scanner',
             'description'             => $description,
             'why_it_matters'          => $why_it_matters,
-            'recommendation'          => $remediation ?: 'Review this file manually and delete if it is not part of a known plugin or theme.',
+            'recommendation'          => $recommendation,
             'evidence'                => $evidence,
             'meta_json'               => wp_json_encode( $meta ),
-            'fixable'                 => 0,
+            'fixable'                 => $core_tampered ? 1 : 0,
             'false_positive_likelihood' => $fp_likelihood,
             'first_seen'              => $now,
             'last_seen'               => $now,
