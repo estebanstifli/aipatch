@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Security scanner module.
  *
@@ -54,6 +54,19 @@ class AIPSC_Scanner {
      */
     public function get_engine() {
         return $this->engine;
+    }
+
+    /**
+     * Sync raw audit results to the findings store.
+     *
+     * Used by the step-by-step REST scan flow.
+     *
+     * @param AIPSC_Audit_Check_Result[] $raw_results Audit check results.
+     */
+    public function sync_findings( array $raw_results ) {
+        if ( $this->findings_store && ! empty( $raw_results ) ) {
+            $this->findings_store->sync( $raw_results );
+        }
     }
 
     /**
@@ -195,7 +208,7 @@ class AIPSC_Scanner {
             'ssl_active'         => is_ssl(),
             'login_protected'    => ! empty( $hardening['login_protection'] ),
             'wp_version_hidden'  => ! empty( $hardening['hide_wp_version'] ),
-            'auto_updates_core'  => ( ! defined( 'WP_AUTO_UPDATE_CORE' ) || false !== WP_AUTO_UPDATE_CORE ),
+            'auto_updates_core'  => ( ! defined( 'WP_AUTO_UPDATE_CORE' ) || false !== constant( 'WP_AUTO_UPDATE_CORE' ) ),
             'total_checks'       => $total_checks,
         );
     }

@@ -52,10 +52,10 @@ class AIPSC_Findings_Store {
             $fp = $result->get_fingerprint();
             $seen_fingerprints[] = $fp;
 
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $existing = $wpdb->get_row(
                 $wpdb->prepare(
-                    "SELECT id, status FROM {$table} WHERE fingerprint = %s LIMIT 1",
+                    "SELECT id, status FROM {$wpdb->prefix}aipsc_findings WHERE fingerprint = %s LIMIT 1",
                     $fp
                 )
             );
@@ -97,11 +97,11 @@ class AIPSC_Findings_Store {
             $placeholders = implode( ',', array_fill( 0, count( $seen_fingerprints ), '%s' ) );
             $values       = array_merge( array( $now ), $seen_fingerprints );
 
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $stats['resolved'] = (int) $wpdb->query(
                 $wpdb->prepare(
-                    "UPDATE {$table} SET status = 'resolved', resolved_at = %s WHERE status = 'open' AND fingerprint NOT IN ({$placeholders})",
-                    $values
+                    "UPDATE {$wpdb->prefix}aipsc_findings SET status = 'resolved', resolved_at = %s WHERE status = 'open' AND fingerprint NOT IN ({$placeholders})",
+                    ...$values
                 )
             );
         }
@@ -157,11 +157,11 @@ class AIPSC_Findings_Store {
         $values[]     = absint( $args['limit'] );
         $values[]     = absint( $args['offset'] );
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT * FROM {$wpdb->prefix}aipsc_findings WHERE {$where_clause} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d",
-                $values
+                ...$values
             )
         );
     }
@@ -229,17 +229,15 @@ class AIPSC_Findings_Store {
     public function stats() {
         global $wpdb;
 
-        $table = $wpdb->prefix . 'aipsc_findings';
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $by_status = $wpdb->get_results(
-            "SELECT status, COUNT(*) as cnt FROM {$table} GROUP BY status",
+            "SELECT status, COUNT(*) as cnt FROM {$wpdb->prefix}aipsc_findings GROUP BY status",
             OBJECT_K
         );
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $by_severity = $wpdb->get_results(
-            "SELECT severity, COUNT(*) as cnt FROM {$table} WHERE status = 'open' GROUP BY severity",
+            "SELECT severity, COUNT(*) as cnt FROM {$wpdb->prefix}aipsc_findings WHERE status = 'open' GROUP BY severity",
             OBJECT_K
         );
 
@@ -320,10 +318,10 @@ class AIPSC_Findings_Store {
             // Build the finding data from the file scan result.
             $data = $this->file_result_to_row( $fr, $fingerprint, $job_id, $now );
 
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $existing = $wpdb->get_row(
                 $wpdb->prepare(
-                    "SELECT id, status, severity, meta_json FROM {$table} WHERE fingerprint = %s LIMIT 1",
+                    "SELECT id, status, severity, meta_json FROM {$wpdb->prefix}aipsc_findings WHERE fingerprint = %s LIMIT 1",
                     $fingerprint
                 )
             );
@@ -373,19 +371,19 @@ class AIPSC_Findings_Store {
             $placeholders = implode( ',', array_fill( 0, count( $seen_fingerprints ), '%s' ) );
             $values       = array_merge( array( $now ), $seen_fingerprints );
 
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $stats['resolved'] = (int) $wpdb->query(
                 $wpdb->prepare(
-                    "UPDATE {$table} SET status = 'resolved', resolved_at = %s WHERE status = 'open' AND source = 'file_scanner' AND fingerprint NOT IN ({$placeholders})",
-                    $values
+                    "UPDATE {$wpdb->prefix}aipsc_findings SET status = 'resolved', resolved_at = %s WHERE status = 'open' AND source = 'file_scanner' AND fingerprint NOT IN ({$placeholders})",
+                    ...$values
                 )
             );
         } else {
             // No findings at all — resolve all open file_scanner findings.
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $stats['resolved'] = (int) $wpdb->query(
                 $wpdb->prepare(
-                    "UPDATE {$table} SET status = 'resolved', resolved_at = %s WHERE status = 'open' AND source = 'file_scanner'",
+                    "UPDATE {$wpdb->prefix}aipsc_findings SET status = 'resolved', resolved_at = %s WHERE status = 'open' AND source = 'file_scanner'",
                     $now
                 )
             );
@@ -407,8 +405,6 @@ class AIPSC_Findings_Store {
     public function diff_since( $since, $source = '' ) {
         global $wpdb;
 
-        $table = $wpdb->prefix . 'aipsc_findings';
-
         $source_clause = '';
         $values_new    = array( $since );
         $values_res    = array( $since );
@@ -420,20 +416,20 @@ class AIPSC_Findings_Store {
         }
 
         // New findings: first_seen >= $since.
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $new = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT * FROM {$table} WHERE first_seen >= %s{$source_clause} ORDER BY severity DESC",
-                $values_new
+                "SELECT * FROM {$wpdb->prefix}aipsc_findings WHERE first_seen >= %s{$source_clause} ORDER BY severity DESC",
+                ...$values_new
             )
         );
 
         // Resolved findings: resolved_at >= $since.
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $resolved = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT * FROM {$table} WHERE status = 'resolved' AND resolved_at >= %s{$source_clause} ORDER BY severity DESC",
-                $values_res
+                "SELECT * FROM {$wpdb->prefix}aipsc_findings WHERE status = 'resolved' AND resolved_at >= %s{$source_clause} ORDER BY severity DESC",
+                ...$values_res
             )
         );
 

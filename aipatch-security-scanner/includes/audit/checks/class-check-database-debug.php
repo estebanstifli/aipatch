@@ -27,7 +27,7 @@ class AIPSC_Check_Database_Debug extends AIPSC_Audit_Check_Base {
         global $wpdb;
         $results = array();
 
-        if ( defined( 'SAVEQUERIES' ) && SAVEQUERIES ) {
+        if ( defined( 'SAVEQUERIES' ) && constant( 'SAVEQUERIES' ) ) {
             $results[] = $this->make_result( array(
                 'id'              => 'savequeries_enabled',
                 'title'           => __( 'SAVEQUERIES is enabled', 'aipatch-security-scanner' ),

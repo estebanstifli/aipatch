@@ -214,11 +214,11 @@ class AIPSC_Job_Manager {
         $values[]     = absint( $args['limit'] );
         $values[]     = absint( $args['offset'] );
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT * FROM {$wpdb->prefix}aipsc_jobs WHERE {$where_clause} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-                $values
+                ...$values
             )
         );
     }
@@ -271,12 +271,10 @@ class AIPSC_Job_Manager {
     public function claim_items( $job_id, $batch_size = 50 ) {
         global $wpdb;
 
-        $table = $wpdb->prefix . 'aipsc_job_items';
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $items = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT * FROM {$table} WHERE job_id = %s AND status = %s ORDER BY id ASC LIMIT %d",
+            "SELECT * FROM {$wpdb->prefix}aipsc_job_items WHERE job_id = %s AND status = %s ORDER BY id ASC LIMIT %d",
                 $job_id,
                 self::STATUS_PENDING,
                 absint( $batch_size )
@@ -290,11 +288,11 @@ class AIPSC_Job_Manager {
         $ids = wp_list_pluck( $items, 'id' );
         $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $wpdb->query(
             $wpdb->prepare(
-                "UPDATE {$table} SET status = 'running', attempts = attempts + 1 WHERE id IN ({$placeholders})",
-                $ids
+                "UPDATE {$wpdb->prefix}aipsc_job_items SET status = 'running', attempts = attempts + 1 WHERE id IN ({$placeholders})",
+                ...$ids
             )
         );
 

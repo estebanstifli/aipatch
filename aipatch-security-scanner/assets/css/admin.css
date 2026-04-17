@@ -698,6 +698,235 @@
     flex-wrap: wrap;
 }
 
+/* ---------------------------------------------------------------
+   Skeleton Loaders
+   --------------------------------------------------------------- */
+
+@keyframes aipatch-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.aipatch-skeleton-pulse {
+    background: linear-gradient(90deg, #f0f0f1 25%, #e2e4e7 50%, #f0f0f1 75%);
+    background-size: 200% 100%;
+    animation: aipatch-shimmer 1.5s ease infinite;
+}
+
+.aipatch-skeleton-text {
+    display: inline-block;
+    background: linear-gradient(90deg, #f0f0f1 25%, #e2e4e7 50%, #f0f0f1 75%);
+    background-size: 200% 100%;
+    animation: aipatch-shimmer 1.5s ease infinite;
+    border-radius: 3px;
+    color: transparent !important;
+    min-width: 40px;
+    height: 1em;
+}
+
+.aipatch-card-skeleton {
+    opacity: 0.6;
+}
+
+.aipatch-card-skeleton .aipatch-skeleton-pulse {
+    background-color: #e2e4e7;
+}
+
+/* ---------------------------------------------------------------
+   Scan Level Selector
+   --------------------------------------------------------------- */
+
+.aipatch-scan-levels {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.aipatch-scan-level {
+    cursor: pointer;
+    margin: 0;
+}
+
+.aipatch-scan-level input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.aipatch-scan-level-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 16px;
+    border: 2px solid #c3c4c7;
+    border-radius: 6px;
+    background: #fff;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    min-width: 80px;
+}
+
+.aipatch-scan-level-card strong {
+    font-size: 13px;
+    color: #1d2327;
+}
+
+.aipatch-scan-level-card small {
+    font-size: 11px;
+    color: #8c8f94;
+}
+
+.aipatch-scan-level-card:hover {
+    border-color: #2271b1;
+}
+
+.aipatch-scan-level-selected,
+.aipatch-scan-level input:checked + .aipatch-scan-level-card {
+    border-color: #2271b1;
+    background: #f0f6fc;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.aipatch-scan-level-recommended {
+    position: relative;
+}
+
+.aipatch-scan-level-recommended::after {
+    content: '\2605';
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #2271b1;
+    color: #fff;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+    line-height: 16px;
+    text-align: center;
+}
+
+/* ---------------------------------------------------------------
+   Scan Progress Panel
+   --------------------------------------------------------------- */
+
+.aipatch-scan-progress {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+}
+
+.aipatch-progress-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.aipatch-progress-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.aipatch-progress-title-row .dashicons {
+    color: #2271b1;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+.aipatch-progress-pct {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2271b1;
+    font-variant-numeric: tabular-nums;
+}
+
+.aipatch-progress-bar-wrap {
+    height: 8px;
+    background: #f0f0f1;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.aipatch-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #2271b1, #135e96);
+    border-radius: 4px;
+    width: 0;
+    transition: width 0.4s ease;
+}
+
+.aipatch-progress-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.aipatch-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    transition: background 0.2s;
+}
+
+.aipatch-step-pending {
+    color: #8c8f94;
+}
+
+.aipatch-step-pending .aipatch-step-icon {
+    color: #c3c4c7;
+}
+
+.aipatch-step-running {
+    background: #f0f6fc;
+    color: #1d2327;
+    font-weight: 500;
+}
+
+.aipatch-step-running .aipatch-step-icon {
+    color: #2271b1;
+}
+
+.aipatch-step-done {
+    color: #1d2327;
+}
+
+.aipatch-step-done .aipatch-step-icon {
+    color: #00a32a;
+}
+
+.aipatch-step-label {
+    flex: 1;
+}
+
+.aipatch-step-time {
+    font-size: 11px;
+    color: #8c8f94;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------
+   Chart Section – fade-in animation
+   --------------------------------------------------------------- */
+
+.aipatch-chart-section {
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.4s ease, transform 0.3s ease;
+}
+
+.aipatch-chart-section.aipatch-chart-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 .aipatch-rec-actions .button-primary .dashicons {
     font-size: 14px;
     width: 14px;

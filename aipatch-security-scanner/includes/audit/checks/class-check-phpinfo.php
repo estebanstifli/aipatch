@@ -35,6 +35,7 @@ class AIPSC_Check_Phpinfo extends AIPSC_Audit_Check_Base {
                 'title'          => $this->get_title(),
                 'severity'       => AIPSC_Audit_Check_Result::SEVERITY_HIGH,
                 'description'    => sprintf(
+                    /* translators: %d: Number of phpinfo files found. */
                     __( 'Found %d phpinfo file(s) accessible from the web.', 'aipatch-security-scanner' ),
                     count( $found )
                 ),

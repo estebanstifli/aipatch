@@ -28,6 +28,7 @@ class AIPSC_Check_Application_Passwords extends AIPSC_Audit_Check_Base {
             return array();
         }
 
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
         $app_passwords_enabled = apply_filters( 'wp_is_application_passwords_available', true );
         if ( ! $app_passwords_enabled ) {
             return array();
@@ -48,6 +49,7 @@ class AIPSC_Check_Application_Passwords extends AIPSC_Audit_Check_Base {
                 $this->make_result( array(
                     'id'              => 'app_passwords_in_use',
                     'title'           => sprintf(
+                        /* translators: %d: Number of administrator accounts using application passwords. */
                         _n( '%d admin has application passwords', '%d admins have application passwords', $users_with_app_passwords, 'aipatch-security-scanner' ),
                         $users_with_app_passwords
                     ),

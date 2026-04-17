@@ -21,7 +21,7 @@ class AIPSC_Check_Cookie_Security extends AIPSC_Audit_Check_Base {
                 'description'    => __( 'session.cookie_secure is not enabled despite HTTPS.', 'aipatch-security-scanner' ),
                 'why_it_matters' => __( 'Cookies without the Secure flag can be sent over HTTP, enabling interception.', 'aipatch-security-scanner' ),
                 'recommendation' => __( 'Set session.cookie_secure = 1 in php.ini or via ini_set().', 'aipatch-security-scanner' ),
-                'evidence'       => 'session.cookie_secure = ' . var_export( $secure, true ),
+                'evidence'       => 'session.cookie_secure = ' . ( '' === (string) $secure ? '(empty)' : (string) $secure ),
             ) );
         }
 
@@ -33,7 +33,7 @@ class AIPSC_Check_Cookie_Security extends AIPSC_Audit_Check_Base {
                 'description'    => __( 'session.cookie_httponly is not set.', 'aipatch-security-scanner' ),
                 'why_it_matters' => __( 'HttpOnly flag prevents JavaScript from accessing cookies, mitigating XSS impact.', 'aipatch-security-scanner' ),
                 'recommendation' => __( 'Set session.cookie_httponly = 1 in php.ini.', 'aipatch-security-scanner' ),
-                'evidence'       => 'session.cookie_httponly = ' . var_export( $httponly, true ),
+                'evidence'       => 'session.cookie_httponly = ' . ( '' === (string) $httponly ? '(empty)' : (string) $httponly ),
             ) );
         }
 
@@ -45,7 +45,7 @@ class AIPSC_Check_Cookie_Security extends AIPSC_Audit_Check_Base {
                 'description'    => __( 'session.cookie_samesite is not set to Lax or Strict.', 'aipatch-security-scanner' ),
                 'why_it_matters' => __( 'SameSite attribute helps prevent CSRF attacks.', 'aipatch-security-scanner' ),
                 'recommendation' => __( 'Set session.cookie_samesite = "Lax" in php.ini.', 'aipatch-security-scanner' ),
-                'evidence'       => 'session.cookie_samesite = ' . var_export( $samesite, true ),
+                'evidence'       => 'session.cookie_samesite = ' . ( '' === (string) $samesite ? '(empty)' : (string) $samesite ),
             ) );
         }
 

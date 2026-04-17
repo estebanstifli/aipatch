@@ -46,10 +46,12 @@ class AIPSC_Check_Unused_Themes extends AIPSC_Audit_Check_Base {
             $results[] = $this->make_result( array(
                 'id'              => 'unused_themes_outdated',
                 'title'           => sprintf(
+                    /* translators: %d: Number of outdated unused themes. */
                     _n( '%d unused theme is outdated', '%d unused themes are outdated', count( $unused_outdated ), 'aipatch-security-scanner' ),
                     count( $unused_outdated )
                 ),
                 'description'     => sprintf(
+                    /* translators: %s: Comma-separated list of outdated unused theme names. */
                     __( 'Unused outdated themes: %s', 'aipatch-security-scanner' ),
                     implode( ', ', array_map( 'esc_html', $unused_outdated ) )
                 ),
@@ -67,6 +69,7 @@ class AIPSC_Check_Unused_Themes extends AIPSC_Audit_Check_Base {
             $results[] = $this->make_result( array(
                 'id'              => 'too_many_unused_themes',
                 'title'           => sprintf(
+                    /* translators: %d: Number of unused installed themes. */
                     __( '%d unused themes installed', 'aipatch-security-scanner' ),
                     count( $unused )
                 ),

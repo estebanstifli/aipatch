@@ -59,10 +59,12 @@ class AIPSC_Check_Security_Headers extends AIPSC_Audit_Check_Base {
             $results[] = $this->make_result( array(
                 'id'              => 'missing_security_headers',
                 'title'           => sprintf(
+                    /* translators: %d: Number of missing security headers. */
                     _n( '%d security header missing', '%d security headers missing', count( $missing_headers ), 'aipatch-security-scanner' ),
                     count( $missing_headers )
                 ),
                 'description'     => sprintf(
+                    /* translators: %s: Comma-separated list of missing security headers. */
                     __( 'Missing headers: %s', 'aipatch-security-scanner' ),
                     implode( ', ', $missing_headers )
                 ),

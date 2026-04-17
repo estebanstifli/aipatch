@@ -24,13 +24,13 @@ class AIPSC_Check_File_Install extends AIPSC_Audit_Check_Base {
     }
 
     public function run(): array {
-        $file_mods_allowed = ! defined( 'DISALLOW_FILE_MODS' ) || ! DISALLOW_FILE_MODS;
+        $file_mods_allowed = ! defined( 'DISALLOW_FILE_MODS' ) || ! constant( 'DISALLOW_FILE_MODS' );
 
         if ( ! $file_mods_allowed ) {
             return array();
         }
 
-        if ( ! defined( 'DISALLOW_FILE_EDIT' ) || ! DISALLOW_FILE_EDIT ) {
+        if ( ! defined( 'DISALLOW_FILE_EDIT' ) || ! constant( 'DISALLOW_FILE_EDIT' ) ) {
             return array();
         }
 

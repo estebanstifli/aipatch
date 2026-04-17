@@ -50,10 +50,12 @@ class AIPSC_Check_Plugins_Outdated extends AIPSC_Audit_Check_Base {
             $this->make_result( array(
                 'id'              => 'plugins_outdated',
                 'title'           => sprintf(
+                    /* translators: %d: Number of active plugins needing updates. */
                     _n( '%d plugin needs updating', '%d plugins need updating', count( $outdated ), 'aipatch-security-scanner' ),
                     count( $outdated )
                 ),
                 'description'     => sprintf(
+                    /* translators: %s: Comma-separated list of outdated plugin names. */
                     __( 'Outdated plugins: %s', 'aipatch-security-scanner' ),
                     implode( ', ', array_map( 'esc_html', array_slice( $outdated, 0, 10 ) ) )
                 ),

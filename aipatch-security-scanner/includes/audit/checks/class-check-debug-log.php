@@ -37,6 +37,7 @@ class AIPSC_Check_Debug_Log extends AIPSC_Audit_Check_Base {
                 'id'              => 'debug_log_exists',
                 'title'           => __( 'Debug log file exists in wp-content', 'aipatch-security-scanner' ),
                 'description'     => sprintf(
+                    /* translators: %s: Human-readable debug.log file size. */
                     __( 'A debug.log file (%s) was found. This file might be accessible publicly.', 'aipatch-security-scanner' ),
                     size_format( $size )
                 ),

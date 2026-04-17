@@ -35,6 +35,7 @@ class AIPSC_Check_User_ID_One extends AIPSC_Audit_Check_Base {
                 'id'              => 'admin_user_id_one',
                 'title'           => __( 'User ID 1 is an administrator', 'aipatch-security-scanner' ),
                 'description'     => sprintf(
+                    /* translators: %s: Username of the administrator account with ID 1. */
                     __( 'The user "%s" (ID 1) has administrator privileges. This is the first target in enumeration attacks.', 'aipatch-security-scanner' ),
                     $user->user_login
                 ),

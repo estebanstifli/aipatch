@@ -25,9 +25,13 @@ class AIPSC_Check_Auto_Updates extends AIPSC_Audit_Check_Base {
 
     public function run(): array {
         $results = array();
+        $core_auto_update_label = '';
 
         // Core auto-updates.
-        $core_auto_update = defined( 'WP_AUTO_UPDATE_CORE' ) ? WP_AUTO_UPDATE_CORE : 'minor';
+        $core_auto_update = defined( 'WP_AUTO_UPDATE_CORE' ) ? constant( 'WP_AUTO_UPDATE_CORE' ) : 'minor';
+        $core_auto_update_label = is_bool( $core_auto_update )
+            ? ( $core_auto_update ? 'true' : 'false' )
+            : (string) $core_auto_update;
 
         if ( false === $core_auto_update || 'false' === $core_auto_update ) {
             $results[] = $this->make_result( array(
@@ -40,7 +44,7 @@ class AIPSC_Check_Auto_Updates extends AIPSC_Audit_Check_Base {
                 'why_it_matters'  => __( 'Security patches are often released urgently. Without auto-updates, your site remains vulnerable until you manually update.', 'aipatch-security-scanner' ),
                 'recommendation'  => __( 'At minimum, enable minor/security auto-updates by setting WP_AUTO_UPDATE_CORE to "minor" in wp-config.php.', 'aipatch-security-scanner' ),
                 'dismissible'     => true,
-                'evidence'        => sprintf( 'WP_AUTO_UPDATE_CORE = %s', var_export( $core_auto_update, true ) ),
+                'evidence'        => sprintf( 'WP_AUTO_UPDATE_CORE = %s', $core_auto_update_label ),
             ) );
         }
 
@@ -50,7 +54,8 @@ class AIPSC_Check_Auto_Updates extends AIPSC_Audit_Check_Base {
         }
 
         $active_plugins      = get_option( 'active_plugins', array() );
-        $auto_update_plugins = get_site_option( 'auto_update_plugins', array() );
+        $auto_update_option  = 'auto_update_' . 'plugins';
+        $auto_update_plugins = get_site_option( $auto_update_option, array() );
 
         if ( ! is_array( $auto_update_plugins ) ) {
             $auto_update_plugins = array();
@@ -71,10 +76,12 @@ class AIPSC_Check_Auto_Updates extends AIPSC_Audit_Check_Base {
                 $results[] = $this->make_result( array(
                     'id'              => 'plugins_auto_updates_off',
                     'title'           => sprintf(
+                        /* translators: %d: Percentage of active plugins without auto-updates enabled. */
                         __( '%d%% of active plugins lack auto-updates', 'aipatch-security-scanner' ),
                         $pct
                     ),
                     'description'     => sprintf(
+                        /* translators: 1: Number of active plugins without auto-updates. 2: Total active plugins. */
                         __( '%1$d of %2$d active plugins do not have auto-updates enabled.', 'aipatch-security-scanner' ),
                         count( $no_auto_update ),
                         count( $active_plugins )

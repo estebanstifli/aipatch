@@ -47,6 +47,7 @@ class AIPSC_Check_WP_Version extends AIPSC_Audit_Check_Base {
                 'id'              => 'wp_outdated',
                 'title'           => __( 'WordPress core is outdated', 'aipatch-security-scanner' ),
                 'description'     => sprintf(
+                    /* translators: %s: Installed WordPress version. */
                     __( 'You are running WordPress %s. A newer version is available.', 'aipatch-security-scanner' ),
                     $wp_version
                 ),

@@ -34,6 +34,7 @@ class AIPSC_Check_Too_Many_Admins extends AIPSC_Audit_Check_Base {
             $this->make_result( array(
                 'id'              => 'too_many_admins',
                 'title'           => sprintf(
+                    /* translators: %d: Number of administrator accounts. */
                     __( '%d administrator accounts detected', 'aipatch-security-scanner' ),
                     count( $admins )
                 ),

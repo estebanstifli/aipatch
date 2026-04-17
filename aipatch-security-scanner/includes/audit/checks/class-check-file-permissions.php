@@ -48,6 +48,7 @@ class AIPSC_Check_File_Permissions extends AIPSC_Audit_Check_Base {
                 'id'              => 'wpconfig_permissions',
                 'title'           => __( 'wp-config.php has loose permissions', 'aipatch-security-scanner' ),
                 'description'     => sprintf(
+                    /* translators: %s: Octal file permissions for wp-config.php. */
                     __( 'Current permissions: %s. Recommended: 0644 or more restrictive.', 'aipatch-security-scanner' ),
                     decoct( $perms )
                 ),

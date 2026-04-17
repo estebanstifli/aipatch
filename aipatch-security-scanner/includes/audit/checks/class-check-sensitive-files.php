@@ -47,10 +47,12 @@ class AIPSC_Check_Sensitive_Files extends AIPSC_Audit_Check_Base {
             $this->make_result( array(
                 'id'              => 'sensitive_files_exposed',
                 'title'           => sprintf(
+                    /* translators: %d: Number of publicly accessible sensitive files found. */
                     _n( '%d sensitive file is publicly accessible', '%d sensitive files are publicly accessible', count( $found_files ), 'aipatch-security-scanner' ),
                     count( $found_files )
                 ),
                 'description'     => sprintf(
+                    /* translators: %s: Comma-separated list of sensitive files found. */
                     __( 'These files exist and may be accessible: %s', 'aipatch-security-scanner' ),
                     implode( ', ', array_map( 'esc_html', $file_list ) )
                 ),

@@ -8,7 +8,7 @@ Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Professional security audit engine for WordPress. 36 automated checks, multi-layer malware file scanning with family classification, WordPress core integrity verification, file integrity baseline, vulnerability intelligence, one-click remediation with rollback, and 23 MCP abilities for AI security agents.
+WordPress security scanner with 36 checks, malware scanning, core integrity verification, remediation, and 23 MCP abilities.
 
 == Description ==
 

@@ -326,11 +326,11 @@ class AIPSC_File_Scanner {
         $values[]     = absint( $args['limit'] );
         $values[]     = absint( $args['offset'] );
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $rows = $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT * FROM {$wpdb->prefix}aipsc_file_scan_results WHERE {$where_clause} ORDER BY risk_score DESC LIMIT %d OFFSET %d",
-                $values
+                ...$values
             )
         );
 
@@ -351,7 +351,7 @@ class AIPSC_File_Scanner {
      */
     public function scan_file( $file_path ) {
         if ( ! is_readable( $file_path ) ) {
-            throw new \RuntimeException( sprintf( 'File not readable: %s', $file_path ) );
+            throw new \RuntimeException( sprintf( 'File not readable: %s', esc_html( $file_path ) ) );
         }
 
         $file_size = filesize( $file_path );
@@ -509,10 +509,8 @@ class AIPSC_File_Scanner {
     private function load_baseline_index() {
         global $wpdb;
 
-        $table = $wpdb->prefix . 'aipsc_file_baseline';
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $rows = $wpdb->get_results( "SELECT file_path, sha256, origin_type, first_seen, last_seen FROM {$table}" );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $rows = $wpdb->get_results( "SELECT file_path, sha256, origin_type, first_seen, last_seen FROM {$wpdb->prefix}aipsc_file_baseline" );
 
         $index = array();
         if ( $rows ) {
@@ -650,12 +648,10 @@ class AIPSC_File_Scanner {
         }
 
         global $wpdb;
-        $table = $wpdb->prefix . 'aipsc_file_scan_results';
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $rows = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT file_path, risk_score, classification, signals_json, sha256, file_size FROM {$table} WHERE job_id = %s AND risk_score >= 15",
+                "SELECT file_path, risk_score, classification, signals_json, sha256, file_size FROM {$wpdb->prefix}aipsc_file_scan_results WHERE job_id = %s AND risk_score >= 15",
                 $job_id
             )
         );
@@ -694,21 +690,19 @@ class AIPSC_File_Scanner {
     private function compute_stats( $job_id ) {
         global $wpdb;
 
-        $table = $wpdb->prefix . 'aipsc_file_scan_results';
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $by_class = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT classification, COUNT(*) as cnt FROM {$table} WHERE job_id = %s GROUP BY classification",
+                "SELECT classification, COUNT(*) as cnt FROM {$wpdb->prefix}aipsc_file_scan_results WHERE job_id = %s GROUP BY classification",
                 $job_id
             ),
             OBJECT_K
         );
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $agg = $wpdb->get_row(
             $wpdb->prepare(
-                "SELECT COUNT(*) as total, MAX(risk_score) as max_risk, AVG(risk_score) as avg_risk FROM {$table} WHERE job_id = %s",
+                "SELECT COUNT(*) as total, MAX(risk_score) as max_risk, AVG(risk_score) as avg_risk FROM {$wpdb->prefix}aipsc_file_scan_results WHERE job_id = %s",
                 $job_id
             )
         );

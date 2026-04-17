@@ -34,6 +34,7 @@ class AIPSC_Check_PHP_Version extends AIPSC_Audit_Check_Base {
             $this->make_result( array(
                 'id'              => 'php_outdated',
                 'title'           => sprintf(
+                    /* translators: %s: Installed PHP version. */
                     __( 'PHP %s is outdated', 'aipatch-security-scanner' ),
                     PHP_VERSION
                 ),

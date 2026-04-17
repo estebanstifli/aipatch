@@ -24,7 +24,7 @@ class AIPSC_Check_Cron_Health extends AIPSC_Audit_Check_Base {
     }
 
     public function run(): array {
-        if ( ! defined( 'DISABLE_WP_CRON' ) || ! DISABLE_WP_CRON ) {
+        if ( ! defined( 'DISABLE_WP_CRON' ) || ! constant( 'DISABLE_WP_CRON' ) ) {
             return array();
         }
 

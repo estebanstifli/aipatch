@@ -61,6 +61,7 @@ class AIPSC_Check_Backup_Files extends AIPSC_Audit_Check_Base {
                 'severity'       => AIPSC_Audit_Check_Result::SEVERITY_HIGH,
                 'confidence'     => AIPSC_Audit_Check_Result::CONFIDENCE_HIGH,
                 'description'    => sprintf(
+                    /* translators: %d: Number of backup files or directories found in the web root. */
                     __( 'Found %d potentially sensitive backup file(s) in the web root.', 'aipatch-security-scanner' ),
                     count( $found )
                 ),

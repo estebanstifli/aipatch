@@ -50,10 +50,12 @@ class AIPSC_Check_Inactive_Plugins extends AIPSC_Audit_Check_Base {
             $results[] = $this->make_result( array(
                 'id'              => 'inactive_plugins_outdated',
                 'title'           => sprintf(
+                    /* translators: %d: Number of inactive outdated plugins. */
                     _n( '%d inactive plugin is outdated', '%d inactive plugins are outdated', count( $inactive_outdated ), 'aipatch-security-scanner' ),
                     count( $inactive_outdated )
                 ),
                 'description'     => sprintf(
+                    /* translators: %s: Comma-separated list of inactive outdated plugin names. */
                     __( 'Inactive outdated plugins: %s', 'aipatch-security-scanner' ),
                     implode( ', ', array_map( 'esc_html', array_slice( $inactive_outdated, 0, 10 ) ) )
                 ),
@@ -71,6 +73,7 @@ class AIPSC_Check_Inactive_Plugins extends AIPSC_Audit_Check_Base {
             $results[] = $this->make_result( array(
                 'id'              => 'too_many_inactive_plugins',
                 'title'           => sprintf(
+                    /* translators: %d: Number of inactive installed plugins. */
                     __( '%d inactive plugins installed', 'aipatch-security-scanner' ),
                     $inactive_count
                 ),

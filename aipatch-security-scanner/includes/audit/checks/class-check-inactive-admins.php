@@ -57,10 +57,12 @@ class AIPSC_Check_Inactive_Admins extends AIPSC_Audit_Check_Base {
             $this->make_result( array(
                 'id'              => 'inactive_admins',
                 'title'           => sprintf(
+                    /* translators: %d: Number of inactive administrator accounts. */
                     _n( '%d admin account appears inactive', '%d admin accounts appear inactive', count( $inactive_admins ), 'aipatch-security-scanner' ),
                     count( $inactive_admins )
                 ),
                 'description'     => sprintf(
+                    /* translators: %s: Comma-separated list of inactive administrator usernames. */
                     __( 'Admin accounts with no recent login: %s', 'aipatch-security-scanner' ),
                     implode( ', ', array_map( 'esc_html', $inactive_admins ) )
                 ),

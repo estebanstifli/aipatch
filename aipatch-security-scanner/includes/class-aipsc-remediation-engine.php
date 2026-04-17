@@ -138,11 +138,10 @@ class AIPSC_Remediation_Engine {
         global $wpdb;
 
         $remediation_id = absint( $remediation_id );
-        $table          = $wpdb->prefix . 'aipsc_remediations';
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $record = $wpdb->get_row(
-            $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d LIMIT 1", $remediation_id ),
+            $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}aipsc_remediations WHERE id = %d LIMIT 1", $remediation_id ),
             ARRAY_A
         );
 
@@ -173,7 +172,7 @@ class AIPSC_Remediation_Engine {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $wpdb->update(
-            $table,
+            $wpdb->prefix . 'aipsc_remediations',
             array(
                 'status'         => self::STATUS_ROLLED_BACK,
                 'rolled_back_at' => $now,
@@ -246,13 +245,11 @@ class AIPSC_Remediation_Engine {
         $values[]  = absint( $args['limit'] );
         $values[]  = absint( $args['offset'] );
 
-        $table = $wpdb->prefix . 'aipsc_remediations';
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT * FROM {$table} WHERE {$where_sql} ORDER BY created_at DESC LIMIT %d OFFSET %d",
-                $values
+                "SELECT * FROM {$wpdb->prefix}aipsc_remediations WHERE {$where_sql} ORDER BY created_at DESC LIMIT %d OFFSET %d",
+                ...$values
             ),
             ARRAY_A
         );
@@ -285,17 +282,15 @@ class AIPSC_Remediation_Engine {
     public function stats() {
         global $wpdb;
 
-        $table = $wpdb->prefix . 'aipsc_remediations';
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $by_status = $wpdb->get_results(
-            "SELECT status, COUNT(*) as cnt FROM {$table} GROUP BY status",
+            "SELECT status, COUNT(*) as cnt FROM {$wpdb->prefix}aipsc_remediations GROUP BY status",
             OBJECT_K
         );
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $by_action = $wpdb->get_results(
-            "SELECT action_type, COUNT(*) as cnt FROM {$table} GROUP BY action_type",
+            "SELECT action_type, COUNT(*) as cnt FROM {$wpdb->prefix}aipsc_remediations GROUP BY action_type",
             OBJECT_K
         );
 
@@ -456,13 +451,17 @@ class AIPSC_Remediation_Engine {
             return $abs;
         }
 
-        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-        $written = file_put_contents( $abs, base64_decode( $data['content'] ) );
-        if ( false === $written ) {
+        $filesystem = $this->get_filesystem();
+        if ( is_wp_error( $filesystem ) ) {
+            return $filesystem;
+        }
+
+        $restored = $filesystem->put_contents( $abs, base64_decode( $data['content'] ), FS_CHMOD_FILE );
+        if ( ! $restored ) {
             return new WP_Error( 'aipatch_restore_failed', "Could not restore: {$data['path']}" );
         }
         if ( ! empty( $data['perms'] ) ) {
-            chmod( $abs, $data['perms'] );
+            $filesystem->chmod( $abs, (int) $data['perms'] );
         }
         return true;
     }
@@ -497,7 +496,12 @@ class AIPSC_Remediation_Engine {
             return new WP_Error( 'aipatch_file_exists', "Destination already exists: {$to}" );
         }
 
-        if ( ! rename( $abs_from, $abs_to ) ) {
+        $filesystem = $this->get_filesystem();
+        if ( is_wp_error( $filesystem ) ) {
+            return $filesystem;
+        }
+
+        if ( ! $filesystem->move( $abs_from, $abs_to, false ) ) {
             return new WP_Error( 'aipatch_rename_failed', "Could not rename {$from} → {$to}" );
         }
 
@@ -512,10 +516,38 @@ class AIPSC_Remediation_Engine {
             return new WP_Error( 'aipatch_rollback_path', 'Invalid rollback paths.' );
         }
 
-        if ( ! rename( $abs_from, $abs_to ) ) {
+        $filesystem = $this->get_filesystem();
+        if ( is_wp_error( $filesystem ) ) {
+            return $filesystem;
+        }
+
+        if ( ! $filesystem->move( $abs_from, $abs_to, false ) ) {
             return new WP_Error( 'aipatch_rollback_rename_failed', 'Could not reverse rename.' );
         }
         return true;
+    }
+
+    /**
+     * Get an initialized WP_Filesystem instance.
+     *
+     * @return WP_Filesystem_Base|WP_Error
+     */
+    private function get_filesystem() {
+        global $wp_filesystem;
+
+        if ( ! function_exists( 'WP_Filesystem' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+        }
+
+        if ( ! $wp_filesystem && ! WP_Filesystem() ) {
+            return new WP_Error( 'aipatch_filesystem_unavailable', 'WP_Filesystem could not be initialized.' );
+        }
+
+        if ( ! $wp_filesystem ) {
+            return new WP_Error( 'aipatch_filesystem_missing', 'WP_Filesystem instance is unavailable.' );
+        }
+
+        return $wp_filesystem;
     }
 
     /* -- file_patch ------------------------------------------------ */

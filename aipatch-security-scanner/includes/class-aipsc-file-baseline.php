@@ -75,10 +75,10 @@ class AIPSC_File_Baseline {
 
             $component = $this->detect_component( $relative );
 
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $existing = $wpdb->get_row(
                 $wpdb->prepare(
-                    "SELECT id FROM {$table} WHERE file_path = %s LIMIT 1",
+                    "SELECT id FROM {$wpdb->prefix}aipsc_file_baseline WHERE file_path = %s LIMIT 1",
                     $relative
                 )
             );
@@ -139,10 +139,8 @@ class AIPSC_File_Baseline {
     public function diff() {
         global $wpdb;
 
-        $table = $wpdb->prefix . 'aipsc_file_baseline';
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $baseline_rows = $wpdb->get_results( "SELECT * FROM {$table}" );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $baseline_rows = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}aipsc_file_baseline" );
 
         $result = array(
             'modified' => array(),
@@ -206,16 +204,14 @@ class AIPSC_File_Baseline {
     public function stats() {
         global $wpdb;
 
-        $table = $wpdb->prefix . 'aipsc_file_baseline';
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $by_origin = $wpdb->get_results(
-            "SELECT origin_type, COUNT(*) as cnt FROM {$table} GROUP BY origin_type",
+            "SELECT origin_type, COUNT(*) as cnt FROM {$wpdb->prefix}aipsc_file_baseline GROUP BY origin_type",
             OBJECT_K
         );
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $total = $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $total = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}aipsc_file_baseline" );
 
         $origins = array();
         foreach ( $by_origin as $key => $row ) {
@@ -236,10 +232,8 @@ class AIPSC_File_Baseline {
     public function prune_missing() {
         global $wpdb;
 
-        $table = $wpdb->prefix . 'aipsc_file_baseline';
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $rows = $wpdb->get_results( "SELECT id, file_path FROM {$table}" );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $rows = $wpdb->get_results( "SELECT id, file_path FROM {$wpdb->prefix}aipsc_file_baseline" );
 
         $to_delete = array();
         foreach ( $rows as $row ) {
@@ -254,9 +248,9 @@ class AIPSC_File_Baseline {
 
         $placeholders = implode( ',', array_fill( 0, count( $to_delete ), '%d' ) );
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return (int) $wpdb->query(
-            $wpdb->prepare( "DELETE FROM {$table} WHERE id IN ({$placeholders})", $to_delete )
+            $wpdb->prepare( "DELETE FROM {$wpdb->prefix}aipsc_file_baseline WHERE id IN ({$placeholders})", ...$to_delete )
         );
     }
 

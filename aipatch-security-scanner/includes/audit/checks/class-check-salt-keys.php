@@ -51,10 +51,12 @@ class AIPSC_Check_Salt_Keys extends AIPSC_Audit_Check_Base {
             $this->make_result( array(
                 'id'              => 'weak_salt_keys',
                 'title'           => sprintf(
+                    /* translators: %d: Number of weak or missing security salt keys. */
                     _n( '%d security salt key is weak or missing', '%d security salt keys are weak or missing', count( $weak_salts ), 'aipatch-security-scanner' ),
                     count( $weak_salts )
                 ),
                 'description'     => sprintf(
+                    /* translators: %s: Comma-separated list of weak or missing security salt constants. */
                     __( 'Weak keys: %s', 'aipatch-security-scanner' ),
                     implode( ', ', $weak_salts )
                 ),

@@ -44,10 +44,12 @@ class AIPSC_Check_Themes_Outdated extends AIPSC_Audit_Check_Base {
             $this->make_result( array(
                 'id'              => 'themes_outdated',
                 'title'           => sprintf(
+                    /* translators: %d: Number of installed themes needing updates. */
                     _n( '%d theme needs updating', '%d themes need updating', count( $outdated ), 'aipatch-security-scanner' ),
                     count( $outdated )
                 ),
                 'description'     => sprintf(
+                    /* translators: %s: Comma-separated list of outdated theme names. */
                     __( 'Outdated themes: %s', 'aipatch-security-scanner' ),
                     implode( ', ', array_map( 'esc_html', $outdated ) )
                 ),
