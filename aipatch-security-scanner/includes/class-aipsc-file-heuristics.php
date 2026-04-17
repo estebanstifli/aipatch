@@ -225,6 +225,126 @@ class AIPSC_File_Heuristics {
                 'description' => 'Disabling WordPress authentication/nonce checks.',
                 'tags'        => array( 'wp_specific', 'dangerous' ),
             ),
+
+            // ── Dangerous execution (additional) ─────────────────
+            'dynamic_include' => array(
+                'pattern'     => '/\b(include|include_once|require|require_once)\s*\(\s*\$_(GET|POST|REQUEST|COOKIE|SERVER)/i',
+                'weight'      => 10,
+                'label'       => 'Dynamic include with user input',
+                'description' => 'File inclusion directly from superglobal — LFI/RFI vector.',
+                'tags'        => array( 'exec', 'userinput', 'dangerous' ),
+            ),
+            'dynamic_include_var' => array(
+                'pattern'     => '/\b(include|include_once|require|require_once)\s*\(\s*\$[a-zA-Z_]\w*\s*\.\s*/i',
+                'weight'      => 5,
+                'label'       => 'Dynamic include with variable',
+                'description' => 'Include path built from variable concatenation.',
+                'tags'        => array( 'exec' ),
+            ),
+            'call_user_func' => array(
+                'pattern'     => '/\bcall_user_func(_array)?\s*\(\s*\$_(GET|POST|REQUEST|COOKIE)/i',
+                'weight'      => 9,
+                'label'       => 'call_user_func with user input',
+                'description' => 'Arbitrary function call controlled by user input.',
+                'tags'        => array( 'exec', 'userinput', 'dangerous' ),
+            ),
+            'error_suppress_exec' => array(
+                'pattern'     => '/@\s*(eval|assert|system|exec|passthru|shell_exec|popen|proc_open)\s*\(/i',
+                'weight'      => 8,
+                'label'       => 'Error-suppressed execution',
+                'description' => 'Error suppression (@) on dangerous function — hiding failures.',
+                'tags'        => array( 'exec', 'obfuscation', 'dangerous' ),
+            ),
+
+            // ── Obfuscation (additional) ─────────────────────────
+            'xor_assembly' => array(
+                'pattern'     => '/\$\w+\s*(?:\^|\|)\s*["\'][^"\']{5,}["\']/i',
+                'weight'      => 6,
+                'label'       => 'XOR/OR string assembly',
+                'description' => 'Building strings via XOR/OR bitwise operations.',
+                'tags'        => array( 'obfuscation' ),
+            ),
+            'str_replace_decode' => array(
+                'pattern'     => '/str_replace\s*\([^)]+\)\s*\.\s*str_replace|str_ireplace\s*\([^)]{30,}\)/i',
+                'weight'      => 4,
+                'label'       => 'Multi-stage str_replace',
+                'description' => 'Chained string replacements, common in payload reconstruction.',
+                'tags'        => array( 'obfuscation' ),
+            ),
+            'pack_unpack' => array(
+                'pattern'     => '/\b(pack|unpack)\s*\(\s*[\'"]H\*/i',
+                'weight'      => 5,
+                'label'       => 'pack/unpack hex conversion',
+                'description' => 'Binary pack/unpack used to reconstruct payloads.',
+                'tags'        => array( 'obfuscation' ),
+            ),
+            'array_map_exec' => array(
+                'pattern'     => '/\barray_map\s*\(\s*[\'"](assert|eval|system|exec|base64_decode)[\'"]/i',
+                'weight'      => 8,
+                'label'       => 'array_map with dangerous callback',
+                'description' => 'Execution via array_map callback — common shell trick.',
+                'tags'        => array( 'exec', 'obfuscation', 'dangerous' ),
+            ),
+            'preg_replace_callback_exec' => array(
+                'pattern'     => '/preg_replace_callback\s*\([^,]+,\s*[\'"](eval|assert|system)[\'"]/i',
+                'weight'      => 8,
+                'label'       => 'preg_replace_callback exec',
+                'description' => 'Execution via preg_replace_callback — code injection trick.',
+                'tags'        => array( 'exec', 'obfuscation', 'dangerous' ),
+            ),
+
+            // ── Remote fetch / payload download ──────────────────
+            'wp_remote_get' => array(
+                'pattern'     => '/\bwp_remote_get\s*\(\s*\$_(GET|POST|REQUEST)/i',
+                'weight'      => 7,
+                'label'       => 'wp_remote_get with user input',
+                'description' => 'Remote fetch URL controlled by user input (SSRF).',
+                'tags'        => array( 'network', 'userinput', 'dangerous' ),
+            ),
+            'curl_setopt_url' => array(
+                'pattern'     => '/curl_setopt\s*\([^,]+,\s*CURLOPT_URL\s*,\s*\$_(GET|POST|REQUEST)/i',
+                'weight'      => 7,
+                'label'       => 'cURL URL from user input',
+                'description' => 'cURL destination set by user-controlled input.',
+                'tags'        => array( 'network', 'userinput', 'dangerous' ),
+            ),
+
+            // ── Persistence / backdoor (additional) ──────────────
+            'move_uploaded_file' => array(
+                'pattern'     => '/\bmove_uploaded_file\s*\(/i',
+                'weight'      => 4,
+                'label'       => 'move_uploaded_file()',
+                'description' => 'File upload handler — benign alone, risky in context.',
+                'tags'        => array( 'upload', 'filesystem' ),
+            ),
+            'register_shutdown' => array(
+                'pattern'     => '/\bregister_shutdown_function\s*\(\s*[\'"](eval|assert|system)[\'"]/i',
+                'weight'      => 9,
+                'label'       => 'Shutdown function exec',
+                'description' => 'Registering dangerous function in shutdown hook.',
+                'tags'        => array( 'exec', 'backdoor', 'dangerous' ),
+            ),
+            'ini_set_disable' => array(
+                'pattern'     => '/\bini_set\s*\(\s*[\'"](?:disable_functions|open_basedir|safe_mode)[\'"]/i',
+                'weight'      => 7,
+                'label'       => 'ini_set security bypass',
+                'description' => 'Attempting to override PHP security directives.',
+                'tags'        => array( 'dangerous', 'backdoor' ),
+            ),
+            'set_time_limit_zero' => array(
+                'pattern'     => '/\bset_time_limit\s*\(\s*0\s*\)/i',
+                'weight'      => 2,
+                'label'       => 'set_time_limit(0)',
+                'description' => 'Removing execution time limit — often used by shells.',
+                'tags'        => array( 'backdoor' ),
+            ),
+            'error_reporting_zero' => array(
+                'pattern'     => '/\berror_reporting\s*\(\s*0\s*\)/i',
+                'weight'      => 3,
+                'label'       => 'error_reporting(0)',
+                'description' => 'Disabling error reporting to hide activity.',
+                'tags'        => array( 'obfuscation', 'backdoor' ),
+            ),
         );
     }
 
@@ -272,6 +392,249 @@ class AIPSC_File_Heuristics {
         $entropy_signal = self::check_entropy( $content );
         if ( $entropy_signal ) {
             $signals[] = $entropy_signal;
+        }
+
+        // Compound rules — multi-pattern correlations.
+        $compound_signals = self::analyse_compound( $content );
+        foreach ( $compound_signals as $cs ) {
+            $signals[] = $cs;
+        }
+
+        return $signals;
+    }
+
+    /**
+     * Compound heuristic rules.
+     *
+     * Each rule checks for a specific multi-pattern correlation that is
+     * much more suspicious than any single pattern alone. Returns high-weight
+     * signals only when the combination is present.
+     *
+     * @var array
+     */
+    private static $compound_rules = array();
+
+    /**
+     * Initialise compound rules (lazy).
+     */
+    private static function init_compound_rules() {
+        if ( ! empty( self::$compound_rules ) ) {
+            return;
+        }
+
+        self::$compound_rules = array(
+            // ── Obfuscation combos ───────────────────────────────
+            'eval_base64' => array(
+                'patterns'    => array(
+                    '/\beval\s*\(/i',
+                    '/\bbase64_decode\s*\(/i',
+                ),
+                'weight'      => 10,
+                'label'       => 'eval(base64_decode(…))',
+                'description' => 'Classic obfuscated payload: decode then execute.',
+                'tags'        => array( 'exec', 'obfuscation', 'dangerous', 'compound' ),
+            ),
+            'gzinflate_base64' => array(
+                'patterns'    => array(
+                    '/\b(gzinflate|gzuncompress|gzdecode)\s*\(/i',
+                    '/\bbase64_decode\s*\(/i',
+                ),
+                'weight'      => 10,
+                'label'       => 'Decompress + decode combo',
+                'description' => 'Compressed and encoded payload — multi-layer obfuscation.',
+                'tags'        => array( 'obfuscation', 'dangerous', 'compound' ),
+            ),
+            'chr_chain_exec' => array(
+                'patterns'    => array(
+                    '/chr\s*\(\s*\d+\s*\)\s*\.\s*chr/i',
+                    '/\b(eval|assert|system|exec|passthru)\s*\(/i',
+                ),
+                'weight'      => 9,
+                'label'       => 'chr() chain + execution',
+                'description' => 'Character-by-character string building fed to exec.',
+                'tags'        => array( 'exec', 'obfuscation', 'dangerous', 'compound' ),
+            ),
+            'hex_assembly_exec' => array(
+                'patterns'    => array(
+                    '/\\\\x[0-9a-fA-F]{2}(?:\\\\x[0-9a-fA-F]{2}){3,}/',
+                    '/\b(eval|assert|system|exec|passthru|call_user_func)\s*\(/i',
+                ),
+                'weight'      => 9,
+                'label'       => 'Hex assembly + execution',
+                'description' => 'Hex-encoded string reconstruction fed to exec.',
+                'tags'        => array( 'exec', 'obfuscation', 'dangerous', 'compound' ),
+            ),
+            'xor_exec' => array(
+                'patterns'    => array(
+                    '/\$\w+\s*\^=?\s*["\'][^"\']{5,}["\']/',
+                    '/\b(eval|assert|system|exec)\s*\(/i',
+                ),
+                'weight'      => 9,
+                'label'       => 'XOR reconstruction + execution',
+                'description' => 'XOR string decoding paired with code execution.',
+                'tags'        => array( 'exec', 'obfuscation', 'dangerous', 'compound' ),
+            ),
+
+            // ── Dangerous execution combos ───────────────────────
+            'assert_superglobal' => array(
+                'patterns'    => array(
+                    '/\bassert\s*\(/i',
+                    '/\$_(POST|GET|REQUEST|COOKIE)\b/',
+                ),
+                'weight'      => 10,
+                'label'       => 'assert() with superglobal input',
+                'description' => 'Assert used with user input — code injection backdoor.',
+                'tags'        => array( 'exec', 'userinput', 'backdoor', 'dangerous', 'compound' ),
+            ),
+            'create_func_exec' => array(
+                'patterns'    => array(
+                    '/\bcreate_function\s*\(/i',
+                    '/\bbase64_decode\s*\(/i',
+                ),
+                'weight'      => 9,
+                'label'       => 'create_function + base64',
+                'description' => 'Deprecated function builder with encoded payload.',
+                'tags'        => array( 'exec', 'obfuscation', 'dangerous', 'compound' ),
+            ),
+            'payload_reconstruct' => array(
+                'patterns'    => array(
+                    '/str_replace\s*\(/i',
+                    '/\b(eval|assert|preg_replace)\s*\(/i',
+                    '/\bbase64_decode\s*\(/i',
+                ),
+                'weight'      => 9,
+                'label'       => 'Payload reconstruction + exec',
+                'description' => 'String manipulation + decode + execution — staged payload.',
+                'tags'        => array( 'exec', 'obfuscation', 'dangerous', 'compound' ),
+            ),
+
+            // ── Remote fetch + persistence ───────────────────────
+            'remote_fetch_write' => array(
+                'patterns'    => array(
+                    '/\b(file_get_contents|curl_exec|wp_remote_get)\s*\(/i',
+                    '/\b(file_put_contents|fwrite|fputs)\s*\(/i',
+                ),
+                'weight'      => 8,
+                'label'       => 'Remote fetch + local write',
+                'description' => 'Downloading content and writing to disk — dropper behavior.',
+                'tags'        => array( 'network', 'write', 'dangerous', 'compound' ),
+            ),
+            'remote_fetch_exec' => array(
+                'patterns'    => array(
+                    '/\b(file_get_contents|curl_exec|wp_remote_get)\s*\(/i',
+                    '/\b(eval|assert|system|exec|passthru)\s*\(/i',
+                ),
+                'weight'      => 10,
+                'label'       => 'Remote fetch + execution',
+                'description' => 'Fetching remote code and executing — remote shell.',
+                'tags'        => array( 'network', 'exec', 'dangerous', 'compound' ),
+            ),
+
+            // ── Suspicious upload handling ───────────────────────
+            'upload_to_exec' => array(
+                'patterns'    => array(
+                    '/\bmove_uploaded_file\s*\(/i',
+                    '/\b(include|include_once|require|require_once|eval)\s*\(/i',
+                ),
+                'weight'      => 9,
+                'label'       => 'Upload + include/exec',
+                'description' => 'File upload immediately included or executed.',
+                'tags'        => array( 'upload', 'exec', 'dangerous', 'compound' ),
+            ),
+            'upload_chmod' => array(
+                'patterns'    => array(
+                    '/\bmove_uploaded_file\s*\(/i',
+                    '/\bchmod\s*\(/i',
+                ),
+                'weight'      => 7,
+                'label'       => 'Upload + chmod',
+                'description' => 'Uploaded file with permission changes — dropper setup.',
+                'tags'        => array( 'upload', 'write', 'dangerous', 'compound' ),
+            ),
+
+            // ── Cloaked / stealth ────────────────────────────────
+            'error_suppress_obfusc' => array(
+                'patterns'    => array(
+                    '/@\s*(eval|assert|system|exec|passthru)\s*\(/i',
+                    '/\b(base64_decode|str_rot13|gzinflate|gzuncompress)\s*\(/i',
+                ),
+                'weight'      => 10,
+                'label'       => 'Error-suppressed exec + obfuscation',
+                'description' => 'Silenced execution with encoded payload — stealth shell.',
+                'tags'        => array( 'exec', 'obfuscation', 'dangerous', 'compound' ),
+            ),
+            'stealth_backdoor' => array(
+                'patterns'    => array(
+                    '/\berror_reporting\s*\(\s*0\s*\)/i',
+                    '/\bset_time_limit\s*\(\s*0\s*\)/i',
+                    '/\b(eval|assert|system|exec|passthru)\s*\(/i',
+                ),
+                'weight'      => 10,
+                'label'       => 'Stealth setup + execution',
+                'description' => 'Error hiding + no time limit + exec — classic shell init.',
+                'tags'        => array( 'exec', 'backdoor', 'dangerous', 'compound' ),
+            ),
+            'ini_override_exec' => array(
+                'patterns'    => array(
+                    '/\bini_set\s*\(\s*[\'"](?:disable_functions|open_basedir)[\'"]/i',
+                    '/\b(eval|assert|system|exec|passthru|shell_exec)\s*\(/i',
+                ),
+                'weight'      => 10,
+                'label'       => 'Security bypass + execution',
+                'description' => 'Overriding PHP security + code execution.',
+                'tags'        => array( 'exec', 'backdoor', 'dangerous', 'compound' ),
+            ),
+        );
+    }
+
+    /**
+     * Run compound (multi-pattern correlation) analysis.
+     *
+     * Each compound rule requires ALL of its patterns to match for the
+     * rule to fire. This produces much higher-confidence signals than
+     * any single pattern match.
+     *
+     * @param string $content File content.
+     * @return array Array of signal arrays.
+     */
+    private static function analyse_compound( $content ) {
+        self::init_compound_rules();
+
+        $signals = array();
+
+        foreach ( self::$compound_rules as $rule_id => $rule ) {
+            $all_match  = true;
+            $first_off  = null;
+            $first_snip = '';
+
+            foreach ( $rule['patterns'] as $pattern ) {
+                if ( preg_match( $pattern, $content, $m, PREG_OFFSET_CAPTURE ) ) {
+                    if ( null === $first_off || $m[0][1] < $first_off ) {
+                        $first_off  = $m[0][1];
+                        $first_snip = self::extract_snippet( $content, $m[0][1] );
+                    }
+                } else {
+                    $all_match = false;
+                    break;
+                }
+            }
+
+            if ( $all_match ) {
+                $line = null !== $first_off
+                    ? substr_count( $content, "\n", 0, $first_off ) + 1
+                    : null;
+
+                $signals[] = array(
+                    'sig_id'      => $rule_id,
+                    'label'       => $rule['label'],
+                    'weight'      => $rule['weight'],
+                    'description' => $rule['description'],
+                    'tags'        => $rule['tags'],
+                    'line'        => $line,
+                    'snippet'     => $first_snip,
+                    'occurrences' => 1,
+                );
+            }
         }
 
         return $signals;

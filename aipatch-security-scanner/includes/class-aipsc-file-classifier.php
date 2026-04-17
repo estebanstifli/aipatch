@@ -45,6 +45,7 @@ class AIPSC_File_Classifier {
      * ------------------------------------------------------------- */
 
     private static $dangerous_combos = array(
+        // Tag-based combos.
         array( 'tags' => array( 'exec', 'obfuscation' ),            'bonus' => 15, 'reason' => 'Execution + obfuscation combo' ),
         array( 'tags' => array( 'exec', 'userinput' ),              'bonus' => 20, 'reason' => 'Execution of user input' ),
         array( 'tags' => array( 'obfuscation', 'network' ),         'bonus' => 12, 'reason' => 'Obfuscated + network activity' ),
@@ -54,6 +55,9 @@ class AIPSC_File_Classifier {
         array( 'tags' => array( 'backdoor' ),                       'bonus' => 15, 'reason' => 'Backdoor signature' ),
         array( 'tags' => array( 'hidden_php', 'exec' ),             'bonus' => 20, 'reason' => 'Hidden PHP with code execution' ),
         array( 'tags' => array( 'hidden_php', 'obfuscation' ),      'bonus' => 18, 'reason' => 'Hidden PHP with obfuscation' ),
+        array( 'tags' => array( 'upload', 'exec' ),                 'bonus' => 15, 'reason' => 'Upload handling + execution' ),
+        array( 'tags' => array( 'network', 'write', 'exec' ),       'bonus' => 20, 'reason' => 'Fetch + write + exec (full dropper chain)' ),
+        array( 'tags' => array( 'compound', 'dangerous' ),          'bonus' => 10, 'reason' => 'Compound correlation rule triggered' ),
     );
 
     /* ---------------------------------------------------------------
@@ -93,6 +97,7 @@ class AIPSC_File_Classifier {
      * ------------------------------------------------------------- */
 
     private static $family_map = array(
+        // Individual signatures.
         'web_shell_keywords'      => 'webshell',
         'superglobal_exec'        => 'backdoor',
         'hidden_iframe'           => 'injector',
@@ -103,6 +108,25 @@ class AIPSC_File_Classifier {
         'hidden_php_full_tag'     => 'cloaked-php',
         'hidden_php_short_echo'   => 'cloaked-php',
         'hidden_php_short_tag'    => 'cloaked-php',
+        'dynamic_include'         => 'backdoor',
+        'call_user_func'          => 'backdoor',
+        'register_shutdown'       => 'backdoor',
+        'ini_set_disable'         => 'backdoor',
+        'array_map_exec'          => 'obfuscated-payload',
+        // Compound rules.
+        'eval_base64'             => 'obfuscated-payload',
+        'gzinflate_base64'        => 'obfuscated-payload',
+        'assert_superglobal'      => 'backdoor',
+        'remote_fetch_exec'       => 'dropper',
+        'remote_fetch_write'      => 'dropper',
+        'upload_to_exec'          => 'dropper',
+        'stealth_backdoor'        => 'backdoor',
+        'ini_override_exec'       => 'backdoor',
+        'error_suppress_obfusc'   => 'obfuscated-payload',
+        'payload_reconstruct'     => 'obfuscated-payload',
+        'chr_chain_exec'          => 'obfuscated-payload',
+        'hex_assembly_exec'       => 'obfuscated-payload',
+        'xor_exec'                => 'obfuscated-payload',
     );
 
     /* ---------------------------------------------------------------
@@ -242,6 +266,9 @@ class AIPSC_File_Classifier {
             'backdoor'    => 0,
             'userinput'   => 0,
             'dangerous'   => 0,
+            'compound'    => 0,
+            'upload'      => 0,
+            'hidden_php'  => 0,
         );
 
         foreach ( $signals as $signal ) {
@@ -289,9 +316,21 @@ class AIPSC_File_Classifier {
             }
         }
 
+        // Compound rule multiplier: compound signals carry higher confidence.
+        if ( $tag_counts['compound'] >= 3 ) {
+            $score += 18;
+            $reasons[] = 'Multiple compound correlation rules (' . $tag_counts['compound'] . ')';
+        } elseif ( $tag_counts['compound'] >= 2 ) {
+            $score += 10;
+            $reasons[] = 'Two compound correlation rules matched';
+        }
+
         // Signal count factor: many different signals are suspicious.
         $sig_count = count( $signals );
-        if ( $sig_count >= 6 ) {
+        if ( $sig_count >= 10 ) {
+            $score    += 18;
+            $reasons[] = 'Very high signal density (' . $sig_count . ' unique matches)';
+        } elseif ( $sig_count >= 6 ) {
             $score    += 10;
             $reasons[] = 'High signal density (' . $sig_count . ' unique matches)';
         } elseif ( $sig_count >= 4 ) {
