@@ -196,6 +196,10 @@ class AIPSC_File_Scanner {
                     'layer_scores'    => isset( $scan_result['layer_scores'] ) ? $scan_result['layer_scores'] : array(),
                     'family_guess'    => $scan_result['family_guess'],
                     'risk_level'      => $scan_result['risk_level'],
+                    'is_new'          => ! empty( $scan_result['is_new'] ),
+                    'is_modified'     => ! empty( $scan_result['is_modified'] ),
+                    'first_seen'      => isset( $scan_result['first_seen'] ) ? $scan_result['first_seen'] : '',
+                    'last_seen'       => isset( $scan_result['last_seen'] ) ? $scan_result['last_seen'] : '',
                 ) );
 
                 // Store in file_scan_results table.
@@ -367,6 +371,8 @@ class AIPSC_File_Scanner {
         // Layered classification.
         $result = AIPSC_File_Classifier::classify( $signals, $relative, $integrity_info, $sha256 );
 
+        $integrity_status = isset( $integrity_info['status'] ) ? $integrity_info['status'] : 'unknown';
+
         return array(
             'risk_score'      => $result['risk_score'],
             'risk_level'      => $result['risk_level'],
@@ -380,6 +386,10 @@ class AIPSC_File_Scanner {
             'layer_scores'    => $result['layer_scores'],
             'sha256'          => $sha256,
             'file_size'       => $file_size,
+            'is_new'          => 'new' === $integrity_status,
+            'is_modified'     => 'modified' === $integrity_status,
+            'first_seen'      => isset( $integrity_info['first_seen'] ) ? $integrity_info['first_seen'] : '',
+            'last_seen'       => isset( $integrity_info['last_seen'] ) ? $integrity_info['last_seen'] : '',
         );
     }
 
@@ -401,25 +411,36 @@ class AIPSC_File_Scanner {
         }
 
         if ( ! isset( $this->baseline_index[ $relative ] ) ) {
-            return array( 'status' => 'new' );
+            return array(
+                'status'      => 'new',
+                'origin_type' => '',
+                'first_seen'  => '',
+                'last_seen'   => '',
+            );
         }
 
         $entry = $this->baseline_index[ $relative ];
 
+        $base = array(
+            'origin_type' => $entry['origin_type'],
+            'first_seen'  => $entry['first_seen'],
+            'last_seen'   => $entry['last_seen'],
+        );
+
         if ( $entry['sha256'] === $sha256 ) {
-            return array( 'status' => 'unchanged' );
+            return array_merge( array( 'status' => 'unchanged' ), $base );
         }
 
-        return array(
+        return array_merge( array(
             'status'     => 'modified',
             'sha256_was' => $entry['sha256'],
-        );
+        ), $base );
     }
 
     /**
      * Load baseline entries into a path-keyed index.
      *
-     * @return array<string, array{sha256: string, origin_type: string}>
+     * @return array<string, array{sha256: string, origin_type: string, first_seen: string, last_seen: string}>
      */
     private function load_baseline_index() {
         global $wpdb;
@@ -427,7 +448,7 @@ class AIPSC_File_Scanner {
         $table = $wpdb->prefix . 'aipsc_file_baseline';
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $rows = $wpdb->get_results( "SELECT file_path, sha256, origin_type FROM {$table}" );
+        $rows = $wpdb->get_results( "SELECT file_path, sha256, origin_type, first_seen, last_seen FROM {$table}" );
 
         $index = array();
         if ( $rows ) {
@@ -435,6 +456,8 @@ class AIPSC_File_Scanner {
                 $index[ $row->file_path ] = array(
                     'sha256'      => $row->sha256,
                     'origin_type' => $row->origin_type,
+                    'first_seen'  => $row->first_seen,
+                    'last_seen'   => $row->last_seen,
                 );
             }
         }

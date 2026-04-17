@@ -155,10 +155,10 @@ class AIPSC_File_Classifier {
         $context = self::score_context( $path, $signals );
 
         // ── C) Integrity layer ──────────────────────────────────
-        $integrity = self::score_integrity( $integrity_info );
+        $integrity = self::score_integrity( $integrity_info, $path, $signals );
 
         // ── D) Risk reduction ───────────────────────────────────
-        $reduction = self::compute_reduction( $path, $sha256, $signals );
+        $reduction = self::compute_reduction( $path, $sha256, $signals, $integrity_info );
 
         // ── Composite score ─────────────────────────────────────
         // Weighted sum of layers, then apply reduction multiplier.
@@ -487,29 +487,113 @@ class AIPSC_File_Classifier {
      * ------------------------------------------------------------- */
 
     /**
-     * Score based on baseline integrity data.
+     * Score based on baseline integrity data, cross-referenced with
+     * path context and signal presence.
      *
-     * @param array $info Integrity info: status, sha256_was, etc.
+     * @param array  $info    Integrity info: status, origin_type, first/last_seen, etc.
+     * @param string $path    Relative file path (for context-aware scoring).
+     * @param array  $signals Heuristic signals (to boost new/modified + signals).
      * @return array{ score: int, reasons: string[], flags: string[] }
      */
-    private static function score_integrity( array $info ) {
+    private static function score_integrity( array $info, $path = '', array $signals = array() ) {
         $score   = 0;
         $reasons = array();
         $flags   = array();
 
-        $status = isset( $info['status'] ) ? $info['status'] : 'unknown';
+        $status      = isset( $info['status'] ) ? $info['status'] : 'unknown';
+        $origin_type = isset( $info['origin_type'] ) ? $info['origin_type'] : '';
+        $has_signals = ! empty( $signals );
+        $in_uploads  = self::is_in_uploads( $path );
+        $in_core     = preg_match( '#^wp-(includes|admin)/#', $path );
+        $in_root     = ( '' !== $path && false === strpos( $path, '/' ) );
 
         switch ( $status ) {
             case 'new':
-                $score     = 40;
+                // Base score for new file.
+                $score     = 35;
                 $flags[]   = 'baseline_new';
                 $reasons[] = 'File not present in baseline (new file)';
+
+                // ── Finding: new + uploads ──
+                if ( $in_uploads ) {
+                    $score    += 25;
+                    $flags[]   = 'new_file_in_uploads';
+                    $reasons[] = 'New file appeared inside uploads directory';
+                }
+
+                // ── Finding: new + dangerous signals ──
+                if ( $has_signals ) {
+                    $dangerous_count = 0;
+                    foreach ( $signals as $s ) {
+                        if ( in_array( 'dangerous', isset( $s['tags'] ) ? $s['tags'] : array(), true ) ) {
+                            $dangerous_count++;
+                        }
+                    }
+                    if ( $dangerous_count > 0 ) {
+                        $bonus     = min( 30, $dangerous_count * 10 );
+                        $score    += $bonus;
+                        $flags[]   = 'new_suspicious_file';
+                        $reasons[] = sprintf( 'New file with %d dangerous signal(s)', $dangerous_count );
+                    }
+                }
+
+                // ── Finding: new in core path ──
+                if ( $in_core ) {
+                    $score    += 20;
+                    $flags[]   = 'unexpected_core_adjacent_file';
+                    $reasons[] = 'New file in WordPress core directory';
+                }
+
+                // ── Finding: new in site root with signals ──
+                if ( $in_root && $has_signals ) {
+                    $score    += 15;
+                    $flags[]   = 'new_root_suspicious';
+                    $reasons[] = 'New file in site root with signals';
+                }
                 break;
 
             case 'modified':
-                $score     = 55;
+                // Base score for modified file.
+                $score     = 40;
                 $flags[]   = 'baseline_modified';
                 $reasons[] = 'File modified since baseline was built';
+
+                // ── Finding: modified in sensitive path ──
+                if ( $in_core || 'core' === $origin_type ) {
+                    $score    += 25;
+                    $flags[]   = 'modified_sensitive_file';
+                    $reasons[] = 'Core file modified — possible compromise';
+                }
+
+                // ── Finding: modified + dangerous signals ──
+                if ( $has_signals ) {
+                    $dangerous_count = 0;
+                    foreach ( $signals as $s ) {
+                        if ( in_array( 'dangerous', isset( $s['tags'] ) ? $s['tags'] : array(), true ) ) {
+                            $dangerous_count++;
+                        }
+                    }
+                    if ( $dangerous_count > 0 ) {
+                        $bonus     = min( 25, $dangerous_count * 8 );
+                        $score    += $bonus;
+                        $flags[]   = 'modified_with_dangerous_signals';
+                        $reasons[] = sprintf( 'Modified file now has %d dangerous signal(s)', $dangerous_count );
+                    }
+                }
+
+                // ── Finding: modified in uploads ──
+                if ( $in_uploads ) {
+                    $score    += 15;
+                    $flags[]   = 'modified_upload_file';
+                    $reasons[] = 'File in uploads modified since baseline';
+                }
+
+                // ── Finding: modified plugin/theme ──
+                if ( in_array( $origin_type, array( 'plugin', 'theme' ), true ) && $has_signals ) {
+                    $score    += 10;
+                    $flags[]   = 'modified_component_file';
+                    $reasons[] = 'Plugin/theme file modified with suspicious signals';
+                }
                 break;
 
             case 'missing':
@@ -527,11 +611,18 @@ class AIPSC_File_Classifier {
                 $score     = 10;
                 $flags[]   = 'no_baseline';
                 $reasons[] = 'No baseline data available for comparison';
+
+                // Even without baseline, new-looking files in risky places get a bump.
+                if ( $in_uploads && $has_signals ) {
+                    $score    += 10;
+                    $flags[]   = 'no_baseline_uploads_signals';
+                    $reasons[] = 'No baseline + signals in uploads directory';
+                }
                 break;
         }
 
         return array(
-            'score'   => $score,
+            'score'   => (int) min( 100, max( 0, $score ) ),
             'reasons' => $reasons,
             'flags'   => $flags,
         );
@@ -544,17 +635,26 @@ class AIPSC_File_Classifier {
     /**
      * Compute a reduction multiplier (0.0–1.0) and reasons.
      *
-     * @param string $path    Relative file path.
-     * @param string $sha256  Current file hash.
-     * @param array  $signals Signals.
+     * @param string $path           Relative file path.
+     * @param string $sha256         Current file hash.
+     * @param array  $signals        Signals.
+     * @param array  $integrity_info Integrity data from baseline.
      * @return array{ multiplier: float, reasons: string[] }
      */
-    private static function compute_reduction( $path, $sha256, array $signals ) {
+    private static function compute_reduction( $path, $sha256, array $signals, array $integrity_info = array() ) {
         $multiplier = 1.0;
         $reasons    = array();
 
         // Files in uploads with signals should not get vendor/benign reductions.
-        $in_uploads = self::is_in_uploads( $path );
+        $in_uploads       = self::is_in_uploads( $path );
+        $integrity_status = isset( $integrity_info['status'] ) ? $integrity_info['status'] : 'unknown';
+
+        // ── Baseline-intact reduction ──
+        // Files confirmed unchanged since baseline are far less suspicious.
+        if ( 'unchanged' === $integrity_status && ! $in_uploads ) {
+            $multiplier *= 0.55;
+            $reasons[]   = 'File unchanged since baseline (integrity confirmed)';
+        }
 
         // ── Known vendor path (skip in uploads) ──
         if ( ! $in_uploads ) {
