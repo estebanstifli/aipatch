@@ -10,8 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-$abilities_registry = AIPSC_Utils::get_abilities_registry();
-$abilities_enabled  = isset( $settings['abilities_enabled'] ) && is_array( $settings['abilities_enabled'] )
+$aipsc_abilities_registry = AIPSC_Utils::get_abilities_registry();
+$aipsc_abilities_enabled  = isset( $settings['abilities_enabled'] ) && is_array( $settings['abilities_enabled'] )
     ? $settings['abilities_enabled']
     : array();
 ?>
@@ -133,17 +133,17 @@ $abilities_enabled  = isset( $settings['abilities_enabled'] ) && is_array( $sett
                 </th>
                 <td>
                     <fieldset>
-                        <?php foreach ( $abilities_registry as $ability ) : ?>
-                            <?php if ( empty( $ability['key'] ) || empty( $ability['name'] ) ) : ?>
+                        <?php foreach ( $aipsc_abilities_registry as $aipsc_ability ) : ?>
+                            <?php if ( empty( $aipsc_ability['key'] ) || empty( $aipsc_ability['name'] ) ) : ?>
                                 <?php continue; ?>
                             <?php endif; ?>
 
                             <label>
-                                <input type="checkbox" name="aipatch_settings[abilities_enabled][<?php echo esc_attr( $ability['key'] ); ?>]" value="1" <?php checked( ! empty( $abilities_enabled[ $ability['key'] ] ) ); ?> />
-                                <code><?php echo esc_html( $ability['name'] ); ?></code>
-                                - <?php echo esc_html( $ability['label'] ); ?>
+                                <input type="checkbox" name="aipatch_settings[abilities_enabled][<?php echo esc_attr( $aipsc_ability['key'] ); ?>]" value="1" <?php checked( ! empty( $aipsc_abilities_enabled[ $aipsc_ability['key'] ] ) ); ?> />
+                                <code><?php echo esc_html( $aipsc_ability['name'] ); ?></code>
+                                - <?php echo esc_html( $aipsc_ability['label'] ); ?>
                                 <span class="description">
-                                    (<?php echo ! empty( $ability['readonly'] ) ? esc_html__( 'read-only', 'aipatch-security-scanner' ) : esc_html__( 'write', 'aipatch-security-scanner' ); ?>)
+                                    (<?php echo ! empty( $aipsc_ability['readonly'] ) ? esc_html__( 'read-only', 'aipatch-security-scanner' ) : esc_html__( 'write', 'aipatch-security-scanner' ); ?>)
                                 </span>
                             </label><br>
                         <?php endforeach; ?>

@@ -55,17 +55,18 @@ class AIPSC_Check_Auto_Updates extends AIPSC_Audit_Check_Base {
 
         $active_plugins      = get_option( 'active_plugins', array() );
         $auto_update_option  = 'auto_update_' . 'plugins';
-        $auto_update_plugins = get_site_option( $auto_update_option, array() );
+        // Read-only access to the core option that stores plugins with auto-updates enabled.
+        $enabled_plugin_updates = get_site_option( $auto_update_option, array() );
 
-        if ( ! is_array( $auto_update_plugins ) ) {
-            $auto_update_plugins = array();
+        if ( ! is_array( $enabled_plugin_updates ) ) {
+            $enabled_plugin_updates = array();
         }
 
         $all_plugins    = get_plugins();
         $no_auto_update = array();
 
         foreach ( $active_plugins as $plugin_file ) {
-            if ( ! in_array( $plugin_file, $auto_update_plugins, true ) && isset( $all_plugins[ $plugin_file ] ) ) {
+            if ( ! in_array( $plugin_file, $enabled_plugin_updates, true ) && isset( $all_plugins[ $plugin_file ] ) ) {
                 $no_auto_update[] = $all_plugins[ $plugin_file ]['Name'];
             }
         }
