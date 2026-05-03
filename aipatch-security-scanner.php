@@ -9,7 +9,7 @@
  *
  * @wordpress-plugin
  * Plugin Name: Aipatch Security Scanner
- * Plugin URI:  https://github.com/estebanstifli/aipatch
+ * Plugin URI:  https://github.com/estebanstifli/aipatch-security-scanner
  * Description: Lightweight security scanner for WordPress. Checks for outdated software, risky configurations, and applies safe hardening measures.
  * Version:     2.0.2
  * Requires at least: 6.5
