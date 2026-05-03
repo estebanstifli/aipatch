@@ -2,8 +2,8 @@
 Contributors: estebandezafra
 Tags: security, malware scanner, vulnerability, hardening, audit
 Requires at least: 6.5
-Tested up to: 6.9
-Stable tag: 2.0.1
+Tested up to: 7.0
+Stable tag: 2.0.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -110,6 +110,8 @@ Built-in performance profiling to identify slow queries, high memory usage, and 
 = MCP Surface for AI Agents (23 Abilities) =
 
 Aipatch exposes 23 structured abilities via the WordPress Abilities API — making your site's security surface fully accessible to external AI agents, coding assistants, and orchestration tools:
+
+By default, only **aipatch/audit-site** is enabled. You can enable additional abilities from **Aipatch Security Scanner -> Settings -> MCP Abilities**.
 
 **Audit & Scanning**
 
@@ -218,7 +220,14 @@ PHP 7.4 or higher. WordPress 6.5 or higher.
 
 == Changelog ==
 
-= 1.0.2 =
+= 2.0.2 =
+* MCP abilities now default to only **aipatch/audit-site** enabled; additional abilities can be enabled from Settings.
+* Fixed remediation `rename_file` path handling so destination paths can be new files (without requiring the destination to already exist).
+* Updated `aipatch/start-file-scan` ability to actually support the `root` input with strict validation inside WordPress root.
+* Hardened file enumeration by disabling symlink traversal and skipping symlink entries.
+* Added runtime and batch budgets to synchronous file scan execution to prevent unbounded scans.
+
+= 2.0.1 =
 * Major architecture overhaul: modular audit engine with interface/registry/engine pattern.
 * 36 security checks (up from 12) across 8 categories including malware surface and access control.
 * Weighted logarithmic scoring engine with per-area risk posture breakdown.
@@ -252,7 +261,10 @@ PHP 7.4 or higher. WordPress 6.5 or higher.
 
 == Upgrade Notice ==
 
-= 1.0.2 =
+= 2.0.2 =
+Maintenance and hardening release: fixes remediation rename destination handling, aligns `start-file-scan` root contract, and adds scanner safeguards for symlinks and runtime budgets.
+
+= 2.0.1 =
 Major upgrade: 36 audit checks, multi-layer malware file scanner with family classification, WordPress core integrity verification, file integrity baseline, remediation engine with rollback, and 23 MCP abilities for AI agents. Database will be upgraded automatically.
 
 = 1.0.1 =

@@ -61,6 +61,13 @@ class AIPSC_Settings {
             $clean['modules_enabled'][ $key ] = ! empty( $input['modules_enabled'][ $key ] );
         }
 
+        // MCP abilities enabled.
+        $ability_keys = array_keys( AIPSC_Utils::get_ability_settings_map() );
+        $clean['abilities_enabled'] = array();
+        foreach ( $ability_keys as $key ) {
+            $clean['abilities_enabled'][ $key ] = ! empty( $input['abilities_enabled'][ $key ] );
+        }
+
         // Reschedule cron if frequency changed.
         $current = AIPSC_Utils::get_settings();
         if ( $clean['scan_frequency'] !== $current['scan_frequency'] ) {

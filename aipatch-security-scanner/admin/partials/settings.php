@@ -9,6 +9,11 @@
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
+
+$abilities_registry = AIPSC_Utils::get_abilities_registry();
+$abilities_enabled  = isset( $settings['abilities_enabled'] ) && is_array( $settings['abilities_enabled'] )
+    ? $settings['abilities_enabled']
+    : array();
 ?>
 <div class="wrap aipatch-wrap">
     <h1 class="aipatch-page-title">
@@ -117,6 +122,34 @@ if ( ! defined( 'ABSPATH' ) ) {
                     </fieldset>
                     <p class="description">
                         <?php esc_html_e( 'Enable or disable individual plugin modules.', 'aipatch-security-scanner' ); ?>
+                    </p>
+                </td>
+            </tr>
+
+            <!-- MCP Abilities -->
+            <tr>
+                <th scope="row">
+                    <?php esc_html_e( 'MCP Abilities', 'aipatch-security-scanner' ); ?>
+                </th>
+                <td>
+                    <fieldset>
+                        <?php foreach ( $abilities_registry as $ability ) : ?>
+                            <?php if ( empty( $ability['key'] ) || empty( $ability['name'] ) ) : ?>
+                                <?php continue; ?>
+                            <?php endif; ?>
+
+                            <label>
+                                <input type="checkbox" name="aipatch_settings[abilities_enabled][<?php echo esc_attr( $ability['key'] ); ?>]" value="1" <?php checked( ! empty( $abilities_enabled[ $ability['key'] ] ) ); ?> />
+                                <code><?php echo esc_html( $ability['name'] ); ?></code>
+                                - <?php echo esc_html( $ability['label'] ); ?>
+                                <span class="description">
+                                    (<?php echo ! empty( $ability['readonly'] ) ? esc_html__( 'read-only', 'aipatch-security-scanner' ) : esc_html__( 'write', 'aipatch-security-scanner' ); ?>)
+                                </span>
+                            </label><br>
+                        <?php endforeach; ?>
+                    </fieldset>
+                    <p class="description">
+                        <?php esc_html_e( 'By default, only aipatch/audit-site is enabled. Enable additional abilities here as needed.', 'aipatch-security-scanner' ); ?>
                     </p>
                 </td>
             </tr>

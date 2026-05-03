@@ -17,6 +17,173 @@ if ( ! defined( 'ABSPATH' ) ) {
 class AIPSC_Utils {
 
     /**
+     * Get abilities registry used for settings and defaults.
+     *
+     * @return array
+     */
+    public static function get_abilities_registry() {
+        return array(
+            array(
+                'key'      => 'audit_site',
+                'name'     => 'aipatch/audit-site',
+                'label'    => __( 'Audit Site', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+            array(
+                'key'      => 'audit_suspicious',
+                'name'     => 'aipatch/audit-suspicious',
+                'label'    => __( 'Audit Suspicious Files', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+            array(
+                'key'      => 'get_async_job_status',
+                'name'     => 'aipatch/get-async-job-status',
+                'label'    => __( 'Get Async Job Status', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+            array(
+                'key'      => 'list_findings',
+                'name'     => 'aipatch/list-findings',
+                'label'    => __( 'List Findings', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+            array(
+                'key'      => 'findings_stats',
+                'name'     => 'aipatch/findings-stats',
+                'label'    => __( 'Findings Statistics', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+            array(
+                'key'      => 'findings_diff',
+                'name'     => 'aipatch/findings-diff',
+                'label'    => __( 'Findings Diff', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+            array(
+                'key'      => 'dismiss_finding',
+                'name'     => 'aipatch/dismiss-finding',
+                'label'    => __( 'Dismiss Finding', 'aipatch-security-scanner' ),
+                'readonly' => false,
+            ),
+            array(
+                'key'      => 'start_file_scan',
+                'name'     => 'aipatch/start-file-scan',
+                'label'    => __( 'Start File Scan', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+            array(
+                'key'      => 'file_scan_progress',
+                'name'     => 'aipatch/file-scan-progress',
+                'label'    => __( 'File Scan Progress', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+            array(
+                'key'      => 'file_scan_results',
+                'name'     => 'aipatch/file-scan-results',
+                'label'    => __( 'File Scan Results', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+            array(
+                'key'      => 'process_file_scan_batch',
+                'name'     => 'aipatch/process-file-scan-batch',
+                'label'    => __( 'Process File Scan Batch', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+            array(
+                'key'      => 'baseline_build',
+                'name'     => 'aipatch/baseline-build',
+                'label'    => __( 'Build File Baseline', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+            array(
+                'key'      => 'baseline_diff',
+                'name'     => 'aipatch/baseline-diff',
+                'label'    => __( 'Baseline Integrity Diff', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+            array(
+                'key'      => 'baseline_stats',
+                'name'     => 'aipatch/baseline-stats',
+                'label'    => __( 'Baseline Statistics', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+            array(
+                'key'      => 'list_jobs',
+                'name'     => 'aipatch/list-jobs',
+                'label'    => __( 'List Jobs', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+            array(
+                'key'      => 'apply_remediation',
+                'name'     => 'aipatch/apply-remediation',
+                'label'    => __( 'Apply Remediation', 'aipatch-security-scanner' ),
+                'readonly' => false,
+            ),
+            array(
+                'key'      => 'rollback_remediation',
+                'name'     => 'aipatch/rollback-remediation',
+                'label'    => __( 'Rollback Remediation', 'aipatch-security-scanner' ),
+                'readonly' => false,
+            ),
+            array(
+                'key'      => 'list_remediations',
+                'name'     => 'aipatch/list-remediations',
+                'label'    => __( 'List Remediations', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+            array(
+                'key'      => 'verify_core_integrity',
+                'name'     => 'aipatch/verify-core-integrity',
+                'label'    => __( 'Verify Core Integrity', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+            array(
+                'key'      => 'list_suspicious_files',
+                'name'     => 'aipatch/list-suspicious-files',
+                'label'    => __( 'List Suspicious Files', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+            array(
+                'key'      => 'get_file_finding_detail',
+                'name'     => 'aipatch/get-file-finding-detail',
+                'label'    => __( 'Get File Finding Detail', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+            array(
+                'key'      => 'get_scan_summary',
+                'name'     => 'aipatch/get-scan-summary',
+                'label'    => __( 'Get Scan Summary', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+            array(
+                'key'      => 'get_baseline_drift',
+                'name'     => 'aipatch/get-baseline-drift',
+                'label'    => __( 'Get Baseline Drift', 'aipatch-security-scanner' ),
+                'readonly' => true,
+            ),
+        );
+    }
+
+    /**
+     * Get settings map (key => ability name) for ability toggles.
+     *
+     * @return array
+     */
+    public static function get_ability_settings_map() {
+        $map = array();
+
+        foreach ( self::get_abilities_registry() as $ability ) {
+            if ( empty( $ability['key'] ) || empty( $ability['name'] ) ) {
+                continue;
+            }
+
+            $map[ $ability['key'] ] = $ability['name'];
+        }
+
+        return $map;
+    }
+
+    /**
      * Get a plugin option with default fallback.
      *
      * @param string $key     Option key (without prefix).
@@ -54,6 +221,11 @@ class AIPSC_Utils {
      * @return array
      */
     public static function get_default_settings() {
+        $abilities_enabled = array();
+        foreach ( array_keys( self::get_ability_settings_map() ) as $ability_key ) {
+            $abilities_enabled[ $ability_key ] = ( 'audit_site' === $ability_key );
+        }
+
         return array(
             'scan_frequency'    => 'daily',
             'log_retention_days' => 30,
@@ -64,6 +236,7 @@ class AIPSC_Utils {
                 'vulnerabilities' => true,
                 'login_protection' => true,
             ),
+            'abilities_enabled' => $abilities_enabled,
         );
     }
 
@@ -92,7 +265,19 @@ class AIPSC_Utils {
     public static function get_settings() {
         $defaults = self::get_default_settings();
         $saved    = self::get_option( 'settings', array() );
-        return wp_parse_args( $saved, $defaults );
+        $settings = wp_parse_args( $saved, $defaults );
+
+        $settings['modules_enabled'] = wp_parse_args(
+            ( isset( $saved['modules_enabled'] ) && is_array( $saved['modules_enabled'] ) ) ? $saved['modules_enabled'] : array(),
+            $defaults['modules_enabled']
+        );
+
+        $settings['abilities_enabled'] = wp_parse_args(
+            ( isset( $saved['abilities_enabled'] ) && is_array( $saved['abilities_enabled'] ) ) ? $saved['abilities_enabled'] : array(),
+            $defaults['abilities_enabled']
+        );
+
+        return $settings;
     }
 
     /**

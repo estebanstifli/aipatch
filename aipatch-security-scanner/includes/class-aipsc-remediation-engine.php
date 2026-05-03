@@ -447,7 +447,7 @@ class AIPSC_Remediation_Engine {
     }
 
     private function rollback_delete_file( array $data ) {
-        $abs = $this->resolve_path( $data['path'] );
+        $abs = $this->resolve_path( $data['path'], false );
         if ( is_wp_error( $abs ) ) {
             return $abs;
         }
@@ -485,7 +485,7 @@ class AIPSC_Remediation_Engine {
         if ( is_wp_error( $abs_from ) ) {
             return $abs_from;
         }
-        $abs_to = $this->resolve_path( $to );
+        $abs_to = $this->resolve_path( $to, false );
         if ( is_wp_error( $abs_to ) ) {
             return $abs_to;
         }
@@ -511,7 +511,7 @@ class AIPSC_Remediation_Engine {
 
     private function rollback_rename_file( array $data ) {
         $abs_from = $this->resolve_path( $data['to'] );
-        $abs_to   = $this->resolve_path( $data['from'] );
+        $abs_to   = $this->resolve_path( $data['from'], false );
 
         if ( is_wp_error( $abs_from ) || is_wp_error( $abs_to ) ) {
             return new WP_Error( 'aipatch_rollback_path', 'Invalid rollback paths.' );
@@ -653,27 +653,72 @@ class AIPSC_Remediation_Engine {
     /**
      * Resolve a relative path safely within ABSPATH.
      *
-     * @param string $relative Relative path.
+     * @param string $relative   Relative path.
+     * @param bool   $must_exist Whether the final path must already exist.
      * @return string|WP_Error Absolute path or error.
      */
-    private function resolve_path( $relative ) {
+    private function resolve_path( $relative, $must_exist = true ) {
         if ( '' === $relative ) {
             return new WP_Error( 'aipatch_empty_path', 'File path is required.' );
         }
 
         // Normalise separators.
-        $relative = str_replace( '\\', '/', $relative );
+        $relative = str_replace( '\\', '/', trim( (string) $relative ) );
+
+        // Require plugin-style relative paths.
+        if ( preg_match( '#^[A-Za-z]:#', $relative ) ) {
+            return new WP_Error( 'aipatch_absolute_path', 'Absolute paths are not allowed.' );
+        }
+
+        $relative = ltrim( $relative, '/' );
+
+        if ( '' === $relative ) {
+            return new WP_Error( 'aipatch_empty_path', 'File path is required.' );
+        }
 
         // Block directory-traversal attempts.
-        if ( false !== strpos( $relative, '..' ) ) {
+        if ( preg_match( '#(^|/)\.\.(?:/|$)#', $relative ) ) {
             return new WP_Error( 'aipatch_path_traversal', 'Path traversal is not allowed.' );
         }
 
-        $abs = realpath( ABSPATH . ltrim( $relative, '/' ) );
+        $root = realpath( ABSPATH );
+        if ( false === $root ) {
+            return new WP_Error( 'aipatch_root_unavailable', 'Could not resolve WordPress root path.' );
+        }
 
-        // Ensure the path stays inside ABSPATH.
-        if ( false === $abs || 0 !== strpos( $abs, realpath( ABSPATH ) ) ) {
+        $root      = wp_normalize_path( $root );
+        $root_base = trailingslashit( $root );
+
+        $abs = wp_normalize_path( ABSPATH . $relative );
+
+        $parent = realpath( dirname( $abs ) );
+        if ( false === $parent ) {
+            return new WP_Error( 'aipatch_path_parent_missing', 'Target directory does not exist.' );
+        }
+
+        $parent = wp_normalize_path( $parent );
+        if ( $parent !== $root && 0 !== strpos( trailingslashit( $parent ), $root_base ) ) {
             return new WP_Error( 'aipatch_path_outside', 'Path resolves outside of WordPress root.' );
+        }
+
+        if ( $must_exist || file_exists( $abs ) ) {
+            $resolved = realpath( $abs );
+            if ( false === $resolved ) {
+                if ( $must_exist ) {
+                    return new WP_Error( 'aipatch_file_not_found', "File not found: {$relative}" );
+                }
+
+                return new WP_Error( 'aipatch_path_resolve_failed', 'Could not resolve destination path.' );
+            }
+
+            $resolved = wp_normalize_path( $resolved );
+
+            // Ensure the path stays inside ABSPATH.
+            if ( $resolved !== $root && 0 !== strpos( trailingslashit( $resolved ), $root_base ) ) {
+                return new WP_Error( 'aipatch_path_outside', 'Path resolves outside of WordPress root.' );
+            }
+
+            return $resolved;
         }
 
         return $abs;

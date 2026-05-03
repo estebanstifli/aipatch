@@ -102,10 +102,41 @@ class AIPSC_Abilities {
             return;
         }
 
-        $this->register_site_audit_ability( 'aipatch/audit-site', __( 'Audit Site', 'aipatch-security-scanner' ), __( 'Runs a full site security audit and returns a structured report for external AI agents.', 'aipatch-security-scanner' ) );
-        $this->register_suspicious_audit_ability( 'aipatch/audit-suspicious', __( 'Audit Suspicious Files', 'aipatch-security-scanner' ), __( 'Scans for suspicious files and returns indicators for deep analysis by an external AI agent.', 'aipatch-security-scanner' ) );
-        $this->register_async_status_ability();
+        if ( $this->is_ability_enabled( 'aipatch/audit-site' ) ) {
+            $this->register_site_audit_ability( 'aipatch/audit-site', __( 'Audit Site', 'aipatch-security-scanner' ), __( 'Runs a full site security audit and returns a structured report for external AI agents.', 'aipatch-security-scanner' ) );
+        }
+
+        if ( $this->is_ability_enabled( 'aipatch/audit-suspicious' ) ) {
+            $this->register_suspicious_audit_ability( 'aipatch/audit-suspicious', __( 'Audit Suspicious Files', 'aipatch-security-scanner' ), __( 'Scans for suspicious files and returns indicators for deep analysis by an external AI agent.', 'aipatch-security-scanner' ) );
+        }
+
+        if ( $this->is_ability_enabled( 'aipatch/get-async-job-status' ) ) {
+            $this->register_async_status_ability();
+        }
+
         $this->register_new_abilities();
+    }
+
+    /**
+     * Check whether an ability is enabled in plugin settings.
+     *
+     * @param string $ability_name Full ability name.
+     * @return bool
+     */
+    private function is_ability_enabled( $ability_name ) {
+        $ability_name = sanitize_text_field( (string) $ability_name );
+        $name_map     = array_flip( AIPSC_Utils::get_ability_settings_map() );
+
+        if ( ! isset( $name_map[ $ability_name ] ) ) {
+            return true;
+        }
+
+        $settings = AIPSC_Utils::get_settings();
+        $enabled  = isset( $settings['abilities_enabled'] ) && is_array( $settings['abilities_enabled'] )
+            ? $settings['abilities_enabled']
+            : array();
+
+        return ! empty( $enabled[ $name_map[ $ability_name ] ] );
     }
 
     /**
@@ -1009,7 +1040,7 @@ class AIPSC_Abilities {
                 'label'       => __( 'Start File Scan', 'aipatch-security-scanner' ),
                 'description' => __( 'Start an asynchronous malware/heuristic file scan job.', 'aipatch-security-scanner' ),
                 'input'       => array(
-                    'root'       => array( 'type' => 'string', 'description' => 'Scan root directory. Default: ABSPATH.' ),
+                    'root'       => array( 'type' => 'string', 'description' => 'Scan root directory (must be inside ABSPATH). Default: ABSPATH.' ),
                     'max_files'  => array( 'type' => 'integer', 'default' => 10000 ),
                 ),
                 'callback'    => 'execute_start_file_scan',
@@ -1173,6 +1204,10 @@ class AIPSC_Abilities {
         );
 
         foreach ( $abilities as $ability ) {
+            if ( ! $this->is_ability_enabled( $ability['name'] ) ) {
+                continue;
+            }
+
             $is_readonly = isset( $ability['readonly'] ) ? $ability['readonly'] : true;
             $result = call_user_func(
                 'wp_register_ability',
@@ -1312,6 +1347,15 @@ class AIPSC_Abilities {
         $input   = is_array( $input ) ? $input : array();
         $options = array();
 
+        if ( isset( $input['root'] ) && '' !== trim( (string) $input['root'] ) ) {
+            $root = $this->sanitize_scan_root( $input['root'] );
+            if ( is_wp_error( $root ) ) {
+                return $root;
+            }
+
+            $options['root'] = $root;
+        }
+
         if ( ! empty( $input['max_files'] ) ) {
             $options['max_files'] = absint( $input['max_files'] );
         }
@@ -1326,6 +1370,45 @@ class AIPSC_Abilities {
             'job_id'  => $job_id,
             'message' => 'File scan job created. Use aipatch/process-file-scan-batch to advance.',
         );
+    }
+
+    /**
+     * Validate and normalize file scan root input.
+     *
+     * @param string $root Raw root input.
+     * @return string|WP_Error
+     */
+    private function sanitize_scan_root( $root ) {
+        $root = trim( (string) $root );
+        if ( '' === $root ) {
+            return new WP_Error( 'aipatch_invalid_root', 'root cannot be empty.', array( 'status' => 400 ) );
+        }
+
+        // If root is relative, resolve it from ABSPATH.
+        if ( ! preg_match( '#^(?:[A-Za-z]:)?[\\/]+#', $root ) ) {
+            $root = ABSPATH . ltrim( str_replace( '\\', '/', $root ), '/' );
+        }
+
+        $root_resolved = realpath( $root );
+        if ( false === $root_resolved || ! is_dir( $root_resolved ) || ! is_readable( $root_resolved ) ) {
+            return new WP_Error( 'aipatch_invalid_root', 'root must be a readable directory.', array( 'status' => 400 ) );
+        }
+
+        $root_resolved = wp_normalize_path( $root_resolved );
+
+        $wp_root = realpath( ABSPATH );
+        if ( false === $wp_root ) {
+            return new WP_Error( 'aipatch_root_unavailable', 'Could not resolve WordPress root.', array( 'status' => 500 ) );
+        }
+
+        $wp_root      = wp_normalize_path( $wp_root );
+        $wp_root_base = trailingslashit( $wp_root );
+
+        if ( $root_resolved !== $wp_root && 0 !== strpos( trailingslashit( $root_resolved ), $wp_root_base ) ) {
+            return new WP_Error( 'aipatch_root_outside', 'root must be inside WordPress root.', array( 'status' => 400 ) );
+        }
+
+        return $root_resolved;
     }
 
     /**

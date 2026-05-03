@@ -179,6 +179,7 @@ Each family classification includes a confidence level (`high`, `medium`, `low`)
 ## MCP Abilities API (23 Tools)
 
 All abilities are registered under the `aipatch-security` category and require the `manage_options` capability (filterable via `aipatch_abilities_required_capability`).
+By default, only `aipatch/audit-site` is enabled. Additional abilities can be enabled from **Settings -> MCP Abilities**.
 
 ### At a Glance
 
@@ -209,6 +210,8 @@ All abilities are registered under the `aipatch-security` category and require t
 | 23 | `aipatch/get-baseline-drift` | read | Combined baseline + core integrity report |
 
 **Read-only:** 20 · **Write:** 3
+
+**Default enabled ability:** `aipatch/audit-site`
 
 ---
 

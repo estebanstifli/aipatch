@@ -114,6 +114,14 @@ class AIPSC_File_Scanner {
         );
         $options = wp_parse_args( $options, $defaults );
 
+        $scan_root = realpath( $options['root'] );
+        if ( false === $scan_root || ! is_dir( $scan_root ) || ! is_readable( $scan_root ) ) {
+            $this->logger->warning( 'file_scan', 'Invalid or unreadable scan root.' );
+            return false;
+        }
+
+        $options['root'] = wp_normalize_path( $scan_root );
+
         $files = $this->enumerate_files(
             $options['root'],
             $options['extensions'],
@@ -270,17 +278,49 @@ class AIPSC_File_Scanner {
      * @return array Summary with job_id and results.
      */
     public function run_full( array $options = array() ) {
-        $job_id = $this->start( $options );
+        $runtime_defaults = array(
+            'batch_size'          => 100,
+            'max_batches'         => 1000,
+            'max_runtime_seconds' => 120,
+        );
+        $runtime = wp_parse_args( $options, $runtime_defaults );
+
+        $start_options = $options;
+        unset( $start_options['batch_size'], $start_options['max_batches'], $start_options['max_runtime_seconds'] );
+
+        $job_id = $this->start( $start_options );
         if ( ! $job_id ) {
             return array( 'error' => 'Failed to create file scan job.' );
         }
 
-        $batch_size = 100;
-        while ( true ) {
+        $batch_size   = max( 1, absint( $runtime['batch_size'] ) );
+        $max_batches  = max( 1, absint( $runtime['max_batches'] ) );
+        $max_runtime  = max( 10, absint( $runtime['max_runtime_seconds'] ) );
+        $started_at   = microtime( true );
+        $batch_count  = 0;
+
+        while ( $batch_count < $max_batches ) {
+            if ( ( microtime( true ) - $started_at ) >= $max_runtime ) {
+                $this->logger->warning(
+                    'file_scan',
+                    sprintf( 'run_full reached runtime budget (%ds) for job %s.', $max_runtime, $job_id )
+                );
+                break;
+            }
+
             $processed = $this->process_batch( $job_id, $batch_size );
+            $batch_count++;
+
             if ( 0 === $processed ) {
                 break;
             }
+        }
+
+        if ( $batch_count >= $max_batches ) {
+            $this->logger->warning(
+                'file_scan',
+                sprintf( 'run_full reached batch budget (%d) for job %s.', $max_batches, $job_id )
+            );
         }
 
         return $this->get_results( $job_id );
@@ -549,12 +589,16 @@ class AIPSC_File_Scanner {
 
         $iterator = new \RecursiveDirectoryIterator(
             $root,
-            \RecursiveDirectoryIterator::SKIP_DOTS | \RecursiveDirectoryIterator::FOLLOW_SYMLINKS
+            \RecursiveDirectoryIterator::SKIP_DOTS
         );
 
         $filter = new \RecursiveCallbackFilterIterator(
             $iterator,
             function ( $current, $key, $iterator ) use ( $excl_map ) {
+                if ( $current->isLink() ) {
+                    return false;
+                }
+
                 if ( $current->isDir() ) {
                     return ! isset( $excl_map[ strtolower( $current->getFilename() ) ] );
                 }
@@ -566,6 +610,10 @@ class AIPSC_File_Scanner {
 
         foreach ( $flat as $file ) {
             if ( ! $file->isFile() ) {
+                continue;
+            }
+
+            if ( $file->isLink() ) {
                 continue;
             }
 
